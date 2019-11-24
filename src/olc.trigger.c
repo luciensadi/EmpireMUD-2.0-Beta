@@ -64,6 +64,35 @@ const char *default_trig_name = "new trigger";
 //// HELPERS /////////////////////////////////////////////////////////////////
 
 /**
+* Checks for common trigger problems and reports them to ch.
+*
+* @param trig_data *trigger The thing to audit.
+* @param char_data *ch The person to report to.
+* @return bool TRUE if any problems were reported; FALSE if all good.
+*/
+bool audit_trigger(trig_data *trig, char_data *ch) {
+	struct cmdlist_element *cmd;
+	bool problem = FALSE;
+		
+	if (!str_cmp(GET_TRIG_NAME(trig), default_trig_name)) {
+		olc_audit_msg(ch, GET_TRIG_VNUM(trig), "Name not set");
+		problem = TRUE;
+	}
+	
+	// TODO look for a 'percent' type with a 0%
+	
+	LL_FOREACH(trig->cmdlist, cmd) {
+		if (strlen(cmd->cmd) > 255) {
+			olc_audit_msg(ch, GET_TRIG_VNUM(trig), "Trigger has a line longer than 255 characters and won't save properly");
+			problem = TRUE;
+		}
+	}
+	
+	return problem;
+}
+
+
+/**
 * Determines all the argument types to show for the various types of a trigger.
 *
 * @param trig_data *trig The trigger.
@@ -310,9 +339,7 @@ void olc_delete_trigger(char_data *ch, trig_vnum vnum) {
 	for (mob = character_list; mob; mob = mob->next) {
 		if (IS_NPC(mob) && SCRIPT(mob)) {
 			remove_live_script_by_vnum(SCRIPT(mob), vnum);
-			if (!TRIGGERS(SCRIPT(mob))) {
-				extract_script(mob, MOB_TRIGGER);
-			}
+			check_extract_script(mob, MOB_TRIGGER);
 		}
 	}
 	
@@ -320,9 +347,7 @@ void olc_delete_trigger(char_data *ch, trig_vnum vnum) {
 	for (obj = object_list; obj; obj = obj->next) {
 		if (SCRIPT(obj)) {
 			remove_live_script_by_vnum(SCRIPT(obj), vnum);
-			if (!TRIGGERS(SCRIPT(obj))) {
-				extract_script(obj, OBJ_TRIGGER);
-			}
+			check_extract_script(obj, OBJ_TRIGGER);
 		}
 	}
 	
@@ -330,9 +355,7 @@ void olc_delete_trigger(char_data *ch, trig_vnum vnum) {
 	LL_FOREACH(vehicle_list, veh) {
 		if (SCRIPT(veh)) {
 			remove_live_script_by_vnum(SCRIPT(veh), vnum);
-			if (!TRIGGERS(SCRIPT(veh))) {
-				extract_script(veh, VEH_TRIGGER);
-			}
+			check_extract_script(veh, VEH_TRIGGER);
 		}
 	}
 	
@@ -340,9 +363,7 @@ void olc_delete_trigger(char_data *ch, trig_vnum vnum) {
 	HASH_ITER(hh, world_table, room, next_room) {
 		if (SCRIPT(room)) {
 			remove_live_script_by_vnum(SCRIPT(room), vnum);
-			if (!TRIGGERS(SCRIPT(room))) {
-				extract_script(room, WLD_TRIGGER);
-			}
+			check_extract_script(room, WLD_TRIGGER);
 		}
 		delete_from_proto_list_by_vnum(&(room->proto_script), vnum);
 	}
@@ -497,13 +518,10 @@ void olc_fullsearch_trigger(char_data *ch, char *argument) {
 		if (!strcmp(type_arg, "-")) {
 			continue;	// just skip stray dashes
 		}
-		else if (is_abbrev(type_arg, "-attaches")) {
-			argument = any_one_word(argument, val_arg);
-			if ((only_attaches = search_block(val_arg, trig_attach_types, FALSE)) == NOTHING) {
-				msg_to_char(ch, "Invalid attach type '%s'.\r\n", val_arg);
-				return;
-			}
-		}
+		
+		FULLSEARCH_LIST("attaches", only_attaches, trig_attach_types)
+		
+		// custom:
 		else if (is_abbrev(type_arg, "-types")) {
 			argument = any_one_word(argument, val_arg);
 			any = FALSE;
@@ -572,6 +590,9 @@ void olc_fullsearch_trigger(char_data *ch, char *argument) {
 		}
 		if (*find_keywords) {
 			any = multi_isname(find_keywords, GET_TRIG_NAME(trig));	// check name first
+			if (!any && GET_TRIG_ARG(trig)) {
+				any |= multi_isname(find_keywords, GET_TRIG_ARG(trig));	// text arg
+			}
 			
 			if (!any) {
 				LL_FOREACH(trig->cmdlist, cmd) {
@@ -794,7 +815,7 @@ void save_olc_trigger(descriptor_data *desc, char *script_text) {
 		
 		// find any 'waiting' copies and kill them
 		if (GET_TRIG_WAIT(live_trig)) {
-			event_cancel(GET_TRIG_WAIT(live_trig), cancel_wait_event);
+			dg_event_cancel(GET_TRIG_WAIT(live_trig), cancel_wait_event);
 			GET_TRIG_WAIT(live_trig) = NULL;
 			GET_TRIG_DEPTH(live_trig) = 0;
 			free_varlist(GET_TRIG_VARS(live_trig));

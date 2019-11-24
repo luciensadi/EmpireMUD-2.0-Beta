@@ -42,6 +42,7 @@ extern const char *from_dir[];
 extern const char *mob_move_types[];
 
 // external funcs
+void adjust_vehicle_tech(vehicle_data *veh, bool add);
 void do_unseat_from_vehicle(char_data *ch);
 extern char *get_room_name(room_data *room, bool color);
 
@@ -195,7 +196,7 @@ struct temp_portal_data *build_portal_list_near(char_data *ch, room_data *origin
 bool can_enter_portal(char_data *ch, obj_data *portal, bool allow_infiltrate, bool skip_permissions) {
 	extern bool can_infiltrate(char_data *ch, empire_data *emp);
 	
-	room_data *to_room;
+	room_data *to_room, *was_in = IN_ROOM(ch);
 	bool ok = FALSE;
 	
 	// easy checks
@@ -220,6 +221,20 @@ bool can_enter_portal(char_data *ch, obj_data *portal, bool allow_infiltrate, bo
 	}
 	else if (!IS_IMMORTAL(ch) && GET_OBJ_VNUM(portal) == o_PORTAL && get_cooldown_time(ch, COOLDOWN_PORTAL_SICKNESS) > SECS_PER_REAL_MIN) {
 		msg_to_char(ch, "You can't enter a portal until your portal sickness cooldown is under one minute.\r\n");
+	}
+	
+	// leave trigger section (the was_in check is in case the player was teleported by the script)
+	else if (!leave_mtrigger(ch, NO_DIR, "portal") || IN_ROOM(ch) != was_in) {
+		// sends own message
+	}
+	else if (!leave_wtrigger(IN_ROOM(ch), ch, NO_DIR, "portal") || IN_ROOM(ch) != was_in) {
+		// sends own message
+	}
+	else if (!leave_vtrigger(ch, NO_DIR, "portal") || IN_ROOM(ch) != was_in) {
+		// sends own message
+	}
+	else if (!leave_otrigger(IN_ROOM(ch), ch, NO_DIR, "portal") || IN_ROOM(ch) != was_in) {
+		// sends own message
 	}
 	else {
 		ok = TRUE;
@@ -1020,12 +1035,29 @@ bool validate_vehicle_move(char_data *ch, vehicle_data *veh, room_data *to_room)
 		return FALSE;
 	}
 	
-	// closed building?
-	if ((VEH_FLAGGED(veh, VEH_NO_BUILDING) || !BLD_ALLOWS_MOUNTS(to_room)) && !IS_INSIDE(IN_ROOM(veh)) && !ROOM_IS_CLOSED(IN_ROOM(veh)) && !IS_ADVENTURE_ROOM(IN_ROOM(veh)) && IS_ANY_BUILDING(to_room) && ROOM_IS_CLOSED(to_room)) {
-		if (ch) {
-			act("$V can't go in there.", FALSE, ch, NULL, veh, TO_CHAR);
+	// closed building checks
+	if (!IS_ADVENTURE_ROOM(IN_ROOM(veh)) && IS_ANY_BUILDING(to_room) && ROOM_IS_CLOSED(to_room)) {
+		// prevent entering from outside if mounts are not allowed
+		if ((VEH_FLAGGED(veh, VEH_NO_BUILDING) || !BLD_ALLOWS_MOUNTS(to_room)) && !IS_INSIDE(IN_ROOM(veh)) && !ROOM_IS_CLOSED(IN_ROOM(veh))) {
+			if (ch) {
+				act("$V can't go in there.", FALSE, ch, NULL, veh, TO_CHAR);
+			}
+			return FALSE;
 		}
-		return FALSE;
+		// prevent moving from an allowed building to a disallowed building (usually due to interlink)
+		if (HOME_ROOM(to_room) != to_room && HOME_ROOM(to_room) != HOME_ROOM(IN_ROOM(veh)) && !BLD_ALLOWS_MOUNTS(to_room) && !BLD_ALLOWS_MOUNTS(HOME_ROOM(to_room))) {
+			if (ch) {
+				act("$V can't go in there.", FALSE, ch, NULL, veh, TO_CHAR);
+			}
+			return FALSE;
+		}
+		// prevent moving deeper into a building if part of it does not allow vehicles and you're in the entrance room
+		if (IS_MAP_BUILDING(IN_ROOM(veh)) && (VEH_FLAGGED(veh, VEH_NO_BUILDING) || !BLD_ALLOWS_MOUNTS(to_room))) {
+			if (ch) {
+				act("$V can't go in there.", FALSE, ch, NULL, veh, TO_CHAR);
+			}
+			return FALSE;
+		}
 	}
 	
 	// barrier?
@@ -1123,7 +1155,11 @@ void char_through_portal(char_data *ch, obj_data *portal, bool following) {
 			snprintf(buf, sizeof(buf), "$V %s through $p.", mob_move_types[VEH_MOVE_TYPE(GET_LEADING_VEHICLE(ch))]);
 			act(buf, FALSE, ROOM_PEOPLE(was_in), portal, GET_LEADING_VEHICLE(ch), TO_CHAR | TO_ROOM);
 		}
+		
+		adjust_vehicle_tech(GET_LEADING_VEHICLE(ch), FALSE);
 		vehicle_to_room(GET_LEADING_VEHICLE(ch), IN_ROOM(ch));
+		adjust_vehicle_tech(GET_LEADING_VEHICLE(ch), TRUE);
+		
 		snprintf(buf, sizeof(buf), "$V %s in through $p.", mob_move_types[VEH_MOVE_TYPE(GET_LEADING_VEHICLE(ch))]);
 		act(buf, FALSE, ch, use_portal, GET_LEADING_VEHICLE(ch), TO_CHAR | TO_ROOM);
 	}
@@ -1196,19 +1232,19 @@ bool do_simple_move(char_data *ch, int dir, room_data *to_room, bitvector_t flag
 	}
 
 	/* blocked by a leave trigger ? */
-	if (!leave_mtrigger(ch, dir) || IN_ROOM(ch) != was_in) {
+	if (!leave_mtrigger(ch, dir, NULL) || IN_ROOM(ch) != was_in) {
 		/* prevent teleport crashes */
 		return FALSE;
 	}
-	if (!leave_wtrigger(IN_ROOM(ch), ch, dir) || IN_ROOM(ch) != was_in) {
+	if (!leave_wtrigger(IN_ROOM(ch), ch, dir, NULL) || IN_ROOM(ch) != was_in) {
 		/* prevent teleport crashes */
 		return FALSE;
 	}
-	if (!leave_vtrigger(ch, dir) || IN_ROOM(ch) != was_in) {
+	if (!leave_vtrigger(ch, dir, NULL) || IN_ROOM(ch) != was_in) {
 		/* prevent teleport crashes */
 		return FALSE;
 	}
-	if (!leave_otrigger(IN_ROOM(ch), ch, dir) || IN_ROOM(ch) != was_in) {
+	if (!leave_otrigger(IN_ROOM(ch), ch, dir, NULL) || IN_ROOM(ch) != was_in) {
 		/* prevent teleport crashes */
 		return FALSE;
 	}
@@ -1361,10 +1397,6 @@ bool do_simple_move(char_data *ch, int dir, room_data *to_room, bitvector_t flag
 		}
 	}
 
-	// mark it
-	add_tracks(ch, IN_ROOM(ch), dir);
-	mark_move_time(ch);
-
 	char_from_room(ch);
 	char_to_room(ch, to_room);
 
@@ -1375,6 +1407,10 @@ bool do_simple_move(char_data *ch, int dir, room_data *to_room, bitvector_t flag
 		char_to_room(ch, was_in);
 		return FALSE;
 	}
+
+	// mark the move
+	add_tracks(ch, was_in, dir);
+	mark_move_time(ch);
 
 	if (!IS_NPC(ch)) {
 		GET_LAST_DIR(ch) = dir;
@@ -1526,7 +1562,11 @@ int perform_move(char_data *ch, int dir, bitvector_t flags) {
 			snprintf(buf, sizeof(buf), "$v %s behind $N.", mob_move_types[VEH_MOVE_TYPE(GET_LEADING_VEHICLE(ch))]);
 			act(buf, FALSE, ROOM_PEOPLE(was_in), GET_LEADING_VEHICLE(ch), ch, TO_CHAR | TO_ROOM | ACT_VEHICLE_OBJ);
 		}
+		
+		adjust_vehicle_tech(GET_LEADING_VEHICLE(ch), FALSE);
 		vehicle_to_room(GET_LEADING_VEHICLE(ch), IN_ROOM(ch));
+		adjust_vehicle_tech(GET_LEADING_VEHICLE(ch), TRUE);
+		
 		snprintf(buf, sizeof(buf), "$V %s in behind you.", mob_move_types[VEH_MOVE_TYPE(GET_LEADING_VEHICLE(ch))]);
 		act(buf, FALSE, ch, NULL, GET_LEADING_VEHICLE(ch), TO_CHAR);
 		snprintf(buf, sizeof(buf), "$V %s in behind $n.", mob_move_types[VEH_MOVE_TYPE(GET_LEADING_VEHICLE(ch))]);
@@ -2180,7 +2220,7 @@ ACMD(do_portal) {
 		msg_to_char(ch, "You don't have permission to open portals here.\r\n");
 		return;
 	}
-	if (!all_access && (!HAS_FUNCTION(IN_ROOM(ch), FNC_PORTAL) || !HAS_FUNCTION(target, FNC_PORTAL))) {
+	if (!all_access && (!room_has_function_and_city_ok(IN_ROOM(ch), FNC_PORTAL) || !room_has_function_and_city_ok(target, FNC_PORTAL))) {
 		msg_to_char(ch, "You can only open portals between portal buildings.\r\n");
 		return;
 	}

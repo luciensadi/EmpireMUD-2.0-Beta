@@ -233,7 +233,8 @@ void do_customize_road(char_data *ch, char *argument) {
 		"crossroad", "crossroads", "freeway", "lane", "loop", "pass",
 		"parkway", "plaza", "trail", "route", "skyway", "terrace", "track",
 		"trace", "tunnel", "turnpike", "bluff", "rd", "av", "ave", "st", "wy",
-		"dr", "blf", "blvd", "cir", "pkwy",
+		"dr", "blf", "blvd", "cir", "pkwy", "pathway", "path", "walkway", "walk",
+		"intersection", "fork", "corner", 
 		"\n"
 	};
 	
@@ -399,7 +400,7 @@ void perform_alternate(char_data *old, char_data *new) {
 	old_emp = GET_LOYALTY(old);
 	
 	// prepare logs
-	snprintf(sys, sizeof(sys), "%s used alternate to switch to %s.", GET_NAME(old), GET_NAME(new));
+	snprintf(sys, sizeof(sys), "%s used alternate to switch to %s at %s.", GET_NAME(old), GET_NAME(new), IN_ROOM(old) ? room_log_identifier(IN_ROOM(old)) : "an unknown location");
 
 	strcpy(temp, PERS(new, new, TRUE));
 	snprintf(mort_alt, sizeof(mort_alt), "%s has switched to %s", PERS(old, old, TRUE), temp);
@@ -590,6 +591,11 @@ INTERACTION_FUNC(shear_interact) {
 		load_otrigger(obj);
 	}
 	
+	// mark gained
+	if (GET_LOYALTY(ch)) {
+		add_production_total(GET_LOYALTY(ch), interaction->vnum, amt);
+	}
+	
 	// only show loot to the skinner
 	if (amt == 1) {
 		act("You skillfully shear $N and get $p.", FALSE, ch, obj, inter_mob, TO_CHAR);
@@ -623,6 +629,11 @@ INTERACTION_FUNC(skin_interact) {
 		scale_item_to_level(obj, 1);	// min scale
 		obj_to_char(obj, ch);
 		load_otrigger(obj);
+	}
+	
+	// mark gained
+	if (GET_LOYALTY(ch)) {
+		add_production_total(GET_LOYALTY(ch), interaction->vnum, interaction->quantity);
 	}
 	
 	// only show loot to the skinner
@@ -1022,7 +1033,7 @@ void alt_import_preferences(char_data *ch, char_data *alt) {
 	bitvector_t set;
 	
 	// prf flags to import
-	bitvector_t prfs = PRF_COMPACT | PRF_DEAF | PRF_NOTELL | PRF_MORTLOG | PRF_NOREPEAT | PRF_NOMAPCOL | PRF_NO_CHANNEL_JOINS | PRF_SCROLLING | PRF_BRIEF | PRF_AUTORECALL | PRF_NOSPAM | PRF_SCREEN_READER;
+	bitvector_t prfs = PRF_COMPACT | PRF_DEAF | PRF_NOTELL | PRF_MORTLOG | PRF_NOREPEAT | PRF_NOMAPCOL | PRF_NO_CHANNEL_JOINS | PRF_SCROLLING | PRF_BRIEF | PRF_AUTORECALL | PRF_NOSPAM | PRF_SCREEN_READER | PRF_AUTOKILL | PRF_AUTODISMOUNT | PRF_NOEMPIRE | PRF_CLEARMETERS | PRF_NO_PAINT | PRF_EXTRA_SPACING | PRF_TRAVEL_LOOK | PRF_AUTOCLIMB | PRF_AUTOSWIM;
 	
 	// add flags
 	set = PRF_FLAGS(alt) & prfs;
@@ -1289,6 +1300,17 @@ void tog_political(char_data *ch) {
 	}
 }
 
+
+/**
+* Sets the pvp cooldown if needed.
+*
+* @param char_data *ch The player.
+*/
+void tog_pvp(char_data *ch) {
+	if (!PRF_FLAGGED(ch, PRF_ALLOW_PVP)) {
+		add_cooldown(ch, COOLDOWN_PVP_FLAG, config_get_int("pvp_timer") * SECS_PER_REAL_MIN);
+	}
+}
 
 
  //////////////////////////////////////////////////////////////////////////////
@@ -2028,7 +2050,7 @@ ACMD(do_group) {
 
 	// no-arg
 	if (!*buf) {
-		msg_to_char(ch, "Available group options: invite, join, kick, leave, leader\r\n");
+		msg_to_char(ch, "Available group options: new, invite, join, kick, leave, leader\r\n");
 		
 		if (GROUP(ch)) {
 			// should we replace this with the group summary? -pc
@@ -2220,6 +2242,9 @@ ACMD(do_herd) {
 
 	if (IS_NPC(ch))
 		return;
+	else if (!has_player_tech(ch, PTECH_HERD)) {
+		msg_to_char(ch, "You don't have the correct ability to herd animals.\r\n");
+	}
 	else if (IS_ADVENTURE_ROOM(IN_ROOM(ch))) {
 		msg_to_char(ch, "You can't herd anything in an adventure.\r\n");
 	}
@@ -2269,6 +2294,7 @@ ACMD(do_herd) {
 			if (IN_ROOM(ch) == was_in && !perform_move(ch, dir, NOBITS)) {
 				char_to_room(victim, IN_ROOM(ch));
 			}
+			gain_player_tech_exp(ch, PTECH_HERD, 5);
 		}
 		else {
 			act("You try to herd $N, but $E refuses to move!", FALSE, ch, 0, victim, TO_CHAR);
@@ -2285,7 +2311,10 @@ ACMD(do_milk) {
 
 	two_arguments(argument, arg, buf);
 
-	if (!room_has_function_and_city_ok(IN_ROOM(ch), FNC_STABLE))
+	if (!has_player_tech(ch, PTECH_MILK)) {
+		msg_to_char(ch, "You don't have the correct ability to milk animals.\r\n");
+	}
+	else if (!room_has_function_and_city_ok(IN_ROOM(ch), FNC_STABLE))
 		msg_to_char(ch, "You can't milk animals here!\r\n");
 	else if (!IS_COMPLETE(IN_ROOM(ch))) {
 		msg_to_char(ch, "You need to finish building the stable before you can milk anything.\r\n");
@@ -2316,6 +2345,7 @@ ACMD(do_milk) {
 		GET_OBJ_VAL(cont, VAL_DRINK_CONTAINER_CONTENTS) += amount;
 		GET_OBJ_VAL(cont, VAL_DRINK_CONTAINER_TYPE) = LIQ_MILK;
 		GET_OBJ_TIMER(cont) = 72;	// mud hours
+		gain_player_tech_exp(ch, PTECH_MILK, 33);
 	}
 }
 
@@ -2442,6 +2472,7 @@ ACMD(do_morph) {
 	double multiplier;
 	obj_data *obj;
 	bool normal, fast;
+	char *tmp;
 	
 	// safety first: mobs must use %morph%
 	if (IS_NPC(ch)) {
@@ -2465,7 +2496,14 @@ ACMD(do_morph) {
 				continue;
 			}
 			
-			msg_to_char(ch, ", %s", skip_filler(MORPH_SHORT_DESC(morph)));
+			if (strstr(MORPH_SHORT_DESC(morph), "#n")) {
+				tmp = str_replace("#n", PERS(ch, ch, TRUE), MORPH_SHORT_DESC(morph));
+				msg_to_char(ch, ", %s", tmp);
+				free(tmp);	// allocated by str_replace
+			}
+			else { // no #n
+				msg_to_char(ch, ", %s", skip_filler(MORPH_SHORT_DESC(morph)));
+			}
 		}
 		
 		msg_to_char(ch, "\r\n");
@@ -2726,7 +2764,7 @@ ACMD(do_quit) {
 		if (!GET_INVIS_LEV(ch)) {
 			act("$n has left the game.", TRUE, ch, 0, 0, TO_ROOM);
 		}
-		syslog(SYS_LOGIN, GET_INVIS_LEV(ch), TRUE, "%s has quit the game.", GET_NAME(ch));
+		syslog(SYS_LOGIN, GET_INVIS_LEV(ch), TRUE, "%s has quit the game at %s", GET_NAME(ch), IN_ROOM(ch) ? room_log_identifier(IN_ROOM(ch)) : "an unknown location");
 		if (GET_INVIS_LEV(ch) == 0) {
 			if (config_get_bool("public_logins")) {
 				mortlog("%s has left the game", PERS(ch, ch, 1));
@@ -2806,7 +2844,7 @@ ACMD(do_selfdelete) {
 	else {
 		
 		// logs and messaging
-		syslog(SYS_INFO, GET_INVIS_LEV(ch), TRUE, "DEL: %s (lev %d/%d) has self-deleted.", GET_NAME(ch), GET_COMPUTED_LEVEL(ch), GET_ACCESS_LEVEL(ch));
+		syslog(SYS_INFO, GET_INVIS_LEV(ch), TRUE, "DEL: %s (lev %d/%d) has self-deleted", GET_NAME(ch), GET_COMPUTED_LEVEL(ch), GET_ACCESS_LEVEL(ch));
 		if (!GET_INVIS_LEV(ch)) {
 			act("$n has left the game.", TRUE, ch, 0, 0, TO_ROOM);
 		}
@@ -2837,7 +2875,10 @@ ACMD(do_shear) {
 	if (!IS_APPROVED(ch) && config_get_bool("gather_approval")) {
 		send_config_msg(ch, "need_approval_string");
 	}
-	else if (!HAS_FUNCTION(IN_ROOM(ch), FNC_STABLE)) {
+	else if (!has_player_tech(ch, PTECH_SHEAR)) {
+		msg_to_char(ch, "You don't have the correct ability to shear animals.\r\n");
+	}
+	else if (!room_has_function_and_city_ok(IN_ROOM(ch), FNC_STABLE)) {
 		msg_to_char(ch, "You need to be in a stable to shear anything.\r\n");
 	}
 	else if (!check_in_city_requirement(IN_ROOM(ch), TRUE)) {
@@ -2871,7 +2912,8 @@ ACMD(do_shear) {
 		any |= run_global_mob_interactions(ch, mob, INTERACT_SHEAR, shear_interact);
 		
 		if (any) {
-			gain_player_tech_exp(ch, PTECH_SHEAR_UPGRADE, 5);
+			gain_player_tech_exp(ch, PTECH_SHEAR, 33);
+			gain_player_tech_exp(ch, PTECH_SHEAR_UPGRADE, 33);
 		}
 		else {
 			act("You can't shear $N!", FALSE, ch, NULL, mob, TO_CHAR);
@@ -3309,6 +3351,11 @@ ACMD(do_toggle) {
 	else {
 		// check for optional on/off arg
 		if (!str_cmp(argument, "on")) {
+			if (IS_SET(PRF_FLAGS(ch), toggle_data[type].bit)) {
+				msg_to_char(ch, "That toggle is already on.\r\n");
+				return;
+			}
+			
 			if (toggle_data[type].type == TOG_ONOFF) {
 				SET_BIT(PRF_FLAGS(ch), toggle_data[type].bit);
 			}
@@ -3317,6 +3364,11 @@ ACMD(do_toggle) {
 			}
 		}
 		else if (!str_cmp(argument, "off")) {
+			if (!IS_SET(PRF_FLAGS(ch), toggle_data[type].bit)) {
+				msg_to_char(ch, "That toggle is already off.\r\n");
+				return;
+			}
+			
 			if (toggle_data[type].type == TOG_ONOFF) {
 				REMOVE_BIT(PRF_FLAGS(ch), toggle_data[type].bit);
 			}
@@ -3329,11 +3381,6 @@ ACMD(do_toggle) {
 		}
 		
 		on = PRF_FLAGGED(ch, toggle_data[type].bit) ? 1 : 0;
-		
-		// special case for pvp toggle
-		if (toggle_data[type].bit == PRF_ALLOW_PVP) {
-			add_cooldown(ch, COOLDOWN_PVP_FLAG, config_get_int("pvp_timer") * SECS_PER_REAL_MIN);
-		}
 		
 		msg_to_char(ch, "You toggle %s %s%s&0.\r\n", toggle_data[type].name, togcols[toggle_data[type].type][on], tognames[toggle_data[type].type][on]);
 		

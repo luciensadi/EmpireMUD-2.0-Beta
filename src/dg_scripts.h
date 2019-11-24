@@ -61,6 +61,7 @@
 #define MTRIG_PLAYER_IN_ROOM   BIT(22)	// modifies some triggers to "only with players in the room"
 #define MTRIG_REBOOT           BIT(23)	// after the mud reboots
 #define MTRIG_BUY              BIT(24)	// attempting a purchase
+#define MTRIG_KILL             BIT(25)	// mob has killed something
 
 
 // OTRIG_x: obj trigger types
@@ -87,6 +88,7 @@
 #define OTRIG_PLAYER_IN_ROOM   BIT(22)	// NOT actually used, currently
 #define OTRIG_REBOOT           BIT(23)	// after the mud reboots
 #define OTRIG_BUY              BIT(24)	// attempting a purchase
+#define OTRIG_KILL             BIT(25)	// obj's owner has killed something
 
 
 // VTRIG_x: vehicle trigger types
@@ -109,6 +111,7 @@
 #define VTRIG_PLAYER_IN_ROOM   BIT(22)	// modifies some triggers to "only with players in the room"
 #define VTRIG_REBOOT           BIT(23)	// after the mud reboots
 #define VTRIG_BUY              BIT(24)	// attempting a purchase in the room
+#define VTRIG_KILL             BIT(25)	// vehicle killed someone
 
 
 // WTRIG_x: wld trigger types
@@ -133,6 +136,7 @@
 #define WTRIG_PLAYER_IN_ROOM   BIT(22)	// modifies some triggers to "only with players in the room"
 #define WTRIG_REBOOT           BIT(23)	// after the mud reboots
 #define WTRIG_BUY              BIT(24)	// attempting a purchase
+// unused 25: rooms cannot kill
 
 
 // list of global trigger types (for random_triggers linked list)
@@ -205,7 +209,7 @@ struct trig_data {
 	char *arglist;			/* argument list                   */
 	int depth;				/* depth into nest ifs/whiles/etc  */
 	int loops;				/* loop iteration counter          */
-	struct event *wait_event;   	/* event to pause the trigger      */
+	struct dg_event *wait_event;   	/* event to pause the trigger      */
 	ubyte purged;			/* trigger is set to be purged     */
 	struct trig_var_data *var_list;	/* list of local vars for trigger  */
 	
@@ -293,9 +297,9 @@ int ability_mtrigger(char_data *actor, char_data *ch, any_vnum abil);
 int ability_otrigger(char_data *actor, obj_data *obj, any_vnum abil);
 int ability_wtrigger(char_data *actor, char_data *vict, obj_data *obj, any_vnum abil);
 
-int leave_mtrigger(char_data *actor, int dir);
-int leave_wtrigger(room_data *room, char_data *actor, int dir);
-int leave_otrigger(room_data *room, char_data *actor, int dir);
+int leave_mtrigger(char_data *actor, int dir, char *custom_dir);
+int leave_wtrigger(room_data *room, char_data *actor, int dir, char *custom_dir);
+int leave_otrigger(room_data *room, char_data *actor, int dir, char *custom_dir);
 
 int door_mtrigger(char_data *actor, int subcmd, int dir);
 int door_wtrigger(char_data *actor, int subcmd, int dir);
@@ -304,10 +308,12 @@ int consume_otrigger(obj_data *obj, char_data *actor, int cmd, char_data *target
 
 int finish_otrigger(obj_data *obj, char_data *actor);
 
+extern int run_kill_triggers(char_data *dying, char_data *killer, vehicle_data *veh_killer);
+
 int command_vtrigger(char_data *actor, char *cmd, char *argument, int mode);
 int destroy_vtrigger(vehicle_data *veh);
 int entry_vtrigger(vehicle_data *veh);
-int leave_vtrigger(char_data *actor, int dir);
+int leave_vtrigger(char_data *actor, int dir, char *custom_dir);
 void load_vtrigger(vehicle_data *veh);
 int greet_vtrigger(char_data *actor, int dir);
 void speech_vtrigger(char_data *actor, char *str);
@@ -339,12 +345,15 @@ void parse_trig_proto(char *line, struct trig_proto_list **list, char *error_str
 extern trig_data *real_trigger(trig_vnum vnum);
 void extract_script(void *thing, int type);
 void extract_script_mem(struct script_memory *sc);
+void check_extract_script(void *go, int type);
+void remove_all_triggers(void *thing, int type);
 void free_proto_scripts(struct trig_proto_list **list);
 void free_trigger(trig_data *trig);
 extern struct trig_proto_list *copy_trig_protos(struct trig_proto_list *list);
 void copy_script(void *source, void *dest, int type);
 void trig_data_copy(trig_data *this_data, const trig_data *trg);
 
+extern bool has_trigger(struct script_data *sc, any_vnum vnum);
 trig_data *read_trigger(int nr);
 void add_var(struct trig_var_data **var_list, char *name, char *value, int id);
 room_data *dg_room_of_obj(obj_data *obj);
@@ -413,6 +422,8 @@ int valid_dg_target(char_data *ch, int bitvector);
 
 #define SCRIPT_TYPES(s)		  ((s)->types)				  
 #define TRIGGERS(s)		  ((s)->trig_list)
+
+#define HAS_TRIGGERS(o)  (SCRIPT(o) && TRIGGERS(SCRIPT(o)))
 
 #define GET_SHORT(ch)    ((ch)->player.short_descr)
 

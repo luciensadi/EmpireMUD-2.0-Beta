@@ -31,7 +31,7 @@ You can reduce the spam from chores like chopping by typing 'toggle action-spam'
 If you're not riding or on a road, there's a small delay each time you move.
 You can only get two skills all the way to 100.
 It's possible to gain skill levels even when you're out of daily skill points. The rate is just lower.
-With the Workforce ability, you can give your citizens chores.
+With the Workforce progress goal, you can give your citizens chores.
 Your Workforce will only work a chore if you don't already have too much of the resource it produces.
 Your Workforce will only work within 20 tiles of each citizen's home.
 If an empire is Distrustful, its guards and towers will attack anyone who isn't at peace with them.
@@ -114,6 +114,7 @@ The 'meters' command will show you how much damage you're dealing/taking.
 You can find out where to store an item by identifying it. Items without regular storage may go in the warehouse.
 Some recipes use generic components, which look like (lumber). Many different types of lumber can be used for this.
 You can morph faster, at an additional cost, by typing 'fastmorph'.
+The 'distance' command tells you the distance to any coordinates.
 Forests will regrow faster if they have more forest tiles around them.
 Type 'estats' to get quick info about your empire, or another.
 If you don't maintain your buildings, they will fall into ruin.
@@ -147,4 +148,5 @@ Type 'climb' to move onto mountains, or 'toggle autoclimb' to remove the need to
 Type 'swim' to move into water, or 'toggle autoswim' to remove the need to do this.
 Use 'mapscan' to locate islands across the sea.
 Use 'run' to set a path and move quickly. You can 'toggle travel-look' to stop seeing rooms while running.
+Try the 'directions' command to figure out how to get to a set of coordinates.
 $~

@@ -101,11 +101,14 @@ whip braided~
 a braided whip~
 A braided whip is coiled on the ground.~
    This whip looks like it might have been made for an animal trainer, but it's
-strong enough to be used as a weapon.
+strong enough to be used as a weapon. A whip like this could really keep
+someone at bay.
 ~
-1 mo an 1
+1 mo an 3
 0 1 7
 7 0
+A
+18 1 0
 S
 #2109
 sword wooden~
@@ -521,13 +524,30 @@ sword obsidian~
 an obsidian sword~
 An obsidian sword is sticking up out of the ground.~
    This strange sword is made from a long wooden shaft with many pieces of
-sharpened obsidian embedded in the side of it to form a burtally sharp stone
+sharpened obsidian embedded in the side of it to form a brutally sharp stone
 tool -- one that strikes as much fear as it does damage.
 ~
-1 hmo an 2
+1 hmo an 3
 0 1 1
 8 0
 C
 50 50
+S
+#2140
+handle bone~
+a bone handle~
+A bone handle is lying here.~
+   The handle is carved from bone, or perhaps horn. It can be attached to many
+things to build tools and weapons.
+~
+1 0 ano 5
+0 3 5
+14 0
+C
+1 1
+O
+13 u
+R
+5121 0
 S
 $

@@ -129,7 +129,7 @@ Basic buildings:
   (==) house
   &y.&0[]&y.&0 pueblo
   &y[==]&0 cliffdwelling
-  (&c~~&0) well
+  &t(&c~~&t) well
   &y/&0[]&y\&0 mine
   (FF) forge
   (MM) mill  (must be by a river)
@@ -144,6 +144,7 @@ Basic buildings:
   {GG} granary -- store grains
   {PP} gravelpit -- store rocks
   {LL} lumberyard -- store lumber
+  |SS| seedsilo -- store seeds
   {SS} smokehouse -- store meats
   {TT} tannery -- store skins
   {UU} utilityshed -- store tools
@@ -242,7 +243,7 @@ while you sleep.
 
 When you're done with the shelter, be sure to dismantle and abandon it.
 #
-CELESTIALFORGE "CELESTIAL FORGE"
+CELESTIALFORGE "CELESTIAL FORGE" SHATTER
 
 [FF]  Celestial Forge  (Renown goal)
 
@@ -570,7 +571,7 @@ HOUSE "SMALL HOUSE"
 Extra rooms:  2
 Citizens:  2
 
-A house is slightly larger than a cabin and supports Extra rooms. You
+A house is slightly larger than a cabin and supports extra rooms. You
 can build this type of home only on regular plains; the desert equivalent is
 a pueblo.
 
@@ -632,7 +633,7 @@ LARGEHOUSE "LARGE HOUSE"
 
 [==]  Large House  (Homestead goal)
 
-Extra rooms:  5
+Extra rooms:  7
 Citizens:  4
 
 This is the largest of the ordinary houses.
@@ -793,11 +794,12 @@ Requires:  Architect ability, Foundations goal
 Stored here:  paints
 
 This building is used to make and store paints (although you also require
-glassblowing tech to make them). Only a Master Craftsman can learn to make
-paints, and can start the quest to make paints once a painter spawns in this
-building.
+glassblowing tech to make them).
 
-See also: PAINT, QUEST
+A Master Craftsman can learn to make paints, and can start the quest to make
+paints once a painter spawns in this building.
+
+See also: PAINT, QUEST, MASTER CRAFTSMAN
 #
 PARK
 
@@ -916,6 +918,17 @@ although unfinished buildings decay faster.
 
 See also: MAINTAIN
 #
+SEEDSILO "SEED SILO"
+
+|SS|  Seed Silo  (Build ability)
+
+Stored here:  seeds
+
+The seed silo stores all your empire's seeds safely, to ensure you'll be able
+to plant all the best crops in the future.
+
+See also: STORAGE
+#
 SHADYGARDEN "SHADY GARDEN"
 
 &g|&y##&g|&0  Shady Garden  (Luxury Resources goal)
@@ -990,7 +1003,7 @@ Extra rooms:  3
 Citizens:  2
 
 This house lets you live serenely above the water. You can build a stilt house
-on shallow ocean, river, or lake.
+on shallow ocean or lake.
 
 See also: DESIGNATE, HOME
 #
@@ -1075,7 +1088,9 @@ can store fibers like cotton and wool, and weave them into fine cloth. Like
 all storage buildings, your NPCs will carry cloth between tailors so that you
 can retrieve it from any such location.
 
-See also: STORAGE, WEAVE
+Sewing and weaving happen faster at a tailor.
+
+See also: STORAGE, SEW, WEAVE
 #
 TANNERY
 
@@ -1331,9 +1346,10 @@ See also: CIRCLE, GATEHOUSE, GREAT WALLS, RITUAL OF DEFENSE
 #
 WELL
 
-(&c~~&0)  Well  (Build ability)
+&t(&c~~&t)  Well  (Build ability)
 
-Wells provide water for your little settlement.
+Wells provide water for your little settlement. They can be built on temperate
+plains or on an oasis in the desert.
 
 See also: DRINK, FILL
 #

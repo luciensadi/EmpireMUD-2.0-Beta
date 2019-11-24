@@ -1241,7 +1241,7 @@ obj_data *die(char_data *ch, char_data *killer) {
 	char_data *ch_iter, *player, *killmaster;
 	obj_data *corpse = NULL;
 	struct mob_tag *tag;
-	int iter;
+	int iter, trig_val;
 	
 	// no need to repeat
 	if (EXTRACTED(ch)) {
@@ -1319,6 +1319,7 @@ obj_data *die(char_data *ch, char_data *killer) {
 		msg_to_char(ch, "Type 'respawn' to come back at your tomb.\r\n");
 		GET_HEALTH(ch) = MIN(GET_HEALTH(ch), -10);	// ensure negative health
 		GET_POS(ch) = POS_DEAD;	// ensure pos
+		run_kill_triggers(ch, killer, NULL);
 		return NULL;
 	}
 	
@@ -1326,7 +1327,9 @@ obj_data *die(char_data *ch, char_data *killer) {
 
 	/* To make ordinary commands work in scripts.  welcor*/  
 	GET_POS(ch) = POS_STANDING;
-	if (death_mtrigger(ch, killmaster)) {
+	trig_val = death_mtrigger(ch, killmaster);
+	trig_val &= run_kill_triggers(ch, killer, NULL);
+	if (trig_val) {
 		death_cry(ch);
 	}
 	GET_POS(ch) = POS_DEAD;
@@ -1354,7 +1357,7 @@ obj_data *die(char_data *ch, char_data *killer) {
 	}
 
 	drop_loot(ch, killmaster);
-	if (MOB_FLAGGED(ch, MOB_UNDEAD)) {
+	if (MOB_FLAGGED(ch, MOB_NO_CORPSE)) {
 		// remove any gear
 		for (iter = 0; iter < NUM_WEARS; ++iter) {
 			if (GET_EQ(ch, iter)) {
@@ -1368,6 +1371,10 @@ obj_data *die(char_data *ch, char_data *killer) {
 			recursive_loot_set(ch->carrying, GET_IDNUM(killmaster), GET_LOYALTY(killmaster));
 		}
 		while (ch->carrying) {
+			if (IS_NPC(ch) && MOB_TAGGED_BY(ch)) {
+				// mark as gathered
+				add_production_total_for_tag_list(MOB_TAGGED_BY(ch), GET_OBJ_VNUM(ch->carrying), 1);
+			}
 			obj_to_room(ch->carrying, IN_ROOM(ch));
 		}
 	}
@@ -1524,6 +1531,7 @@ obj_data *make_corpse(char_data *ch) {
 	GET_OBJ_LONG_DESC(corpse) = str_dup(longdesc);
 
 	GET_OBJ_VAL(corpse, VAL_CORPSE_IDNUM) = IS_NPC(ch) ? GET_MOB_VNUM(ch) : (-1 * GET_IDNUM(ch));
+	GET_OBJ_VAL(corpse, VAL_CORPSE_SIZE) = size;
 	GET_OBJ_VAL(corpse, VAL_CORPSE_FLAGS) = 0;
 		
 	if (human) {
@@ -1557,6 +1565,12 @@ obj_data *make_corpse(char_data *ch) {
 
 		IS_CARRYING_N(ch) = 0;
 		ch->carrying = NULL;
+		
+		if (MOB_TAGGED_BY(ch)) {
+			LL_FOREACH2(corpse->contains, o, next_content) {
+				add_production_total_for_tag_list(MOB_TAGGED_BY(ch), GET_OBJ_VNUM(o), 1);
+			}
+		}
 	}
 	else {
 		// not an npc, but check for stolen
@@ -2529,8 +2543,9 @@ void appear(char_data *ch) {
 * @param char_data *ch Optional: The attacker (may be NULL, used for offenses)
 * @param room_data *to_room The target room
 * @param int damage How much damage to deal to the room
+* @param vehicle_data *by_vehicle Optional: Which vehicle gets credit for the damage, if any.
 */
-void besiege_room(char_data *attacker, room_data *to_room, int damage) {
+void besiege_room(char_data *attacker, room_data *to_room, int damage, vehicle_data *by_vehicle) {
 	static struct resource_data *default_res = NULL;
 	char_data *c, *next_c;
 	obj_data *o, *next_o;
@@ -2623,6 +2638,7 @@ void besiege_room(char_data *attacker, room_data *to_room, int damage) {
 				log_to_slash_channel_by_name(DEATH_LOG_CHANNEL, c, "%s has been killed by siege damage at (%d, %d)!", PERS(c, c, 1), X_COORD(IN_ROOM(c)), Y_COORD(IN_ROOM(c)));
 				syslog(SYS_DEATH, 0, TRUE, "DEATH: %s has been killed by siege damage at %s", GET_NAME(c), room_log_identifier(IN_ROOM(c)));
 			}
+			run_kill_triggers(c, attacker, by_vehicle);
 			die(c, c);
 		}
 	}
@@ -2643,9 +2659,11 @@ void besiege_room(char_data *attacker, room_data *to_room, int damage) {
 * @param vehicle_data *veh The vehicle to damage.
 * @param int damage How much siege damage to deal.
 * @param int siege_type What SIEGE_ damage type.
+* @param vehicle_data *by_vehicle Optional: Which vehicle gets credit for the damage, if any.
 * @return bool TRUE if the target survives, FALSE if it's extracted
 */
-bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int siege_type) {
+bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int siege_type, vehicle_data *by_vehicle) {
+	void adjust_vehicle_tech(vehicle_data *veh, bool add);
 	void fully_empty_vehicle(vehicle_data *veh);
 
 	static struct resource_data *default_res = NULL;
@@ -2725,6 +2743,7 @@ bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int sie
 						log_to_slash_channel_by_name(DEATH_LOG_CHANNEL, ch, "%s has been killed by siege damage at (%d, %d)!", PERS(ch, ch, TRUE), X_COORD(IN_ROOM(ch)), Y_COORD(IN_ROOM(ch)));
 						syslog(SYS_DEATH, 0, TRUE, "DEATH: %s has been killed by siege damage at %s", GET_NAME(ch), room_log_identifier(IN_ROOM(ch)));
 					}
+					run_kill_triggers(ch, attacker, by_vehicle);
 					die(ch, ch);
 				}
 			}
@@ -2735,7 +2754,13 @@ bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int sie
 				log_to_slash_channel_by_name(DEATH_LOG_CHANNEL, VEH_SITTING_ON(veh), "%s has been killed by siege damage at (%d, %d)!", PERS(VEH_SITTING_ON(veh), VEH_SITTING_ON(veh), TRUE), X_COORD(IN_ROOM(veh)), Y_COORD(IN_ROOM(veh)));
 				syslog(SYS_DEATH, 0, TRUE, "DEATH: %s has been killed by siege damage at %s", GET_NAME(VEH_SITTING_ON(veh)), room_log_identifier(IN_ROOM(veh)));
 			}
-			die(ch, ch);
+			run_kill_triggers(VEH_SITTING_ON(veh), attacker, by_vehicle);
+			die(VEH_SITTING_ON(veh), VEH_SITTING_ON(veh));
+		}
+		
+		if (VEH_OWNER(veh)) {
+			// do this before removing it from room
+			adjust_vehicle_tech(veh, FALSE);
 		}
 		
 		vehicle_from_room(veh);	// remove from room first to destroy anything inside
@@ -2760,7 +2785,7 @@ bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int sie
 * @param char_data *ch The person who needs help!
 */
 void check_auto_assist(char_data *ch) {
-	void perform_rescue(char_data *ch, char_data *vict, char_data *from);
+	void perform_rescue(char_data *ch, char_data *vict, char_data *from, int msg);
 	
 	char_data *ch_iter, *next_iter, *iter_master;
 	bool assist;
@@ -2789,7 +2814,7 @@ void check_auto_assist(char_data *ch) {
 		if (MOB_FLAGGED(ch_iter, MOB_CHAMPION) && iter_master == ch && FIGHTING(ch) && FIGHTING(FIGHTING(ch)) == ch && IS_NPC(ch_iter)) {
 			if (FIGHT_MODE(FIGHTING(ch)) == FMODE_MELEE) {
 				// can rescue only in melee
-				perform_rescue(ch_iter, ch, FIGHTING(ch));
+				perform_rescue(ch_iter, ch, FIGHTING(ch), RESCUE_RESCUE);
 			}
 			// else { champion but not in melee? just fall through to the continue
 			continue;
@@ -2876,6 +2901,7 @@ bool check_combat_position(char_data *ch, double speed) {
  *	> 0	How much damage done.
  */
 int damage(char_data *ch, char_data *victim, int dam, int attacktype, byte damtype) {
+	void start_drinking_blood(char_data *ch, char_data *victim);
 	extern const struct wear_data_type wear_data[NUM_WEARS];
 	
 	struct instance_data *inst;
@@ -3074,8 +3100,16 @@ int damage(char_data *ch, char_data *victim, int dam, int attacktype, byte damty
 
 	/* Uh oh.  Victim died. */
 	if (GET_POS(victim) == POS_DEAD) {
-		perform_execute(ch, victim, attacktype, damtype);
-		return -1;
+		if (attacktype == ATTACK_VAMPIRE_BITE && ch != victim && !AFF_FLAGGED(victim, AFF_NO_DRINK_BLOOD) && !GET_FEEDING_FROM(ch) && IN_ROOM(ch) == IN_ROOM(victim)) {
+			GET_HEALTH(victim) = 0;
+			GET_POS(victim) = POS_STUNNED;
+			start_drinking_blood(ch, victim);
+			// fall through to return dam below
+		}
+		else {
+			perform_execute(ch, victim, attacktype, damtype);
+			return -1;
+		}
 	}
 	else if (ch != victim && GET_POS(victim) < POS_SLEEPING && !WOULD_EXECUTE(ch, victim)) {
 		// SHOULD this also remove DoTs etc? -paul 5/6/2017
@@ -3772,6 +3806,8 @@ void update_pos(char_data *victim) {
 * @param obj_data *weapon Optional: Which weapon to attack with (NULL means fists)
 */
 void perform_violence_melee(char_data *ch, obj_data *weapon) {
+	extern bool starving_vampire_aggro(char_data *ch);
+	
 	// sanity
 	if (weapon && !IS_WEAPON(weapon)) {
 		weapon = NULL;
@@ -3780,6 +3816,13 @@ void perform_violence_melee(char_data *ch, obj_data *weapon) {
 	if (weapon && OBJ_FLAGGED(weapon, OBJ_TWO_HANDED) && (!has_player_tech(ch, PTECH_TWO_HANDED_WEAPONS) || !check_solo_role(ch))) {
 		msg_to_char(ch, "You must be alone to use two-handed weapons in the solo role.\r\n");
 		return;
+	}
+	
+	// random chance of this INSTEAD of 'hit' when blood-starved
+	if (!IS_NPC(ch) && IS_VAMPIRE(ch) && IS_BLOOD_STARVED(ch) && !number(0, 5)) {
+		if (starving_vampire_aggro(ch)) {
+			return;
+		}
 	}
 	
 	if (hit(ch, FIGHTING(ch), weapon, TRUE) < 0) {

@@ -535,6 +535,7 @@ void point_update_char(char_data *ch) {
 */
 void real_update_char(char_data *ch) {
 	void adventure_unsummon(char_data *ch);
+	void cancel_blood_upkeeps(char_data *ch);
 	extern bool can_wear_item(char_data *ch, obj_data *item, bool send_messages);
 	void check_combat_end(char_data *ch);
 	void check_morph_ability(char_data *ch);
@@ -543,8 +544,10 @@ void real_update_char(char_data *ch) {
 	void do_unseat_from_vehicle(char_data *ch);
 	extern bool fail_daily_quests(char_data *ch);
 	void random_encounter(char_data *ch);
+	extern bool starving_vampire_aggro(char_data *ch);
 	void update_biting_char(char_data *ch);
 	void update_vampire_sun(char_data *ch);
+	extern int max_inventory_size;
 	
 	struct over_time_effect_type *dot, *next_dot;
 	struct affected_type *af, *next_af, *immune;
@@ -571,6 +574,11 @@ void real_update_char(char_data *ch) {
 	
 	if (!IS_NPC(ch) && IS_RIDING(ch)) {
 		check_should_dismount(ch);
+	}
+	
+	// record maximum global inventory size, for script safety
+	if (!IS_NPC(ch) && CAN_CARRY_N(ch) > max_inventory_size) {
+		max_inventory_size = CAN_CARRY_N(ch);
 	}
 	
 	if (GET_LEADING_VEHICLE(ch) && IN_ROOM(ch) != IN_ROOM(GET_LEADING_VEHICLE(ch))) {
@@ -825,6 +833,10 @@ void real_update_char(char_data *ch) {
 		out_of_blood(ch);
 		return;
 	}
+	else if (IS_BLOOD_STARVED(ch)) {
+		cancel_blood_upkeeps(ch);
+		starving_vampire_aggro(ch);
+	}
 	
 	// too-many-followers check
 	fol_count = 0;
@@ -851,7 +863,7 @@ void real_update_char(char_data *ch) {
 			}
 		}
 	}
-
+	
 	random_encounter(ch);
 }
 
@@ -1788,7 +1800,7 @@ void autostore_vehicle_contents(vehicle_data *veh) {
 * @param vehicle_data *veh The vehicle to update.
 */
 void point_update_vehicle(vehicle_data *veh) {
-	bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int siege_type);
+	bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int siege_type, vehicle_data *by_vehicle);
 	
 	// autostore
 	if ((time(0) - VEH_LAST_MOVE_TIME(veh)) > (config_get_int("autostore_time") * SECS_PER_REAL_MIN)) {
@@ -1800,7 +1812,7 @@ void point_update_vehicle(vehicle_data *veh) {
 		if (ROOM_PEOPLE(IN_ROOM(veh))) {
 			act("The flames roar as they envelop $V!", FALSE, ROOM_PEOPLE(IN_ROOM(veh)), NULL, veh, TO_CHAR | TO_ROOM);
 		}
-		if (!besiege_vehicle(NULL, veh, MAX(1, (VEH_MAX_HEALTH(veh) / 12)), SIEGE_BURNING)) {
+		if (!besiege_vehicle(NULL, veh, MAX(1, (VEH_MAX_HEALTH(veh) / 12)), SIEGE_BURNING, NULL)) {
 			// extracted
 			return;
 		}
@@ -2035,10 +2047,6 @@ int health_gain(char_data *ch, bool info_only) {
 			gain += 1 + (get_approximate_level(ch) / 20);
 		}
 		
-		if (GET_FEEDING_FROM(ch) && has_ability(ch, ABIL_SANGUINE_RESTORATION)) {
-			gain *= 4;
-		}
-		
 		if (GET_POS(ch) == POS_SLEEPING && !AFF_FLAGGED(ch, AFF_EARTHMELD)) {
 			min = round((double) GET_MAX_HEALTH(ch) / ((double) config_get_int("max_sleeping_regen_time") / (room_has_function_and_city_ok(IN_ROOM(ch), FNC_BEDROOM) ? 2.0 : 1.0) / SECS_PER_REAL_UPDATE));
 			gain = MAX(gain, min);
@@ -2091,9 +2099,6 @@ int mana_gain(char_data *ch, bool info_only) {
 		if (HAS_BONUS_TRAIT(ch, BONUS_MANA_REGEN)) {
 			gain += 1 + (get_approximate_level(ch) / 20);
 		}
-		if (GET_FEEDING_FROM(ch) && has_ability(ch, ABIL_SANGUINE_RESTORATION)) {
-			gain *= 4;
-		}
 		
 		if (GET_POS(ch) == POS_SLEEPING && !AFF_FLAGGED(ch, AFF_EARTHMELD)) {
 			min = round((double) GET_MAX_MANA(ch) / ((double) config_get_int("max_sleeping_regen_time") / (room_has_function_and_city_ok(IN_ROOM(ch), FNC_BEDROOM) ? 2.0 : 1.0) / SECS_PER_REAL_UPDATE));
@@ -2142,9 +2147,6 @@ int move_gain(char_data *ch, bool info_only) {
 		
 		if (HAS_BONUS_TRAIT(ch, BONUS_MOVE_REGEN)) {
 			gain += 1 + (get_approximate_level(ch) / 20);
-		}
-		if (GET_FEEDING_FROM(ch) && has_ability(ch, ABIL_SANGUINE_RESTORATION)) {
-			gain *= 4;
 		}
 		
 		if (GET_POS(ch) == POS_SLEEPING && !AFF_FLAGGED(ch, AFF_EARTHMELD)) {

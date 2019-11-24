@@ -56,7 +56,10 @@ I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 101 15.00 1 X  # DIG: a lump of clay
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3013 100.00 1  # FORAGE: a handful of nuts
-I 7 1201 100.00 1  # FIND-HERB: a sack of fiveleaf
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1201 100.00 1 p  # PICK: a sack of fiveleaf
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 237 5.00 ce
 M
@@ -78,13 +81,15 @@ M
 M
 9154 10.00 bc
 M
-9004 5.00 bd
+9004 5.00 bce
 M
-9010 5.00 bd
+9014 5.00 bd
+M
+9010 5.00 bce
 M
 9012 10.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9152 5.00 bd
 M
@@ -92,9 +97,9 @@ M
 M
 9020 5.00 bd
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
-9011 5.00 bd
+9011 5.00 bce
 M
 9025 5.00 bd
 M
@@ -106,7 +111,9 @@ M
 M
 9032 1.00 bd
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9116 5.00 ad
 M
@@ -114,7 +121,7 @@ M
 M
 9023 5.00 d
 M
-9024 5.00 d
+9024 5.00 ce
 M
 246 0.30 ad
 M
@@ -150,7 +157,7 @@ M
 M
 9138 5.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9140 1.00 dh
 M
@@ -158,23 +165,29 @@ M
 M
 9040 0.01 d
 M
-9034 5.00 0
+9034 5.00 ce
 M
-9036 5.00 h
+9028 10.00 bdg
 M
-9037 5.00 h
+9041 10.00 bdh
 M
-9038 5.00 h
+9036 5.00 ceh
 M
-9033 5.00 g
+9037 5.00 ceh
 M
-9035 5.00 g
+9038 5.00 ceh
 M
-9039 5.00 g
+9033 5.00 ceg
+M
+9035 5.00 ceg
+M
+9039 5.00 ceg
 M
 9064 0.90 ad
 M
 9200 5.00 d
+M
+9066 0.02 0
 S
 #1
 Light Forest~
@@ -212,14 +225,17 @@ I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 101 15.00 1 X  # DIG: a lump of clay
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3015 100.00 1  # FORAGE: some red berries
-I 7 1201 100.00 1  # FIND-HERB: a sack of fiveleaf
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1201 100.00 1 p  # PICK: a sack of fiveleaf
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 9 121 88.00 1 g  # GATHER: some sticks and leaves
 I 9 131 12.00 1 g  # GATHER: a green sapling
 I 20 120 100.00 1  # CHOP: a large tree
 M
 9140 1.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9138 5.00 dh
 M
@@ -227,11 +243,11 @@ M
 M
 9134 5.00 bdh
 M
-9037 5.00 dh
+9037 5.00 ceh
 M
-9038 5.00 dh
+9038 5.00 ceh
 M
-9036 5.00 dh
+9036 5.00 ceh
 M
 9006 5.00 dg
 M
@@ -253,11 +269,11 @@ M
 M
 9013 5.00 bdg
 M
-9039 5.00 dg
+9039 5.00 ceg
 M
-9035 5.00 dg
+9035 5.00 ceg
 M
-9033 5.00 dg
+9033 5.00 ceg
 M
 250 0.10 ad
 M
@@ -267,17 +283,23 @@ M
 M
 246 0.30 ad
 M
-9024 5.00 d
+9024 5.00 ce
 M
 9023 5.00 d
 M
-9034 5.00 d
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9133 5.00 ad
 M
 9116 5.00 ad
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9032 1.00 bd
 M
@@ -289,47 +311,55 @@ M
 M
 9025 5.00 bd
 M
-9011 5.00 bd
+9011 5.00 bce
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
 9020 5.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9012 10.00 bd
 M
-9010 5.00 bd
+9010 5.00 bce
 M
-9004 5.00 bd
+9004 5.00 bce
+M
+9014 5.00 bd
 M
 253 10.00 cf
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
 9154 10.00 bc
 M
 9153 10.00 bc
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9064 0.90 ad
 M
 9200 5.00 d
 M
 9202 5.00 dh
+M
+9066 0.02 0
 S
 #2
 Forest~
@@ -367,7 +397,10 @@ I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 101 15.00 1 X  # DIG: a lump of clay
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3015 100.00 1  # FORAGE: some red berries
-I 7 1201 100.00 1  # FIND-HERB: a sack of fiveleaf
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1201 100.00 1 p  # PICK: a sack of fiveleaf
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 9 121 88.00 1 g  # GATHER: some sticks and leaves
 I 9 131 12.00 1 g  # GATHER: a green sapling
 I 20 120 100.00 1  # CHOP: a large tree
@@ -389,8 +422,6 @@ M
 9144 5.00 adg
 M
 9002 5.00 adg
-M
-9003 5.00 dg
 M
 9136 5.00 bdg
 M
@@ -416,7 +447,9 @@ M
 M
 9116 5.00 ad
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9032 5.00 bd
 M
@@ -434,23 +467,27 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
 9154 10.00 bc
 M
 9153 10.00 bc
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9064 0.90 ad
 M
@@ -459,6 +496,8 @@ M
 9200 5.00 d
 M
 9202 5.00 dh
+M
+9066 0.02 0
 S
 #3
 Shady Forest~
@@ -496,7 +535,10 @@ I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 101 15.00 1 X  # DIG: a lump of clay
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3015 100.00 1  # FORAGE: some red berries
-I 7 1201 100.00 1  # FIND-HERB: a sack of fiveleaf
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1201 100.00 1 p  # PICK: a sack of fiveleaf
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 9 121 88.00 1 g  # GATHER: some sticks and leaves
 I 9 131 12.00 1 g  # GATHER: a green sapling
 I 20 120 100.00 1  # CHOP: a large tree
@@ -551,23 +593,27 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
 9154 10.00 bc
 M
 9153 10.00 bc
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9064 0.90 ad
 M
@@ -578,6 +624,8 @@ M
 9200 5.00 d
 M
 9202 5.00 dh
+M
+9066 0.02 0
 S
 #4
 Overgrown Forest~
@@ -639,7 +687,10 @@ I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 101 15.00 1 X  # DIG: a lump of clay
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3015 100.00 1  # FORAGE: some red berries
-I 7 1201 100.00 1  # FIND-HERB: a sack of fiveleaf
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1201 100.00 1 p  # PICK: a sack of fiveleaf
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 9 121 88.00 1 g  # GATHER: some sticks and leaves
 I 9 131 12.00 1 g  # GATHER: a green sapling
 I 20 120 100.00 1  # CHOP: a large tree
@@ -698,23 +749,27 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
 9154 10.00 bc
 M
 9153 10.00 bc
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9064 0.90 ad
 M
@@ -725,6 +780,8 @@ M
 9200 5.00 d
 M
 9202 5.00 dh
+M
+9066 0.02 0
 S
 #5
 River~
@@ -895,19 +952,23 @@ I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 101 15.00 1 X  # DIG: a lump of clay
 I 5 100 100.00 1 X  # DIG: a rock
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9154 10.00 bc
 M
@@ -958,7 +1019,10 @@ I 5 104 8.00 1 X  # DIG: a red bloodstone
 I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3015 100.00 1  # FORAGE: some red berries
-I 7 1202 100.00 1  # FIND-HERB: a twig of redthorn
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1202 100.00 1 p  # PICK: a twig of redthorn
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 9060 0.01 d
 M
@@ -966,7 +1030,7 @@ M
 M
 9143 10.00 dh
 M
-9142 10.00 dh
+9045 10.00 dh
 M
 9017 5.00 dg
 M
@@ -999,17 +1063,17 @@ D4
 M
 246 0.30 ad
 M
-9037 5.00 dh
+9037 5.00 ceh
 M
-9038 5.00 dh
+9038 5.00 ceh
 M
-9036 5.00 dh
+9036 5.00 ceh
 M
-9039 5.00 dg
+9039 5.00 ceg
 M
-9035 5.00 dg
+9035 5.00 ceg
 M
-9033 5.00 dg
+9033 5.00 ceg
 M
 9032 5.00 d
 M
@@ -1019,25 +1083,35 @@ M
 M
 9029 5.00 d
 M
-9034 5.00 d
+9034 5.00 ce
 M
-9022 10.00 d
+9028 10.00 bdg
+M
+9041 10.00 bdh
+M
+9022 10.00 ace
+M
+9015 10.00 ad
 M
 9012 10.00 d
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 240 6.00 bc
 M
@@ -1137,7 +1211,9 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
+M
+9027 15.00 bd
 M
 9123 5.00 d
 M
@@ -1163,19 +1239,19 @@ M
 M
 9124 5.00 bd
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 M
 9153 10.00 bc
 M
@@ -1196,6 +1272,10 @@ M
 237 5.00 ce
 M
 9064 0.90 ad
+M
+9042 5.00 d
+M
+9044 1.00 bdh
 S
 #13
 Seeded Field~
@@ -1213,19 +1293,18 @@ E
 I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3003 100.00 1  # FORAGE: a handful of grain
-I 7 1201 100.00 1  # FIND-HERB: a sack of fiveleaf
 M
-9037 5.00 dh
+9037 5.00 ceh
 M
-9038 5.00 dh
+9038 5.00 ceh
 M
-9036 5.00 dh
+9036 5.00 ceh
 M
-9039 5.00 dg
+9039 5.00 ceg
 M
-9035 5.00 dg
+9035 5.00 ceg
 M
-9033 5.00 dg
+9033 5.00 ceg
 M
 9032 5.00 d
 M
@@ -1237,27 +1316,35 @@ M
 M
 9153 10.00 d
 M
-9021 20.00 d
+9044 1.00 bdh
 M
-9024 20.00 d
+9024 20.00 ce
 M
-9034 5.00 d
+9034 5.00 ce
 M
-9022 20.00 d
+9028 10.00 bdg
+M
+9041 10.00 bdh
+M
+9022 20.00 ace
+M
+9015 20.00 ad
 M
 9012 20.00 d
 M
-9011 20.00 d
+9011 20.00 bce
 M
-9010 20.00 d
+9010 20.00 bce
 M
 9154 5.00 bd
 M
 9152 5.00 bd
 M
-9009 20.00 d
+9009 20.00 bce
 M
-9004 20.00 d
+9004 20.00 bce
+M
+9014 20.00 bd
 S
 #14
 Sandy Field~
@@ -1276,7 +1363,6 @@ I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 5 103 8.00 1 X  # DIG: a yellow lightning stone
 I 6 3014 100.00 1  # FORAGE: some dry beans
-I 7 1204 100.00 1  # FIND-HERB: a daggerbite frond
 M
 9040 0.01 d
 M
@@ -1302,7 +1388,9 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
+M
+9027 15.00 bd
 M
 9123 5.00 d
 M
@@ -1328,19 +1416,19 @@ M
 M
 9124 5.00 bd
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 M
 9153 10.00 bc
 M
@@ -1361,6 +1449,10 @@ M
 237 5.00 ce
 M
 9064 0.90 ad
+M
+9042 5.00 d
+M
+9044 1.00 bdh
 S
 #15
 Jungle Field~
@@ -1408,7 +1500,7 @@ M
 M
 9107 10.00 dg
 M
-9101 1.00 dg
+9043 1.00 bdg
 M
 9112 5.00 bdg
 M
@@ -1428,21 +1520,21 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
 9153 10.00 bc
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 S
 #16
 Jungle Crop~
@@ -1493,7 +1585,7 @@ M
 M
 9107 10.00 dg
 M
-9101 1.00 dg
+9043 1.00 bdg
 M
 9112 5.00 bdg
 M
@@ -1513,21 +1605,21 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
 9153 10.00 bc
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 S
 #17
 Trench~
@@ -1618,7 +1710,10 @@ I 5 103 8.00 1 X  # DIG: a yellow lightning stone
 I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3014 100.00 1  # FORAGE: some dry beans
-I 7 1204 100.00 1  # FIND-HERB: a daggerbite frond
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1204 100.00 1 p  # PICK: a daggerbite frond
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 9040 0.01 d
 M
@@ -1644,7 +1739,9 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
+M
+9027 15.00 bd
 M
 9123 5.00 d
 M
@@ -1670,19 +1767,19 @@ M
 M
 9124 5.00 bd
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 M
 9153 10.00 bc
 M
@@ -1703,6 +1800,12 @@ M
 237 5.00 ce
 M
 9064 0.90 ad
+M
+9042 5.00 d
+M
+9044 1.00 bdh
+M
+9066 0.02 0
 S
 #21
 Oasis~
@@ -1736,7 +1839,10 @@ I 5 103 8.00 1 X  # DIG: a yellow lightning stone
 I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3014 100.00 1  # FORAGE: some dry beans
-I 7 1203 100.00 1  # FIND-HERB: some magewhisper sepals
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1203 100.00 1 p  # PICK: some magewhisper sepals
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 250 0.10 ad
 M
@@ -1762,7 +1868,9 @@ M
 M
 9128 10.00 d
 M
-9026 50.00 d
+9026 50.00 bce
+M
+9027 50.00 bd
 M
 9123 10.00 d
 M
@@ -1788,19 +1896,19 @@ M
 M
 9124 10.00 bd
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 M
 9154 10.00 bc
 M
@@ -1823,6 +1931,12 @@ M
 237 5.00 ce
 M
 9064 0.90 ad
+M
+9042 10.00 d
+M
+9044 1.00 bdh
+M
+9066 0.02 0
 S
 #22
 Sandy Trench~
@@ -1851,7 +1965,7 @@ S
 #23
 Desert Stumps~
 A Group of Stumps in the Desert~
-'.' 21 2 2 l ep
+'.' 21 2 2 dl ep
 C
 burn stumps, dig, pick~
 D1
@@ -1892,7 +2006,10 @@ I 5 103 8.00 1 X  # DIG: a yellow lightning stone
 I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3014 100.00 1  # FORAGE: some dry beans
-I 7 1204 100.00 1  # FIND-HERB: a daggerbite frond
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1204 100.00 1 p  # PICK: a daggerbite frond
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 9040 0.01 d
 M
@@ -1918,7 +2035,9 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
+M
+9027 15.00 bd
 M
 9123 5.00 d
 M
@@ -1944,19 +2063,19 @@ M
 M
 9124 5.00 bd
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 M
 9153 10.00 bc
 M
@@ -1977,6 +2096,10 @@ M
 237 5.00 ce
 M
 9064 0.90 ad
+M
+9042 5.00 d
+M
+9044 1.00 bdh
 S
 #24
 Desert Copse~
@@ -2009,7 +2132,10 @@ I 5 103 8.00 1 X  # DIG: a yellow lightning stone
 I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3016 100.00 1  # FORAGE: a handful of dates
-I 7 1204 100.00 1  # FIND-HERB: a daggerbite frond
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1204 100.00 1 p  # PICK: a daggerbite frond
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 20 134 100.00 1  # CHOP: a thorny sapling
 M
 9040 0.01 d
@@ -2036,7 +2162,9 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
+M
+9027 15.00 bd
 M
 9123 5.00 d
 M
@@ -2064,23 +2192,27 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
 9153 10.00 bc
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 M
 9064 0.90 ad
+M
+9042 5.00 d
+M
+9044 1.00 bdh
 S
 #25
 Desert Shrub~
@@ -2116,7 +2248,10 @@ I 5 103 8.00 1 X  # DIG: a yellow lightning stone
 I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3016 100.00 1  # FORAGE: a handful of dates
-I 7 1204 100.00 1  # FIND-HERB: a daggerbite frond
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1204 100.00 1 p  # PICK: a daggerbite frond
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 20 134 100.00 1  # CHOP: a thorny sapling
 M
 9040 0.01 d
@@ -2143,7 +2278,9 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
+M
+9027 15.00 bd
 M
 9123 5.00 d
 M
@@ -2171,23 +2308,27 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
 9153 10.00 bc
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 M
 9064 0.90 ad
+M
+9042 5.00 d
+M
+9044 1.00 bdh
 S
 #26
 Grove~
@@ -2214,7 +2355,10 @@ I 5 103 8.00 1 X  # DIG: a yellow lightning stone
 I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3016 100.00 1  # FORAGE: a handful of dates
-I 7 1204 100.00 1  # FIND-HERB: a daggerbite frond
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1204 100.00 1 p  # PICK: a daggerbite frond
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 9 132 88.00 1 g  # GATHER: some thorny branches
 I 9 134 12.00 1 g  # GATHER: a thorny sapling
 I 20 122 5.00 4 c  # CHOP: some rough wood
@@ -2246,7 +2390,9 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
+M
+9027 15.00 bd
 M
 9123 5.00 d
 M
@@ -2274,23 +2420,29 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
 9153 10.00 bc
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 M
 9064 0.90 ad
+M
+9042 5.00 d
+M
+9044 1.00 bdh
+M
+9066 0.02 0
 S
 #27
 Partial Jungle~
@@ -2362,7 +2514,7 @@ M
 M
 9107 10.00 dg
 M
-9101 1.00 dg
+9043 1.00 bdg
 M
 9109 10.00 dg
 M
@@ -2384,21 +2536,21 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
 9153 10.00 bc
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 S
 #28
 Jungle~
@@ -2464,7 +2616,7 @@ M
 M
 9107 15.00 dg
 M
-9101 5.00 dg
+9043 5.00 bdg
 M
 9109 15.00 dg
 M
@@ -2486,21 +2638,21 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
 9153 10.00 bc
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 S
 #29
 Swamp~
@@ -2837,13 +2989,15 @@ M
 M
 9154 10.00 bc
 M
-9004 5.00 bd
+9004 5.00 bce
 M
-9010 5.00 bd
+9014 5.00 bd
+M
+9010 5.00 bce
 M
 9012 10.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9152 5.00 bd
 M
@@ -2851,9 +3005,9 @@ M
 M
 9020 5.00 bd
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
-9011 5.00 bd
+9011 5.00 bce
 M
 9025 5.00 bd
 M
@@ -2865,7 +3019,9 @@ M
 M
 9032 1.00 bd
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9116 5.00 ad
 M
@@ -2873,7 +3029,7 @@ M
 M
 9023 5.00 d
 M
-9024 5.00 d
+9024 5.00 ce
 M
 246 0.30 ad
 M
@@ -2909,7 +3065,7 @@ M
 M
 9138 5.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9140 1.00 dh
 M
@@ -2917,19 +3073,23 @@ M
 M
 9040 0.01 d
 M
-9034 5.00 0
+9034 5.00 ce
 M
-9036 5.00 h
+9028 10.00 bdg
 M
-9037 5.00 h
+9041 10.00 bdh
 M
-9038 5.00 h
+9036 5.00 ceh
 M
-9033 5.00 g
+9037 5.00 ceh
 M
-9035 5.00 g
+9038 5.00 ceh
 M
-9039 5.00 g
+9033 5.00 ceg
+M
+9035 5.00 ceg
+M
+9039 5.00 ceg
 M
 9064 0.90 ad
 M
@@ -2977,7 +3137,7 @@ I 20 131 100.00 1  # CHOP: a green sapling
 M
 9140 1.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9138 5.00 dh
 M
@@ -2985,11 +3145,11 @@ M
 M
 9134 5.00 bdh
 M
-9037 5.00 dh
+9037 5.00 ceh
 M
-9038 5.00 dh
+9038 5.00 ceh
 M
-9036 5.00 dh
+9036 5.00 ceh
 M
 9006 5.00 dg
 M
@@ -3011,11 +3171,11 @@ M
 M
 9013 5.00 bdg
 M
-9039 5.00 dg
+9039 5.00 ceg
 M
-9035 5.00 dg
+9035 5.00 ceg
 M
-9033 5.00 dg
+9033 5.00 ceg
 M
 250 0.10 ad
 M
@@ -3025,17 +3185,23 @@ M
 M
 246 0.30 ad
 M
-9024 5.00 d
+9024 5.00 ce
 M
 9023 5.00 d
 M
-9034 5.00 d
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9133 5.00 ad
 M
 9116 5.00 ad
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9032 1.00 bd
 M
@@ -3047,41 +3213,47 @@ M
 M
 9025 5.00 bd
 M
-9011 5.00 bd
+9011 5.00 bce
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
 9020 5.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9012 10.00 bd
 M
-9010 5.00 bd
+9010 5.00 bce
 M
-9004 5.00 bd
+9004 5.00 bce
+M
+9014 5.00 bd
 M
 253 10.00 cf
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
 9154 10.00 bc
 M
 9153 10.00 bc
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9064 0.90 ad
 M
@@ -3131,7 +3303,7 @@ I 20 131 100.00 1  # CHOP: a green sapling
 M
 9140 1.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9138 5.00 dh
 M
@@ -3139,11 +3311,11 @@ M
 M
 9134 5.00 bdh
 M
-9037 5.00 dh
+9037 5.00 ceh
 M
-9038 5.00 dh
+9038 5.00 ceh
 M
-9036 5.00 dh
+9036 5.00 ceh
 M
 9006 5.00 dg
 M
@@ -3165,11 +3337,11 @@ M
 M
 9013 5.00 bdg
 M
-9039 5.00 dg
+9039 5.00 ceg
 M
-9035 5.00 dg
+9035 5.00 ceg
 M
-9033 5.00 dg
+9033 5.00 ceg
 M
 250 0.10 ad
 M
@@ -3179,17 +3351,23 @@ M
 M
 246 0.30 ad
 M
-9024 5.00 d
+9024 5.00 ce
 M
 9023 5.00 d
 M
-9034 5.00 d
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9133 5.00 ad
 M
 9116 5.00 ad
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9032 1.00 bd
 M
@@ -3201,41 +3379,47 @@ M
 M
 9025 5.00 bd
 M
-9011 5.00 bd
+9011 5.00 bce
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
 9020 5.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9012 10.00 bd
 M
-9010 5.00 bd
+9010 5.00 bce
 M
-9004 5.00 bd
+9004 5.00 bce
+M
+9014 5.00 bd
 M
 253 10.00 cf
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
 9154 10.00 bc
 M
 9153 10.00 bc
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9064 0.90 ad
 M
@@ -3285,7 +3469,7 @@ I 20 131 100.00 1  # CHOP: a green sapling
 M
 9140 1.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9138 5.00 dh
 M
@@ -3293,11 +3477,11 @@ M
 M
 9134 5.00 bdh
 M
-9037 5.00 dh
+9037 5.00 ceh
 M
-9038 5.00 dh
+9038 5.00 ceh
 M
-9036 5.00 dh
+9036 5.00 ceh
 M
 9006 5.00 dg
 M
@@ -3319,11 +3503,11 @@ M
 M
 9013 5.00 bdg
 M
-9039 5.00 dg
+9039 5.00 ceg
 M
-9035 5.00 dg
+9035 5.00 ceg
 M
-9033 5.00 dg
+9033 5.00 ceg
 M
 250 0.10 ad
 M
@@ -3333,17 +3517,23 @@ M
 M
 246 0.30 ad
 M
-9024 5.00 d
+9024 5.00 ce
 M
 9023 5.00 d
 M
-9034 5.00 d
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9133 5.00 ad
 M
 9116 5.00 ad
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9032 1.00 bd
 M
@@ -3355,41 +3545,47 @@ M
 M
 9025 5.00 bd
 M
-9011 5.00 bd
+9011 5.00 bce
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
 9020 5.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9012 10.00 bd
 M
-9010 5.00 bd
+9010 5.00 bce
 M
-9004 5.00 bd
+9004 5.00 bce
+M
+9014 5.00 bd
 M
 253 10.00 cf
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
 9154 10.00 bc
 M
 9153 10.00 bc
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9064 0.90 ad
 M
@@ -3447,7 +3643,10 @@ I 5 102 9.00 1 x  # DIG: a flint stone
 I 5 100 9.00 1 x  # DIG: a rock
 I 5 101 100.00 1 x  # DIG: a lump of clay
 I 6 3013 100.00 1  # FORAGE: a handful of nuts
-I 7 1205 100.00 1  # FIND-HERB: some bileberries
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1205 100.00 1 p  # PICK: some bileberries
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 237 5.00 ce
 M
@@ -3469,13 +3668,15 @@ M
 M
 9154 10.00 bc
 M
-9004 5.00 bd
+9004 5.00 bce
 M
-9010 5.00 bd
+9014 5.00 bd
+M
+9010 5.00 bce
 M
 9012 10.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9152 5.00 bd
 M
@@ -3483,9 +3684,9 @@ M
 M
 9020 5.00 bd
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
-9011 5.00 bd
+9011 5.00 bce
 M
 9025 5.00 bd
 M
@@ -3497,7 +3698,9 @@ M
 M
 9032 1.00 bd
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9116 5.00 ad
 M
@@ -3505,7 +3708,7 @@ M
 M
 9023 5.00 d
 M
-9024 5.00 d
+9024 5.00 ce
 M
 246 0.30 ad
 M
@@ -3541,7 +3744,7 @@ M
 M
 9138 5.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9140 1.00 dh
 M
@@ -3549,19 +3752,23 @@ M
 M
 9040 0.01 d
 M
-9034 5.00 0
+9034 5.00 ce
 M
-9036 5.00 h
+9028 10.00 bdg
 M
-9037 5.00 h
+9041 10.00 bdh
 M
-9038 5.00 h
+9036 5.00 ceh
 M
-9033 5.00 g
+9037 5.00 ceh
 M
-9035 5.00 g
+9038 5.00 ceh
 M
-9039 5.00 g
+9033 5.00 ceg
+M
+9035 5.00 ceg
+M
+9039 5.00 ceg
 M
 9064 0.90 ad
 M
@@ -3586,7 +3793,10 @@ E
 14 0 20.00 40
 E
 15 0 20.00 40
-I 7 1205 100.00 1  # FIND-HERB: some bileberries
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1205 100.00 1 p  # PICK: some bileberries
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 21 1300 20.00 1 f  # FISH: a glowing green seashell
 I 21 1305 0.25 1 f  # FISH: a worn old statuette
 I 21 256 0.25 1 f  # FISH: a hestian trinket
@@ -3624,7 +3834,10 @@ E
 E
 15 0 20.00 44
 I 6 3015 100.00 1  # FORAGE: some red berries
-I 7 1205 100.00 1  # FIND-HERB: some bileberries
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1205 100.00 1 p  # PICK: some bileberries
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 20 120 100.00 1  # CHOP: a large tree
 I 21 1300 20.00 1 f  # FISH: a glowing green seashell
 I 21 1305 0.25 1 f  # FISH: a worn old statuette
@@ -3638,7 +3851,7 @@ I 22 174 5.00 1  # PAN: a small flake of gold
 M
 9140 1.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9138 5.00 dh
 M
@@ -3646,11 +3859,11 @@ M
 M
 9134 5.00 bdh
 M
-9037 5.00 dh
+9037 5.00 ceh
 M
-9038 5.00 dh
+9038 5.00 ceh
 M
-9036 5.00 dh
+9036 5.00 ceh
 M
 9006 5.00 dg
 M
@@ -3672,11 +3885,11 @@ M
 M
 9013 5.00 bdg
 M
-9039 5.00 dg
+9039 5.00 ceg
 M
-9035 5.00 dg
+9035 5.00 ceg
 M
-9033 5.00 dg
+9033 5.00 ceg
 M
 250 0.10 ad
 M
@@ -3686,17 +3899,23 @@ M
 M
 246 0.30 ad
 M
-9024 5.00 d
+9024 5.00 ce
 M
 9023 5.00 d
 M
-9034 5.00 d
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9133 5.00 ad
 M
 9116 5.00 ad
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9032 1.00 bd
 M
@@ -3708,41 +3927,47 @@ M
 M
 9025 5.00 bd
 M
-9011 5.00 bd
+9011 5.00 bce
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
 9020 5.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9012 10.00 bd
 M
-9010 5.00 bd
+9010 5.00 bce
 M
-9004 5.00 bd
+9004 5.00 bce
+M
+9014 5.00 bd
 M
 253 10.00 cf
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
 9154 10.00 bc
 M
 9153 10.00 bc
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9064 0.90 ad
 M
@@ -3771,7 +3996,10 @@ E
 E
 15 0 20.00 45
 I 6 3015 100.00 1  # FORAGE: some red berries
-I 7 1205 100.00 1  # FIND-HERB: some bileberries
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1205 100.00 1 p  # PICK: some bileberries
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 20 120 100.00 1  # CHOP: a large tree
 I 21 1300 20.00 1 f  # FISH: a glowing green seashell
 I 21 1305 0.25 1 f  # FISH: a worn old statuette
@@ -3831,14 +4059,17 @@ I 5 102 9.00 1 x  # DIG: a flint stone
 I 5 100 9.00 1 x  # DIG: a rock
 I 5 101 100.00 1 x  # DIG: a lump of clay
 I 6 3015 100.00 1  # FORAGE: some red berries
-I 7 1205 100.00 1  # FIND-HERB: some bileberries
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1205 100.00 1 p  # PICK: some bileberries
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 9 121 88.00 1 g  # GATHER: some sticks and leaves
 I 9 131 12.00 1 g  # GATHER: a green sapling
 I 20 120 100.00 1  # CHOP: a large tree
 M
 9140 1.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9138 5.00 dh
 M
@@ -3846,11 +4077,11 @@ M
 M
 9134 5.00 bdh
 M
-9037 5.00 dh
+9037 5.00 ceh
 M
-9038 5.00 dh
+9038 5.00 ceh
 M
-9036 5.00 dh
+9036 5.00 ceh
 M
 9006 5.00 dg
 M
@@ -3872,11 +4103,11 @@ M
 M
 9013 5.00 bdg
 M
-9039 5.00 dg
+9039 5.00 ceg
 M
-9035 5.00 dg
+9035 5.00 ceg
 M
-9033 5.00 dg
+9033 5.00 ceg
 M
 250 0.10 ad
 M
@@ -3886,17 +4117,23 @@ M
 M
 246 0.30 ad
 M
-9024 5.00 d
+9024 5.00 ce
 M
 9023 5.00 d
 M
-9034 5.00 d
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9133 5.00 ad
 M
 9116 5.00 ad
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9032 1.00 bd
 M
@@ -3908,41 +4145,47 @@ M
 M
 9025 5.00 bd
 M
-9011 5.00 bd
+9011 5.00 bce
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
 9020 5.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9012 10.00 bd
 M
-9010 5.00 bd
+9010 5.00 bce
 M
-9004 5.00 bd
+9004 5.00 bce
+M
+9014 5.00 bd
 M
 253 10.00 cf
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
 9154 10.00 bc
 M
 9153 10.00 bc
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9064 0.90 ad
 M
@@ -3992,14 +4235,17 @@ I 5 102 9.00 1 x  # DIG: a flint stone
 I 5 100 9.00 1 x  # DIG: a rock
 I 5 101 100.00 1 x  # DIG: a lump of clay
 I 6 3015 100.00 1  # FORAGE: some red berries
-I 7 1205 100.00 1  # FIND-HERB: some bileberries
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1205 100.00 1 p  # PICK: some bileberries
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 9 121 88.00 1 g  # GATHER: some sticks and leaves
 I 9 131 12.00 1 g  # GATHER: a green sapling
 I 20 120 100.00 1  # CHOP: a large tree
 M
 9140 1.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9138 5.00 dh
 M
@@ -4007,11 +4253,11 @@ M
 M
 9134 5.00 bdh
 M
-9037 5.00 dh
+9037 5.00 ceh
 M
-9038 5.00 dh
+9038 5.00 ceh
 M
-9036 5.00 dh
+9036 5.00 ceh
 M
 9006 5.00 dg
 M
@@ -4033,11 +4279,11 @@ M
 M
 9013 5.00 bdg
 M
-9039 5.00 dg
+9039 5.00 ceg
 M
-9035 5.00 dg
+9035 5.00 ceg
 M
-9033 5.00 dg
+9033 5.00 ceg
 M
 250 0.10 ad
 M
@@ -4047,17 +4293,23 @@ M
 M
 246 0.30 ad
 M
-9024 5.00 d
+9024 5.00 ce
 M
 9023 5.00 d
 M
-9034 5.00 d
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9133 5.00 ad
 M
 9116 5.00 ad
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9032 1.00 bd
 M
@@ -4069,41 +4321,47 @@ M
 M
 9025 5.00 bd
 M
-9011 5.00 bd
+9011 5.00 bce
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
 9020 5.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9012 10.00 bd
 M
-9010 5.00 bd
+9010 5.00 bce
 M
-9004 5.00 bd
+9004 5.00 bce
+M
+9014 5.00 bd
 M
 253 10.00 cf
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
 9154 10.00 bc
 M
 9153 10.00 bc
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9064 0.90 ad
 M
@@ -4143,7 +4401,10 @@ I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 100 9.00 1 X  # DIG: a rock
 I 5 101 100.00 1 X  # DIG: a lump of clay
 I 6 3013 100.00 1  # FORAGE: a handful of nuts
-I 7 1205 100.00 1  # FIND-HERB: some bileberries
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1205 100.00 1 p  # PICK: some bileberries
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 237 5.00 ce
 M
@@ -4165,13 +4426,15 @@ M
 M
 9154 10.00 bc
 M
-9004 5.00 bd
+9004 5.00 bce
 M
-9010 5.00 bd
+9014 5.00 bd
+M
+9010 5.00 bce
 M
 9012 10.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9152 5.00 bd
 M
@@ -4179,9 +4442,9 @@ M
 M
 9020 5.00 bd
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
-9011 5.00 bd
+9011 5.00 bce
 M
 9025 5.00 bd
 M
@@ -4193,7 +4456,9 @@ M
 M
 9032 1.00 bd
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9116 5.00 ad
 M
@@ -4201,7 +4466,7 @@ M
 M
 9023 5.00 d
 M
-9024 5.00 d
+9024 5.00 ce
 M
 246 0.30 ad
 M
@@ -4237,7 +4502,7 @@ M
 M
 9138 5.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9140 1.00 dh
 M
@@ -4245,19 +4510,23 @@ M
 M
 9040 0.01 d
 M
-9034 5.00 0
+9034 5.00 ce
 M
-9036 5.00 h
+9028 10.00 bdg
 M
-9037 5.00 h
+9041 10.00 bdh
 M
-9038 5.00 h
+9036 5.00 ceh
 M
-9033 5.00 g
+9037 5.00 ceh
 M
-9035 5.00 g
+9038 5.00 ceh
 M
-9039 5.00 g
+9033 5.00 ceg
+M
+9035 5.00 ceg
+M
+9039 5.00 ceg
 M
 9064 0.90 ad
 M
@@ -4311,12 +4580,15 @@ I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 100 9.00 1 X  # DIG: a rock
 I 5 101 100.00 1 X  # DIG: a lump of clay
 I 6 3015 100.00 1  # FORAGE: some red berries
-I 7 1205 100.00 1  # FIND-HERB: some bileberries
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1205 100.00 1 p  # PICK: some bileberries
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 20 131 100.00 1  # CHOP: a green sapling
 M
 9140 1.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9138 5.00 dh
 M
@@ -4324,11 +4596,11 @@ M
 M
 9134 5.00 bdh
 M
-9037 5.00 dh
+9037 5.00 ceh
 M
-9038 5.00 dh
+9038 5.00 ceh
 M
-9036 5.00 dh
+9036 5.00 ceh
 M
 9006 5.00 dg
 M
@@ -4350,11 +4622,11 @@ M
 M
 9013 5.00 bdg
 M
-9039 5.00 dg
+9039 5.00 ceg
 M
-9035 5.00 dg
+9035 5.00 ceg
 M
-9033 5.00 dg
+9033 5.00 ceg
 M
 250 0.10 ad
 M
@@ -4364,17 +4636,23 @@ M
 M
 246 0.30 ad
 M
-9024 5.00 d
+9024 5.00 ce
 M
 9023 5.00 d
 M
-9034 5.00 d
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9133 5.00 ad
 M
 9116 5.00 ad
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9032 1.00 bd
 M
@@ -4386,41 +4664,47 @@ M
 M
 9025 5.00 bd
 M
-9011 5.00 bd
+9011 5.00 bce
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
 9020 5.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9012 10.00 bd
 M
-9010 5.00 bd
+9010 5.00 bce
 M
-9004 5.00 bd
+9004 5.00 bce
+M
+9014 5.00 bd
 M
 253 10.00 cf
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
 9154 10.00 bc
 M
 9153 10.00 bc
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9064 0.90 ad
 M
@@ -4467,7 +4751,10 @@ I 5 100 9.00 1 x  # DIG: a rock
 I 5 101 100.00 1 x  # DIG: a lump of clay
 I 6 3051 50.00 1 x  # FORAGE: a sea urchin
 I 6 3052 50.00 1 x  # FORAGE: a clam
-I 7 1200 100.00 1  # FIND-HERB: a handful of whitegrass
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1200 100.00 1 p  # PICK: a handful of whitegrass
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 201 5.00 bce
 M
@@ -4487,13 +4774,15 @@ M
 M
 9154 10.00 bc
 M
-9004 5.00 bd
+9004 5.00 bce
 M
-9010 5.00 bd
+9014 5.00 bd
+M
+9010 5.00 bce
 M
 9012 10.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9152 5.00 bd
 M
@@ -4501,9 +4790,9 @@ M
 M
 9020 5.00 bd
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
-9011 5.00 bd
+9011 5.00 bce
 M
 9025 5.00 bd
 M
@@ -4515,7 +4804,9 @@ M
 M
 9032 1.00 bd
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9116 5.00 ad
 M
@@ -4523,7 +4814,7 @@ M
 M
 9023 5.00 d
 M
-9024 5.00 d
+9024 5.00 ce
 M
 246 0.30 ad
 M
@@ -4559,7 +4850,7 @@ M
 M
 9138 5.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9140 1.00 dh
 M
@@ -4567,19 +4858,23 @@ M
 M
 9040 0.01 d
 M
-9034 5.00 0
+9034 5.00 ce
 M
-9036 5.00 h
+9028 10.00 bdg
 M
-9037 5.00 h
+9041 10.00 bdh
 M
-9038 5.00 h
+9036 5.00 ceh
 M
-9033 5.00 g
+9037 5.00 ceh
 M
-9035 5.00 g
+9038 5.00 ceh
 M
-9039 5.00 g
+9033 5.00 ceg
+M
+9035 5.00 ceg
+M
+9039 5.00 ceg
 M
 9064 0.90 ad
 M
@@ -4622,7 +4917,10 @@ I 5 100 9.00 1 x  # DIG: a rock
 I 5 101 100.00 1 x  # DIG: a lump of clay
 I 6 3051 50.00 1 x  # FORAGE: a sea urchin
 I 6 3052 50.00 1 x  # FORAGE: a clam
-I 7 1200 100.00 1  # FIND-HERB: a handful of whitegrass
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1200 100.00 1 p  # PICK: a handful of whitegrass
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 9040 0.01 d
 M
@@ -4648,7 +4946,9 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
+M
+9027 15.00 bd
 M
 9123 5.00 d
 M
@@ -4674,19 +4974,19 @@ M
 M
 9124 5.00 bd
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 M
 9153 10.00 bc
 M
@@ -4711,6 +5011,10 @@ M
 9206 10.00 0
 M
 9210 0.03 0
+M
+9042 5.00 d
+M
+9044 1.00 bdh
 S
 #52
 Cliffs~
@@ -4737,7 +5041,10 @@ I 5 104 8.00 1 X  # DIG: a red bloodstone
 I 5 102 9.00 1 X  # DIG: a flint stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3015 100.00 1  # FORAGE: some red berries
-I 7 1202 100.00 1  # FIND-HERB: a twig of redthorn
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1202 100.00 1 p  # PICK: a twig of redthorn
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 9060 0.01 d
 M
@@ -4745,7 +5052,7 @@ M
 M
 9143 10.00 dh
 M
-9142 10.00 dh
+9045 10.00 dh
 M
 9017 5.00 dg
 M
@@ -4831,14 +5138,17 @@ I 5 100 9.00 1 x  # DIG: a rock
 I 5 101 100.00 1 x  # DIG: a lump of clay
 I 6 3051 50.00 1 x  # FORAGE: a sea urchin
 I 6 3052 50.00 1 x  # FORAGE: a clam
-I 7 1200 100.00 1  # FIND-HERB: a handful of whitegrass
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1200 100.00 1 p  # PICK: a handful of whitegrass
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 9 121 88.00 1 g  # GATHER: some sticks and leaves
 I 9 131 12.00 1 g  # GATHER: a green sapling
 I 20 120 100.00 1  # CHOP: a large tree
 M
 9140 1.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9138 5.00 dh
 M
@@ -4846,11 +5156,11 @@ M
 M
 9134 5.00 bdh
 M
-9037 5.00 dh
+9037 5.00 ceh
 M
-9038 5.00 dh
+9038 5.00 ceh
 M
-9036 5.00 dh
+9036 5.00 ceh
 M
 9006 5.00 dg
 M
@@ -4872,11 +5182,11 @@ M
 M
 9013 5.00 bdg
 M
-9039 5.00 dg
+9039 5.00 ceg
 M
-9035 5.00 dg
+9035 5.00 ceg
 M
-9033 5.00 dg
+9033 5.00 ceg
 M
 250 0.10 ad
 M
@@ -4886,17 +5196,23 @@ M
 M
 246 0.30 ad
 M
-9024 5.00 d
+9024 5.00 ce
 M
 9023 5.00 d
 M
-9034 5.00 d
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9133 5.00 ad
 M
 9116 5.00 ad
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9032 1.00 bd
 M
@@ -4908,41 +5224,47 @@ M
 M
 9025 5.00 bd
 M
-9011 5.00 bd
+9011 5.00 bce
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
 9020 5.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9012 10.00 bd
 M
-9010 5.00 bd
+9010 5.00 bce
 M
-9004 5.00 bd
+9004 5.00 bce
+M
+9014 5.00 bd
 M
 253 10.00 cf
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
 9154 10.00 bc
 M
 9153 10.00 bc
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9064 0.90 ad
 M
@@ -4980,7 +5302,10 @@ E
 10 57 5.00 27
 I 6 3051 50.00 1 x  # FORAGE: a sea urchin
 I 6 3052 50.00 1 x  # FORAGE: a clam
-I 7 1200 100.00 1  # FIND-HERB: a handful of whitegrass
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1200 100.00 1 p  # PICK: a handful of whitegrass
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 9 133 88.00 1 g  # GATHER: a tangle of vines
 I 9 135 12.00 1 g  # GATHER: a reaching sapling
 I 20 128 100.00 1  # CHOP: a massive jungle tree
@@ -5015,7 +5340,7 @@ M
 M
 9107 10.00 dg
 M
-9101 1.00 dg
+9043 1.00 bdg
 M
 9109 10.00 dg
 M
@@ -5037,21 +5362,21 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
 9153 10.00 bc
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 M
 9203 10.00 a
 M
@@ -5090,7 +5415,10 @@ I 5 100 9.00 1 x  # DIG: a rock
 I 5 101 100.00 1 x  # DIG: a lump of clay
 I 6 3051 50.00 1 x  # FORAGE: a sea urchin
 I 6 3052 50.00 1 x  # FORAGE: a clam
-I 7 1200 100.00 1  # FIND-HERB: a handful of whitegrass
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1200 100.00 1 p  # PICK: a handful of whitegrass
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 201 5.00 bce
 M
@@ -5110,13 +5438,15 @@ M
 M
 9154 10.00 bc
 M
-9004 5.00 bd
+9004 5.00 bce
 M
-9010 5.00 bd
+9014 5.00 bd
+M
+9010 5.00 bce
 M
 9012 10.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9152 5.00 bd
 M
@@ -5124,9 +5454,9 @@ M
 M
 9020 5.00 bd
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
-9011 5.00 bd
+9011 5.00 bce
 M
 9025 5.00 bd
 M
@@ -5138,7 +5468,9 @@ M
 M
 9032 1.00 bd
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9116 5.00 ad
 M
@@ -5146,7 +5478,7 @@ M
 M
 9023 5.00 d
 M
-9024 5.00 d
+9024 5.00 ce
 M
 246 0.30 ad
 M
@@ -5182,7 +5514,7 @@ M
 M
 9138 5.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9140 1.00 dh
 M
@@ -5190,19 +5522,23 @@ M
 M
 9040 0.01 d
 M
-9034 5.00 0
+9034 5.00 ce
 M
-9036 5.00 h
+9028 10.00 bdg
 M
-9037 5.00 h
+9041 10.00 bdh
 M
-9038 5.00 h
+9036 5.00 ceh
 M
-9033 5.00 g
+9037 5.00 ceh
 M
-9035 5.00 g
+9038 5.00 ceh
 M
-9039 5.00 g
+9033 5.00 ceg
+M
+9035 5.00 ceg
+M
+9039 5.00 ceg
 M
 9064 0.90 ad
 M
@@ -5256,7 +5592,10 @@ I 5 102 9.00 1 x  # DIG: a flint stone
 I 5 100 9.00 1 x  # DIG: a rock
 I 5 101 100.00 1 x  # DIG: a lump of clay
 I 6 3013 100.00 1  # FORAGE: a handful of nuts
-I 7 1205 100.00 1  # FIND-HERB: some bileberries
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1205 100.00 1 p  # PICK: some bileberries
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 237 5.00 ce
 M
@@ -5278,13 +5617,15 @@ M
 M
 9154 10.00 bc
 M
-9004 5.00 bd
+9004 5.00 bce
 M
-9010 5.00 bd
+9014 5.00 bd
+M
+9010 5.00 bce
 M
 9012 10.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9152 5.00 bd
 M
@@ -5292,9 +5633,9 @@ M
 M
 9020 5.00 bd
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
-9011 5.00 bd
+9011 5.00 bce
 M
 9025 5.00 bd
 M
@@ -5306,7 +5647,9 @@ M
 M
 9032 1.00 bd
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9116 5.00 ad
 M
@@ -5314,7 +5657,7 @@ M
 M
 9023 5.00 d
 M
-9024 5.00 d
+9024 5.00 ce
 M
 246 0.30 ad
 M
@@ -5350,7 +5693,7 @@ M
 M
 9138 5.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9140 1.00 dh
 M
@@ -5358,19 +5701,23 @@ M
 M
 9040 0.01 d
 M
-9034 5.00 0
+9034 5.00 ce
 M
-9036 5.00 h
+9028 10.00 bdg
 M
-9037 5.00 h
+9041 10.00 bdh
 M
-9038 5.00 h
+9036 5.00 ceh
 M
-9033 5.00 g
+9037 5.00 ceh
 M
-9035 5.00 g
+9038 5.00 ceh
 M
-9039 5.00 g
+9033 5.00 ceg
+M
+9035 5.00 ceg
+M
+9039 5.00 ceg
 M
 9064 0.90 ad
 M
@@ -5421,7 +5768,10 @@ I 5 100 9.00 1 x  # DIG: a rock
 I 5 101 100.00 1 x  # DIG: a lump of clay
 I 6 3051 50.00 1 x  # FORAGE: a sea urchin
 I 6 3052 50.00 1 x  # FORAGE: a clam
-I 7 1200 100.00 1  # FIND-HERB: a handful of whitegrass
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1200 100.00 1 p  # PICK: a handful of whitegrass
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 201 5.00 bce
 M
@@ -5441,13 +5791,15 @@ M
 M
 9154 10.00 bc
 M
-9004 5.00 bd
+9004 5.00 bce
 M
-9010 5.00 bd
+9014 5.00 bd
+M
+9010 5.00 bce
 M
 9012 10.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9152 5.00 bd
 M
@@ -5455,9 +5807,9 @@ M
 M
 9020 5.00 bd
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
-9011 5.00 bd
+9011 5.00 bce
 M
 9025 5.00 bd
 M
@@ -5469,7 +5821,9 @@ M
 M
 9032 1.00 bd
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9116 5.00 ad
 M
@@ -5477,7 +5831,7 @@ M
 M
 9023 5.00 d
 M
-9024 5.00 d
+9024 5.00 ce
 M
 246 0.30 ad
 M
@@ -5513,7 +5867,7 @@ M
 M
 9138 5.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9140 1.00 dh
 M
@@ -5521,19 +5875,23 @@ M
 M
 9040 0.01 d
 M
-9034 5.00 0
+9034 5.00 ce
 M
-9036 5.00 h
+9028 10.00 bdg
 M
-9037 5.00 h
+9041 10.00 bdh
 M
-9038 5.00 h
+9036 5.00 ceh
 M
-9033 5.00 g
+9037 5.00 ceh
 M
-9035 5.00 g
+9038 5.00 ceh
 M
-9039 5.00 g
+9033 5.00 ceg
+M
+9035 5.00 ceg
+M
+9039 5.00 ceg
 M
 9064 0.90 ad
 M
@@ -5590,12 +5948,15 @@ I 5 100 9.00 1 x  # DIG: a rock
 I 5 101 100.00 1 x  # DIG: a lump of clay
 I 6 3051 50.00 1 x  # FORAGE: a sea urchin
 I 6 3052 50.00 1 x  # FORAGE: a clam
-I 7 1200 100.00 1  # FIND-HERB: a handful of whitegrass
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1200 100.00 1 p  # PICK: a handful of whitegrass
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 20 131 100.00 1  # CHOP: a green sapling
 M
 9140 1.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9138 5.00 dh
 M
@@ -5603,11 +5964,11 @@ M
 M
 9134 5.00 bdh
 M
-9037 5.00 dh
+9037 5.00 ceh
 M
-9038 5.00 dh
+9038 5.00 ceh
 M
-9036 5.00 dh
+9036 5.00 ceh
 M
 9006 5.00 dg
 M
@@ -5629,11 +5990,11 @@ M
 M
 9013 5.00 bdg
 M
-9039 5.00 dg
+9039 5.00 ceg
 M
-9035 5.00 dg
+9035 5.00 ceg
 M
-9033 5.00 dg
+9033 5.00 ceg
 M
 250 0.10 ad
 M
@@ -5643,17 +6004,23 @@ M
 M
 246 0.30 ad
 M
-9024 5.00 d
+9024 5.00 ce
 M
 9023 5.00 d
 M
-9034 5.00 d
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9133 5.00 ad
 M
 9116 5.00 ad
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9032 1.00 bd
 M
@@ -5665,41 +6032,47 @@ M
 M
 9025 5.00 bd
 M
-9011 5.00 bd
+9011 5.00 bce
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
 9020 5.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9012 10.00 bd
 M
-9010 5.00 bd
+9010 5.00 bce
 M
-9004 5.00 bd
+9004 5.00 bce
+M
+9014 5.00 bd
 M
 253 10.00 cf
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
 9154 10.00 bc
 M
 9153 10.00 bc
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9064 0.90 ad
 M
@@ -5793,7 +6166,7 @@ M
 M
 9107 10.00 dg
 M
-9101 1.00 dg
+9043 1.00 bdg
 M
 9109 10.00 dg
 M
@@ -5815,21 +6188,21 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
 9153 10.00 bc
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 S
 #62
 Jungle Copse~
@@ -5900,7 +6273,7 @@ M
 M
 9107 10.00 dg
 M
-9101 1.00 dg
+9043 1.00 bdg
 M
 9109 10.00 dg
 M
@@ -5922,21 +6295,21 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
 9153 10.00 bc
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 S
 #63
 Seaside Jungle Stumps~
@@ -5962,7 +6335,10 @@ E
 16 0 100.00 50
 I 6 3051 50.00 1 x  # FORAGE: a sea urchin
 I 6 3052 50.00 1 x  # FORAGE: a clam
-I 7 1200 100.00 1  # FIND-HERB: a handful of whitegrass
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1200 100.00 1 p  # PICK: a handful of whitegrass
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 9061 0.01 d
 M
@@ -5994,7 +6370,7 @@ M
 M
 9107 10.00 dg
 M
-9101 1.00 dg
+9043 1.00 bdg
 M
 9109 10.00 dg
 M
@@ -6016,21 +6392,25 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
 9153 10.00 bc
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 201 5.00 bce
 M
@@ -6046,13 +6426,15 @@ M
 M
 9154 10.00 bc
 M
-9004 5.00 bd
+9004 5.00 bce
 M
-9010 5.00 bd
+9014 5.00 bd
+M
+9010 5.00 bce
 M
 9012 10.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9152 5.00 bd
 M
@@ -6060,9 +6442,9 @@ M
 M
 9020 5.00 bd
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
-9011 5.00 bd
+9011 5.00 bce
 M
 9025 5.00 bd
 M
@@ -6074,7 +6456,9 @@ M
 M
 9032 1.00 bd
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9116 5.00 ad
 M
@@ -6082,7 +6466,7 @@ M
 M
 9023 5.00 d
 M
-9024 5.00 d
+9024 5.00 ce
 M
 9013 5.00 bdg
 M
@@ -6110,7 +6494,7 @@ M
 M
 9138 5.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9140 1.00 dh
 M
@@ -6118,19 +6502,19 @@ M
 M
 9040 0.01 d
 M
-9034 5.00 0
+9034 5.00 ce
 M
-9036 5.00 h
+9036 5.00 ceh
 M
-9037 5.00 h
+9037 5.00 ceh
 M
-9038 5.00 h
+9038 5.00 ceh
 M
-9033 5.00 g
+9033 5.00 ceg
 M
-9035 5.00 g
+9035 5.00 ceg
 M
-9039 5.00 g
+9039 5.00 ceg
 M
 9064 0.90 ad
 M
@@ -6168,7 +6552,10 @@ E
 10 57 5.00 62
 I 6 3051 50.00 1 x  # FORAGE: a sea urchin
 I 6 3052 50.00 1 x  # FORAGE: a clam
-I 7 1200 100.00 1  # FIND-HERB: a handful of whitegrass
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1200 100.00 1 p  # PICK: a handful of whitegrass
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 20 135 100.00 1  # CHOP: a reaching sapling
 M
 9061 0.01 d
@@ -6201,7 +6588,7 @@ M
 M
 9107 10.00 dg
 M
-9101 1.00 dg
+9043 1.00 bdg
 M
 9109 10.00 dg
 M
@@ -6223,21 +6610,25 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
 9153 10.00 bc
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 201 5.00 bce
 M
@@ -6253,13 +6644,15 @@ M
 M
 9154 10.00 bc
 M
-9004 5.00 bd
+9004 5.00 bce
 M
-9010 5.00 bd
+9014 5.00 bd
+M
+9010 5.00 bce
 M
 9012 10.00 bd
 M
-9009 10.00 bd
+9009 10.00 bce
 M
 9152 5.00 bd
 M
@@ -6267,9 +6660,9 @@ M
 M
 9020 5.00 bd
 M
-9021 5.00 bd
+9044 1.00 bdh
 M
-9011 5.00 bd
+9011 5.00 bce
 M
 9025 5.00 bd
 M
@@ -6281,7 +6674,9 @@ M
 M
 9032 1.00 bd
 M
-9022 5.00 ad
+9022 5.00 ace
+M
+9015 5.00 ad
 M
 9116 5.00 ad
 M
@@ -6289,7 +6684,7 @@ M
 M
 9023 5.00 d
 M
-9024 5.00 d
+9024 5.00 ce
 M
 9013 5.00 bdg
 M
@@ -6317,7 +6712,7 @@ M
 M
 9138 5.00 dh
 M
-9139 5.00 dh
+9139 2.50 dh
 M
 9140 1.00 dh
 M
@@ -6325,19 +6720,19 @@ M
 M
 9040 0.01 d
 M
-9034 5.00 0
+9034 5.00 ce
 M
-9036 5.00 h
+9036 5.00 ceh
 M
-9037 5.00 h
+9037 5.00 ceh
 M
-9038 5.00 h
+9038 5.00 ceh
 M
-9033 5.00 g
+9033 5.00 ceg
 M
-9035 5.00 g
+9035 5.00 ceg
 M
-9039 5.00 g
+9039 5.00 ceg
 M
 9064 0.90 ad
 M
@@ -6409,7 +6804,7 @@ M
 M
 9107 10.00 dg
 M
-9101 1.00 dg
+9043 1.00 bdg
 M
 9109 10.00 dg
 M
@@ -6431,21 +6826,21 @@ M
 M
 240 6.00 bc
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
 9153 10.00 bc
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 S
 #70
 Irrigated Plains~
@@ -6488,8 +6883,12 @@ I 5 103 8.00 1 X  # DIG: a yellow lightning stone
 I 5 101 15.00 1 X  # DIG: a lump of clay
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3014 100.00 1  # FORAGE: some dry beans
-I 7 1201 50.00 1 a  # FIND-HERB: a sack of fiveleaf
-I 7 1204 50.00 1 a  # FIND-HERB: a daggerbite frond
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1201 45.83 1 p  # PICK: a sack of fiveleaf
+I+ 0 70  # Ability: Find Herbs
+I 7 1204 45.84 1 p  # PICK: a daggerbite frond
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 9040 0.01 d
 M
@@ -6515,7 +6914,7 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
 M
 9123 5.00 d
 M
@@ -6541,19 +6940,23 @@ M
 M
 9124 5.00 bd
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9153 10.00 bc
 M
@@ -6614,8 +7017,12 @@ I 5 101 15.00 1 X  # DIG: a lump of clay
 I 5 103 8.00 1 X  # DIG: a yellow lightning stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3014 100.00 1  # FORAGE: some dry beans
-I 7 1201 50.00 1 a  # FIND-HERB: a sack of fiveleaf
-I 7 1204 50.00 1 a  # FIND-HERB: a daggerbite frond
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1201 45.83 1 p  # PICK: a sack of fiveleaf
+I+ 0 70  # Ability: Find Herbs
+I 7 1204 45.84 1 p  # PICK: a daggerbite frond
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 9 121 88.00 1 g  # GATHER: some sticks and leaves
 I 9 131 12.00 1 g  # GATHER: a green sapling
 I 20 120 50.00 2 c  # CHOP: a large tree
@@ -6645,7 +7052,7 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
 M
 9123 5.00 d
 M
@@ -6671,19 +7078,23 @@ M
 M
 9124 5.00 bd
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9153 10.00 bc
 M
@@ -6726,8 +7137,12 @@ I 5 101 15.00 1 X  # DIG: a lump of clay
 I 5 103 8.00 1 X  # DIG: a yellow lightning stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3014 100.00 1  # FORAGE: some dry beans
-I 7 1201 50.00 1 a  # FIND-HERB: a sack of fiveleaf
-I 7 1204 50.00 1 a  # FIND-HERB: a daggerbite frond
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1201 45.83 1 p  # PICK: a sack of fiveleaf
+I+ 0 70  # Ability: Find Herbs
+I 7 1204 45.84 1 p  # PICK: a daggerbite frond
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 9 123 88.00 1 g  # GATHER: a small flower
 I 9 135 12.00 1 g  # GATHER: a reaching sapling
 I 20 128 50.00 1 c  # CHOP: a massive jungle tree
@@ -6757,7 +7172,7 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
 M
 9123 5.00 d
 M
@@ -6783,19 +7198,19 @@ M
 M
 9124 5.00 bd
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 M
 9153 10.00 bc
 M
@@ -6837,7 +7252,7 @@ M
 M
 9107 10.00 dg
 M
-9101 1.00 dg
+9043 1.00 bdg
 M
 9112 5.00 bdg
 M
@@ -6898,8 +7313,12 @@ I 5 103 8.00 1 X  # DIG: a yellow lightning stone
 I 5 101 15.00 1 X  # DIG: a lump of clay
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3014 100.00 1  # FORAGE: some dry beans
-I 7 1201 50.00 1 a  # FIND-HERB: a sack of fiveleaf
-I 7 1204 50.00 1 a  # FIND-HERB: a daggerbite frond
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1201 45.83 1 p  # PICK: a sack of fiveleaf
+I+ 0 70  # Ability: Find Herbs
+I 7 1204 45.84 1 p  # PICK: a daggerbite frond
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 9040 0.01 d
 M
@@ -6925,7 +7344,7 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
 M
 9123 5.00 d
 M
@@ -6951,19 +7370,23 @@ M
 M
 9124 5.00 bd
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9153 10.00 bc
 M
@@ -7024,8 +7447,12 @@ I 5 101 15.00 1 X  # DIG: a lump of clay
 I 5 103 8.00 1 X  # DIG: a yellow lightning stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3014 100.00 1  # FORAGE: some dry beans
-I 7 1201 50.00 1 a  # FIND-HERB: a sack of fiveleaf
-I 7 1204 50.00 1 a  # FIND-HERB: a daggerbite frond
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1201 45.83 1 p  # PICK: a sack of fiveleaf
+I+ 0 70  # Ability: Find Herbs
+I 7 1204 45.84 1 p  # PICK: a daggerbite frond
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 20 131 100.00 1  # CHOP: a green sapling
 M
 9040 0.01 d
@@ -7052,7 +7479,7 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
 M
 9123 5.00 d
 M
@@ -7078,19 +7505,23 @@ M
 M
 9124 5.00 bd
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 9153 10.00 bc
 M
@@ -7137,8 +7568,12 @@ I 5 101 15.00 1 X  # DIG: a lump of clay
 I 5 103 8.00 1 X  # DIG: a yellow lightning stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3014 100.00 1  # FORAGE: some dry beans
-I 7 1201 50.00 1 a  # FIND-HERB: a sack of fiveleaf
-I 7 1204 50.00 1 a  # FIND-HERB: a daggerbite frond
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1201 45.83 1 p  # PICK: a sack of fiveleaf
+I+ 0 70  # Ability: Find Herbs
+I 7 1204 45.84 1 p  # PICK: a daggerbite frond
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 M
 9040 0.01 d
 M
@@ -7164,7 +7599,7 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
 M
 9123 5.00 d
 M
@@ -7190,19 +7625,19 @@ M
 M
 9124 5.00 bd
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 M
 9153 10.00 bc
 M
@@ -7244,7 +7679,7 @@ M
 M
 9107 10.00 dg
 M
-9101 1.00 dg
+9043 1.00 bdg
 M
 9112 5.00 bdg
 M
@@ -7289,8 +7724,12 @@ I 5 101 15.00 1 X  # DIG: a lump of clay
 I 5 103 8.00 1 X  # DIG: a yellow lightning stone
 I 5 100 100.00 1 X  # DIG: a rock
 I 6 3014 100.00 1  # FORAGE: some dry beans
-I 7 1201 50.00 1 a  # FIND-HERB: a sack of fiveleaf
-I 7 1204 50.00 1 a  # FIND-HERB: a daggerbite frond
+I 7 1206 8.33 1 p  # PICK: an iridescent blue iris
+I 7 1201 45.83 1 p  # PICK: a sack of fiveleaf
+I+ 0 70  # Ability: Find Herbs
+I 7 1204 45.84 1 p  # PICK: a daggerbite frond
+I+ 0 70  # Ability: Find Herbs
+I 7 123 100.00 1 p  # PICK: a small flower
 I 20 135 100.00 1  # CHOP: a reaching sapling
 M
 9040 0.01 d
@@ -7317,7 +7756,7 @@ M
 M
 9128 5.00 d
 M
-9026 15.00 d
+9026 15.00 bce
 M
 9123 5.00 d
 M
@@ -7343,19 +7782,19 @@ M
 M
 9124 5.00 bd
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
 M
 9153 10.00 bc
 M
@@ -7397,7 +7836,7 @@ M
 M
 9107 10.00 dg
 M
-9101 1.00 dg
+9043 1.00 bdg
 M
 9112 5.00 bdg
 M

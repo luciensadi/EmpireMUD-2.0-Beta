@@ -41,6 +41,9 @@ This command is grantable.
 
 The command "config approval -v" will show the current configuration.
 
+You can also use 'util approval' to convert existing player approvals to/from
+"by account" or "by character".
+
 To see the mortal version of this help file, see: MORTAPPROVE
 
 See also: CONFIG, GRANT
@@ -189,18 +192,6 @@ player or dump the player's inventory on the ground. This command is grantable.
 DC is also useful for disconnecting people who are stuck in character creation.
 
 See also: GRANT, USERS
-#d
-DISTANCE
-
-Usage:  distance <location>
-
-This computes the map distance between your current location and any target.
-You can target players, coordinates, or anything else you could target with
-commands like 'goto'.
-
-The mortal version of this is 'mark'.
-
-See also: MARK
 #d
 ECHO GECHO SEND /ECHO
 
@@ -382,7 +373,7 @@ GOTO TRANSFER
 Usage:  goto <location>
         transfer <victim|vehicle> [location]
 
-These commands are used to transports yourself and others to different rooms.
+These commands are used to transport yourself and others to different rooms.
 GOTO allows you to go to other rooms; TRANS transports a person (or vehicle)
 from wherever they are to the room you're in, or another location. The transfer
 command is grantable.
@@ -414,6 +405,7 @@ Most of the grant names correspond to actual commands, but some are special:
  olc - Allows .olc, vnum, and vstat.
  olc-controls - Allows .setflags, .setminvnum, and .setmaxvnum.
  transfer - Allows moving mortals with commands like transfer and portal.
+ events - Allows more event commands and starting/stopping events.
 
 Try 'helpsearch grantable' to find grantable commands. You can also type
 'set <name> grants' with no other arguments to see a list of grants.
@@ -694,7 +686,7 @@ Do not abuse this command.
 
 See also: GRANT
 #d
-PEACE
+PEACE "PEACE COMMAND"
 
 Usage:  peace
 
@@ -702,7 +694,7 @@ The peace command ends all combat in the room (but does not keep people from
 re-attacking). Input queues are also cleared, to avoid players accidentally
 restarting combat from queued attacks. This command is grantable.
 
-See also: GRANT
+See also: DIPLOMACY PEACE, GRANT
 #d
 PLAYERDELETE "PLAYER DELETE" "DELETE PLAYER" DELETEPLAYER PLRDELETE
 
@@ -898,13 +890,17 @@ See also: GRANT
 #d
 RESTORE
 
-Usage:  restore <player | mobile>
+Usage:  restore <player | mobile> [types]
 
-RESTORE restores a player or mobile to full hit, mana, and movement points.
-It also resets all cooldowns. This command is grantable.
+RESTORE is used to heal and cure a player or mobile. If you use it without a
+type argument, it fully restores the target. Or, you can choose one or more
+types to restore from: health, mana, movement, blood, hunger, thirst,
+drunkenness, cooldowns, and DoTs.
 
-If used on immortals, it also sets all skill levels to 100 and grants all
-abilities (on the first skill set only).
+If a full restore (all) is performed on an immortal, it also sets all skill
+levels to 100 and gives all abilities (on the main skill set only).
+
+This command is grantable.
 
 See also: GRANT, SKILL SWAP
 #d
@@ -956,7 +952,8 @@ grants         PC      MISC         Set grants for player
 invstart       PC      BINARY       Invisible @ Start
 lastname       PC      STRING       Player's last name, or off
 learned        PC      MISC         Turns learned recipes on/off
-minipet        PC      MISC         Turns minipets on/off
+minipet        PC      MISC         Adds/removes minipets
+mount          PC      MISC         Adds/removes mounts
 access         PC      NUMBER       Player's immortal access level
 loadroom       PC      MISC         Player always starts here
 name           PC      STRING       Change a player's name
@@ -966,10 +963,10 @@ skill          PC      MISC         Changes a skill level
 title          PC      STRING       Player's title
 vampire        PC      BINARY       Makes/unmakes vampires
 
-blood          NPC     NUMBER       Maximum blood
-health         NPC     NUMBER       Maximum health
-mana           NPC     NUMBER       Maximum mana
-move           NPC     NUMBER       Maximum moves
+blood          BOTH    NUMBER       Current blood
+health         BOTH    NUMBER       Current health
+mana           BOTH    NUMBER       Current mana
+move           BOTH    NUMBER       Current moves
 
 strength       BOTH    NUMBER       Strength attribute
 dexterity      BOTH    NUMBER       Dexterity attribute
@@ -1039,6 +1036,16 @@ WARNING: This works on ANY mob vnum.
 
 See also: MINIPET
 #d
+"SET MOUNT"
+
+Usage:  set [file] <player> mount <mob vnum> <on | off>
+
+This lets you give (or revoke) a mount.
+
+WARNING: This works on ANY mob vnum.
+
+See also: SHOW MOUNTS
+#d
 SHOW
 
 Usage:  show <mode> [argument]
@@ -1061,13 +1068,17 @@ ignoring   Immort   Shows you who a player has on their ignore list.
 islands    Immort   Shows you which island ids have empire storage (for MOVEEINV).
 learned    Immort   Shows you learned recipes.
 minipets   Immort   Shows you mini-pets collected by a player.
+mounts     Immort   Shows you mounts owned by a player.
 notes      Immort   Show notes on a player.
+olc        Immort   Shows all players with OLC access (vnum optional).
 player     Immort   Shows player summary information.
 players    Immort   Shows health and status for all current players.
+produced   Immort   Shows total produced items for an empire.
 progress   Immort   Shows how many empires have completed a progress goal.
 progression Immrt   Shows stats on progression goals in general.
 quests     Immort   Shows quests and quest trackers for players.
 rent       Immort   Shows a player's full equipment and inventory.
+resource   Immort   Shows stats on an item based on global empire storage.
 shops      Immort   Shows any shops available in your current location.
 skills     Immort   Shows skill levels and abilities for a player.
 spawns     Immort   Shows where a mob spawns on the map, similar to ".mob search".
@@ -1172,11 +1183,26 @@ Shows you mini-pets collected by a player.
 
 See also: SET MINIPET
 #e
+"SHOW MOUNTS"
+
+Usage:  show mounts <player> [search phrase]
+
+Shows you mounts owned by a player.
+
+See also: SET MOUNT
+#e
 "SHOW NOTES"
 
 Usage:  show notes <player name>
 
 Shows immortal notes for the target player's account.
+#e
+"SHOW OLC"
+
+Usage:  show olc [vnum]
+
+This shows you all players who have OLC access. If you specify a vnum, it
+shows only players who have access to that vnum.
 #e
 "SHOW PILES"
 
@@ -1201,6 +1227,15 @@ players. Not to be confused with SHOW PLAYER.
 
 See also: USERS
 #e
+"SHOW PRODUCED"
+
+Usage:  show produced "<empire>" [search phrase | vnum]
+
+This command shows the total produced items for an empire. Put the empire name
+in quotes if it's longer than 1 word.
+
+The total produced item counts are used for some progress goals and quests.
+#e
 "SHOW PROGRESS"
 
 Usage:  show progress <goal>
@@ -1224,6 +1259,13 @@ Usage:  show rent <player name>
 Shows the target player's inventory and equipment. Used to show the binary file
 path to their inventory data, hence the name.
 #e
+"SHOW RESOURCE"
+
+Usage:  show resource <vnum | name>
+
+Shows stats on how many empires are storing an item, and how many they have,
+on average.
+#e
 "SHOW SHOPS"
 
 Usage:  show shops
@@ -1237,6 +1279,10 @@ Usage:  show skills <player name> [swap]
 
 Shows the target player's skills and abilities. The optional "swap" argument
 shows the player's alternate set of abilities.
+
+The numbers displayed are: [level, experience, unspent points]
+If there is an asterisk after the unspent ability points, it indicates that the
+player has skill resets available for that skill.
 #e
 "SHOW SPAWNS"
 
@@ -1519,6 +1565,7 @@ This is a generic command that houses several simple utilities for immortals.
 They generally have no game effect, but can help with testing.
 
 Available utilities:
+ &capproval&0 - Change all player approvals to be "by account" or "by character".
  &cb318buildings&0 - Finds buildings using flags that were deprecated in 2.0b3.18.
  &cclearroles&0 - Clears the group roles and abilities of all players.
  &cdiminish <number> <scale>&0 - Applies the game's diminishing returns formula,
@@ -1547,7 +1594,7 @@ specified name. If you specify more than one keyword, it will find things
 that match ALL of those keywords.
 
 Valid types are: adventure, ability, archetype, augment, book, building, craft,
-                 class, crop, faction, global, generic, mob, morph, obj, 
+                 class, crop, event, faction, global, generic, mob, morph, obj, 
                  progress, quest, roomtemplate, sector, shop, skill, social,
                  trigger, vehicle
 
@@ -1570,9 +1617,9 @@ Usage:  vstat <type> <vnum>
 Used to stat a prototypical object by virtual number.
 
 Valid types are: adventure, ability, archetype, augment, building, book, craft,
-                class, crop, empire, faction, global, generic, mob, morph, obj, 
-                progress, quest, roomtemplate, sector, shop, skill, social,
-                trigger, vehicle
+                class, crop, empire, event, faction, global, generic, mob,
+                morph, obj, progress, quest, roomtemplate, sector, shop, skill,
+                social, trigger, vehicle
 
 Examples:
 

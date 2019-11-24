@@ -32,6 +32,7 @@ extern const char *dirs[];
 extern struct instance_data *quest_instance_global;
 
 // external functions
+void adjust_vehicle_tech(vehicle_data *veh, bool add);
 void send_char_pos(char_data *ch, int dam);
 void die(char_data *ch, char_data *killer);
 void sub_write(char *arg, char_data *ch, byte find_invis, int targets);
@@ -501,8 +502,8 @@ WCMD(do_wdoor) {
 
 
 WCMD(do_wsiege) {
-	void besiege_room(char_data *attacker, room_data *to_room, int damage);
-	extern bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int siege_type);
+	void besiege_room(char_data *attacker, room_data *to_room, int damage, vehicle_data *by_vehicle);
+	extern bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int siege_type, vehicle_data *by_vehicle);
 	extern room_data *dir_to_room(room_data *room, int dir, bool ignore_entrance);
 	extern bool find_siege_target_for_vehicle(char_data *ch, vehicle_data *veh, char *arg, room_data **room_targ, int *dir, vehicle_data **veh_targ);
 	extern bool validate_siege_target_room(char_data *ch, vehicle_data *veh, room_data *to_room);
@@ -550,14 +551,46 @@ WCMD(do_wsiege) {
 	
 	if (room_targ) {
 		if (validate_siege_target_room(NULL, NULL, room_targ)) {
-			besiege_room(NULL, room_targ, dam);
+			besiege_room(NULL, room_targ, dam, NULL);
 		}
 	}
 	else if (veh_targ) {
-		besiege_vehicle(NULL, veh_targ, dam, SIEGE_PHYSICAL);
+		besiege_vehicle(NULL, veh_targ, dam, SIEGE_PHYSICAL, NULL);
 	}
 	else {
 		wld_log(room, "wsiege: invalid target");
+	}
+}
+
+
+// kills the target
+WCMD(do_wslay) {
+	char name[MAX_INPUT_LENGTH];
+	char_data *vict;
+	
+	argument = one_argument(argument, name);
+
+	if (!*name) {
+		wld_log(room, "wslay: no target");
+		return;
+	}
+	
+	if (*name == UID_CHAR) {
+		if (!(vict = get_char(name))) {
+			wld_log(room, "wslay: victim (%s) does not exist", name);
+			return;
+		}
+	}
+	else if (!(vict = get_char_by_room(room, name))) {
+		wld_log(room, "wslay: victim (%s) does not exist", name);
+		return;
+	}
+	
+	if (IS_IMMORTAL(vict)) {
+		msg_to_char(vict, "Being the cool immortal you are, you sidestep a trap, obviously placed to kill you.\r\n");
+	}
+	else {
+		die(vict, vict);
 	}
 }
 
@@ -566,6 +599,7 @@ WCMD(do_wteleport) {
 	char_data *ch, *next_ch;
 	vehicle_data *veh;
 	room_data *target;
+	obj_data *obj;
 	char arg1[MAX_INPUT_LENGTH], arg2[MAX_INPUT_LENGTH];
 	struct instance_data *inst;
 	int iter;
@@ -651,9 +685,14 @@ WCMD(do_wteleport) {
 			}
 		}
 		else if ((*arg1 == UID_CHAR && (veh = get_vehicle(arg1))) || (veh = get_vehicle_room(room, arg1))) {
+			adjust_vehicle_tech(veh, FALSE);
 			vehicle_from_room(veh);
 			vehicle_to_room(veh, target);
+			adjust_vehicle_tech(veh, TRUE);
 			entry_vtrigger(veh);
+		}
+		else if ((*arg1 == UID_CHAR && (obj = get_obj(arg1))) || (obj = get_obj_by_room(room, arg1))) {
+			obj_to_room(obj, target);
 		}
 		else
 			wld_log(room, "wteleport: no target found");
@@ -1123,6 +1162,11 @@ WCMD(do_wload) {
 		
 		tch = get_char_in_room(room, arg1);
 		if (tch) {
+			// mark as "gathered" like a resource
+			if (!IS_NPC(tch) && GET_LOYALTY(tch)) {
+				add_production_total(GET_LOYALTY(tch), GET_OBJ_VNUM(object), 1);
+			}
+			
 			if (*arg2 && (pos = find_eq_pos_script(arg2)) >= 0 && !GET_EQ(tch, pos) && can_wear_on_pos(object, pos)) {
 				equip_char(tch, object, pos);
 				load_otrigger(object);
@@ -1164,6 +1208,12 @@ WCMD(do_wload) {
 	}
 	else
 		wld_log(room, "wload: bad type");
+}
+
+
+WCMD(do_wmod) {
+	void script_modify(char *argument);
+	script_modify(argument);
 }
 
 
@@ -1544,6 +1594,7 @@ const struct wld_command_info wld_cmd_info[] = {
 	{ "wforce", do_wforce, NO_SCMD },
 	{ "wheal", do_wheal, NO_SCMD },
 	{ "wload", do_wload, NO_SCMD },
+	{ "wmod", do_wmod, NO_SCMD },
 	{ "wmorph", do_wmorph, NO_SCMD },
 	{ "wpurge", do_wpurge, NO_SCMD },
 	{ "wquest", do_wquest, NO_SCMD },
@@ -1551,6 +1602,7 @@ const struct wld_command_info wld_cmd_info[] = {
 	{ "wscale", do_wscale, NO_SCMD },
 	{ "wsend", do_wsend, SCMD_WSEND },
 	{ "wsiege", do_wsiege, NO_SCMD },
+	{ "wslay", do_wslay, NO_SCMD },
 	{ "wteleport", do_wteleport, NO_SCMD },
 	{ "wterracrop", do_wterracrop, NO_SCMD },
 	{ "wterraform", do_wterraform, NO_SCMD },

@@ -51,6 +51,7 @@ extern const char *class_role_color[];
 
 // eternal functions
 void apply_ability_techs_to_player(char_data *ch, ability_data *abil);
+void assign_class_abilities(char_data *ch, class_data *cls, int role);
 void resort_empires(bool force);
 extern bool is_class_ability(ability_data *abil);
 void scale_item_to_level(obj_data *obj, int level);
@@ -135,6 +136,7 @@ void check_skill_sell(char_data *ch, ability_data *abil) {
 					if ((obj = GET_EQ(ch, WEAR_HOLD)) && IS_SHIELD(obj)) {
 						act("You stop using $p.", FALSE, ch, GET_EQ(ch, WEAR_HOLD), NULL, TO_CHAR);
 						unequip_char_to_inventory(ch, WEAR_HOLD);
+						determine_gear_level(ch);
 					}
 					break;
 				}
@@ -153,6 +155,7 @@ void check_skill_sell(char_data *ch, ability_data *abil) {
 					if (GET_EQ(ch, WEAR_RANGED) && IS_MISSILE_WEAPON(GET_EQ(ch, WEAR_RANGED))) {
 						act("You stop using $p.", FALSE, ch, GET_EQ(ch, WEAR_RANGED), NULL, TO_CHAR);
 						unequip_char_to_inventory(ch, WEAR_RANGED);
+						determine_gear_level(ch);
 					}
 					break;
 				}
@@ -167,6 +170,7 @@ void check_skill_sell(char_data *ch, ability_data *abil) {
 					if ((obj = GET_EQ(ch, WEAR_WIELD)) && OBJ_FLAGGED(obj, OBJ_TWO_HANDED)) {
 						act("You stop using $p.", FALSE, ch, obj, NULL, TO_CHAR);
 						unequip_char_to_inventory(ch, WEAR_WIELD);
+						determine_gear_level(ch);
 					}
 					break;
 				}
@@ -972,6 +976,7 @@ bool gain_skill(char_data *ch, skill_data *skill, int amount) {
 		
 		// update class and progression
 		update_class(ch);
+		assign_class_abilities(ch, NULL, NOTHING);
 		SAVE_CHAR(ch);
 	}
 	
@@ -1402,8 +1407,6 @@ void mark_level_gained_from_ability(char_data *ch, ability_data *abil) {
 * @param char_data *ch The player to swap.
 */
 void perform_swap_skill_sets(char_data *ch) {
-	void assign_class_abilities(char_data *ch, class_data *cls, int role);
-	
 	struct player_ability_data *plab, *next_plab;
 	int cur_set, old_set;
 	ability_data *abil;
@@ -1843,6 +1846,7 @@ ACMD(do_skills) {
 			set_skill(ch, SKILL_VNUM(skill), level);
 			update_class(ch);
 			check_ability_levels(ch, SKILL_VNUM(skill));
+			assign_class_abilities(ch, NULL, NOTHING);
 			
 			SAVE_CHAR(ch);
 		}
@@ -2055,6 +2059,7 @@ ACMD(do_specialize) {
 
 		// check class and skill levels
 		update_class(ch);
+		assign_class_abilities(ch, NULL, NOTHING);
 	}
 }
 
@@ -2590,7 +2595,7 @@ bool audit_skill(skill_data *skill, char_data *ch) {
 		}
 		
 		// verify tree
-		if (skab->prerequisite) {
+		if (skab->prerequisite != NO_ABIL) {
 			if (skab->vnum == skab->prerequisite) {
 				olc_audit_msg(ch, SKILL_VNUM(skill), "Ability %d %s is its own prerequisite", ABIL_VNUM(abil), ABIL_NAME(abil));
 				problem = TRUE;
@@ -2610,7 +2615,7 @@ bool audit_skill(skill_data *skill, char_data *ch) {
 	
 	// other skills
 	HASH_ITER(hh, skill_table, iter, next_iter) {
-		if (iter == skill) {
+		if (iter == skill || SKILL_VNUM(iter) == SKILL_VNUM(skill)) {
 			continue;
 		}
 		
@@ -3544,6 +3549,7 @@ void save_olc_skill(descriptor_data *desc) {
 		if (!IS_NPC(ch_iter)) {
 			update_class(ch_iter);
 			give_level_zero_abilities(ch_iter);
+			assign_class_abilities(ch_iter, NULL, NOTHING);
 		}
 	}
 }

@@ -60,6 +60,7 @@ extern const char *dirs[];
 extern struct instance_data *quest_instance_global;
 
 // external funcs
+void adjust_vehicle_tech(vehicle_data *veh, bool add);
 void die(char_data *ch, char_data *killer);
 extern struct instance_data *get_instance_by_mob(char_data *mob);
 extern room_data *get_room(room_data *ref, char *name);
@@ -380,7 +381,7 @@ ACMD(do_mjunk) {
 
 /* prints the message to everyone in the room other than the mob and victim */
 ACMD(do_mechoaround) {
-	char arg[MAX_INPUT_LENGTH];
+	char arg[MAX_INPUT_LENGTH], temp[MAX_INPUT_LENGTH];
 	char_data *victim;
 	char *p;
 
@@ -391,8 +392,9 @@ ACMD(do_mechoaround) {
 
 	if (AFF_FLAGGED(ch, AFF_ORDERED))
 		return;
-
-	p = one_argument(argument, arg);
+	
+	strcpy(temp, argument);	// preserve a copy
+	p = one_argument(temp, arg);
 	skip_spaces(&p);
 
 	if (!*arg) {
@@ -469,7 +471,7 @@ ACMD(do_mechoneither) {
 
 /* sends the message to only the victim */
 ACMD(do_msend) {
-	char arg[MAX_INPUT_LENGTH];
+	char arg[MAX_INPUT_LENGTH], temp[MAX_INPUT_LENGTH];
 	char_data *victim;
 	char *p;
 
@@ -480,8 +482,9 @@ ACMD(do_msend) {
 
 	if (AFF_FLAGGED(ch, AFF_ORDERED))
 		return;
-
-	p = one_argument(argument, arg);
+	
+	strcpy(temp, argument);	// preserve this
+	p = one_argument(temp, arg);
 	skip_spaces(&p);
 
 	if (!*arg) {
@@ -781,6 +784,11 @@ ACMD(do_mload) {
 		
 		tch = (*arg1 == UID_CHAR) ? get_char(arg1) : get_char_room_vis(ch, arg1);
 		if (tch) {	// load on char
+			// mark as "gathered" like a resource
+			if (!IS_NPC(tch) && GET_LOYALTY(tch)) {
+				add_production_total(GET_LOYALTY(tch), GET_OBJ_VNUM(object), 1);
+			}
+			
 			if (*arg2 && (pos = find_eq_pos_script(arg2)) >= 0 && !GET_EQ(tch, pos) && can_wear_on_pos(object, pos)) {
 				equip_char(tch, object, pos);
 				load_otrigger(object);
@@ -828,6 +836,12 @@ ACMD(do_mload) {
 	}
 	else
 		mob_log(ch, "mload: bad type");
+}
+
+
+ACMD(do_mmod) {
+	void script_modify(char *argument);
+	script_modify(argument);
 }
 
 
@@ -1246,6 +1260,7 @@ ACMD(do_mteleport) {
 	char_data *vict, *next_ch;
 	struct instance_data *inst;
 	vehicle_data *veh;
+	obj_data *obj;
 	int iter;
 
 	if (!MOB_OR_IMPL(ch)) {
@@ -1338,9 +1353,14 @@ ACMD(do_mteleport) {
 			}
 		}
 		else if ((*arg1 == UID_CHAR && (veh = get_vehicle(arg1))) || (veh = get_vehicle_in_room_vis(ch, arg1))) {
+			adjust_vehicle_tech(veh, FALSE);
 			vehicle_from_room(veh);
 			vehicle_to_room(veh, target);
+			adjust_vehicle_tech(veh, TRUE);
 			entry_vtrigger(veh);
+		}
+		else if ((*arg1 == UID_CHAR && (obj = get_obj(arg1))) || (obj = get_obj_vis(ch, arg1))) {
+			obj_to_room(obj, target);
 		}
 		else {
 			mob_log(ch, "mteleport: victim (%s) does not exist", arg1);
@@ -1877,8 +1897,8 @@ ACMD(do_mforget) {
 
 
 ACMD(do_msiege) {
-	void besiege_room(char_data *attacker, room_data *to_room, int damage);
-	extern bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int siege_type);
+	void besiege_room(char_data *attacker, room_data *to_room, int damage, vehicle_data *by_vehicle);
+	extern bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int siege_type, vehicle_data *by_vehicle);
 	extern bool find_siege_target_for_vehicle(char_data *ch, vehicle_data *veh, char *arg, room_data **room_targ, int *dir, vehicle_data **veh_targ);
 	extern bool validate_siege_target_room(char_data *ch, vehicle_data *veh, room_data *to_room);
 	
@@ -1926,14 +1946,54 @@ ACMD(do_msiege) {
 	
 	if (room_targ) {
 		if (validate_siege_target_room(ch, NULL, room_targ)) {
-			besiege_room(NULL, room_targ, dam);
+			besiege_room(NULL, room_targ, dam, NULL);
 		}
 	}
 	else if (veh_targ) {
-		besiege_vehicle(NULL, veh_targ, dam, SIEGE_PHYSICAL);
+		besiege_vehicle(NULL, veh_targ, dam, SIEGE_PHYSICAL, NULL);
 	}
 	else {
 		mob_log(ch, "osiege: invalid target");
+	}
+}
+
+
+// kills the target
+ACMD(do_mslay) {
+	char name[MAX_INPUT_LENGTH];
+	char_data *vict;
+
+	if (!MOB_OR_IMPL(ch)) {
+		send_config_msg(ch, "huh_string");
+		return;
+	}
+
+	if (AFF_FLAGGED(ch, AFF_ORDERED))
+		return;
+
+	argument = one_argument(argument, name);
+
+	if (!*name) {
+		mob_log(ch, "mslay: no target");
+		return;
+	}
+	
+	if (*name == UID_CHAR) {
+		if (!(vict = get_char(name))) {
+			mob_log(ch, "mslay: victim (%s) does not exist", name);
+			return;
+		}
+	}
+	else if (!(vict = get_char_room_vis(ch, name))) {
+		mob_log(ch, "mslay: victim (%s) does not exist", name);
+		return;
+	}
+	
+	if (IS_IMMORTAL(vict)) {
+		msg_to_char(vict, "Being the cool immortal you are, you sidestep a trap, obviously placed to kill you.\r\n");
+	}
+	else {
+		die(vict, ch);
 	}
 }
 

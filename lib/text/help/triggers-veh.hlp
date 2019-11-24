@@ -50,6 +50,7 @@ help files for more info):
 &c%scale%&0 - Changes the scale level of a target.
 &c%send%&0 - Send a message to one person.
 &c%siege%&0 - Deals siege damage to a vehicle or room.
+&c%slay%&0 - Instantly kills the target.
 &c%teleport%&0 - Moves people to another location.
 &c%terracrop%&0 - Changes the terrain to a certain crop type.
 &c%terraform%&0 - Changes the terrain to a certain sector type.
@@ -73,6 +74,7 @@ Vehicles can trigger on the following events:
 &cPlayer-in-Room&0 - Modifier: trigger requires a player present.
 &cReboot&0 - Triggers when the mud starts up.
 &cBuy&0 - Triggers when someone tries to buy in the room.
+&cKill&0 - Triggers when the vehicle kills someone.
 
 For each type, there is a help file named &yVTRIG <type>&0.
 #d
@@ -98,11 +100,13 @@ When using field  - The variable returns:
 &charness(mob)&0 - Harnesses a mob to the vehicle (or loads and harnesses one if
    you give a vnum instead of a mob).
 &chas_in(str)&0 - True if an object with a given name/vnum is inside.
+&chas_trigger(vnum)&0 - Has the specified trigger attached.
 &chealth&0 - Current health of the vehicle.
 &cid&0 - The id number of the vehicle.
 &cin_on&0 - "in" or "on" depending on how characters sit in/on the vehicle.
 &cinterior&0 - The base inside room (where you'd board to, if it has one).
-&cis_flagged(FLAG)&0 - True if the vehicle has the flag.
+&cis_flagged(FLAG)&0 - True if the vehicle has the flag. If called with no
+   argument, lists current flags instead.
 &ckeywords&0 - The vehicle's keyword list.
 &cled_by&0 - The person leading the vehicle, if any.
 &clevel&0 - What level the vehicle is scaled to.

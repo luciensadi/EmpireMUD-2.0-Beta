@@ -334,7 +334,7 @@ struct time_info_data *mud_time_passed(time_t t2, time_t t1) {
 * @param char_data *vict The person who is seeing them.
 * @param bool real If TRUE, uses real name instead of disguise/morph.
 */
-char *PERS(char_data *ch, char_data *vict, bool real) {
+const char *PERS(char_data *ch, char_data *vict, bool real) {
 	static char output[MAX_INPUT_LENGTH];
 
 	if (!CAN_SEE(vict, ch)) {
@@ -342,7 +342,7 @@ char *PERS(char_data *ch, char_data *vict, bool real) {
 	}
 
 	if (IS_MORPHED(ch) && !real) {
-		return MORPH_SHORT_DESC(GET_MORPH(ch));
+		return get_morph_desc(ch, FALSE);
 	}
 	
 	if (!real && IS_DISGUISED(ch)) {
@@ -804,6 +804,11 @@ bool process_import_one(empire_data *emp) {
 				// items
 				add_to_empire_storage(emp, found_island, trade->vnum, trade_amt);
 				charge_stored_resource(pair->emp, ANY_ISLAND, trade->vnum, trade_amt);
+				
+				// mark gather trackers
+				add_production_total(emp, trade->vnum, trade_amt);
+				mark_production_trade(emp, trade->vnum, trade_amt, 0);
+				mark_production_trade(pair->emp, trade->vnum, 0, trade_amt);
 				
 				// money
 				decrease_empire_coins(emp, emp, cost);
@@ -1351,7 +1356,7 @@ bool has_tech_available(char_data *ch, int tech) {
 		return FALSE;
 	}
 	else if (!has_tech_available_room(IN_ROOM(ch), tech)) {
-		msg_to_char(ch, "In order to do that you need to be in the territory of an empire with %s.\r\n", techs[tech]);
+		msg_to_char(ch, "In order to do that you need to be in the territory of an empire with %s on this island.\r\n", techs[tech]);
 		return FALSE;
 	}
 	else {
@@ -1415,11 +1420,14 @@ int land_can_claim(empire_data *emp, int ter_type) {
 	int cur, from_wealth, out_t = 0, fron_t = 0, total = 0, min_cap = 0;
 	double outskirts_mod = config_get_double("land_outside_city_modifier");
 	double frontier_mod = config_get_double("land_frontier_modifier");
+	int frontier_timeout = config_get_int("frontier_timeout");
 	
 	if (!emp) {
 		return 0;
 	}
-	
+	if (ter_type == TER_FRONTIER && frontier_timeout > 0 && (EMPIRE_LAST_LOGON(emp) + (frontier_timeout * SECS_PER_REAL_DAY)) < time(0)) {
+		return 0;	// no frontier territory if gone longer than this
+	}
 	
 	// so long as there's at least 1 active member, they get the min cap
 	if (EMPIRE_MEMBERS(emp) > 0) {
@@ -2091,34 +2099,32 @@ int reserved_word(char *argument) {
 * it to be returned.  Returns NOTHING if not found; 0..n otherwise.  Array
 * must be terminated with a '\n' so it knows to stop searching.
 *
+* As of b5.57, This function will prefer exact matches over partial matches,
+* even without 'exact'.
+*
 * @param char *arg The input.
 * @param const char **list A "\n"-terminated name list.
 * @param int exact 0 = abbrevs, 1 = full match
 */
 int search_block(char *arg, const char **list, int exact) {
-	register int i, l;
+	register int i, l, part = NOTHING;
+
+	if (!*arg) {
+		return NOTHING;	// shortcut
+	}
 
 	l = strlen(arg);
 
-	if (exact) {
-		for (i = 0; **(list + i) != '\n'; i++) {
-			if (!str_cmp(arg, *(list + i))) {
-				return (i);
-			}
+	for (i = 0; **(list + i) != '\n'; i++) {
+		if (!str_cmp(arg, *(list + i))) {
+			return i;	// exact or otherwise
 		}
-	}
-	else {
-		if (!l) {
-			l = 1;			/* Avoid "" to match the first available string */
-		}
-		for (i = 0; **(list + i) != '\n'; i++) {
-			if (!strn_cmp(arg, *(list + i), l)) {
-				return (i);
-			}
+		else if (!exact && part == NOTHING && !strn_cmp(arg, *(list + i), l)) {
+			part = i;	// found partial but keep searching
 		}
 	}
 
-	return (NOTHING);
+	return part;	// if any
 }
 
 
@@ -3784,6 +3790,10 @@ bool multi_isname(const char *arg, const char *namelist) {
 	char argcpy[MAX_INPUT_LENGTH], argword[256];
 	char *ptr;
 	bool ok;
+	
+	if (!namelist || !*namelist) {
+		return FALSE;	// shortcut
+	}
 
 	/* the easy way */
 	if (!str_cmp(arg, namelist)) {
@@ -3791,15 +3801,19 @@ bool multi_isname(const char *arg, const char *namelist) {
 	}
 	
 	strcpy(argcpy, arg);
-	ptr = any_one_arg(argcpy, argword);
+	ptr = argcpy;
+	do {
+		ptr = any_one_arg(ptr, argword);
+	} while (fill_word(argword));
 	
 	ok = TRUE;
 	while (*argword && ok) {
 		if (!isname(argword, namelist)) {
 			ok = FALSE;
 		}
-		
-		ptr = any_one_arg(ptr, argword);
+		do {	// skip fill words like "of" so "bunch of apples" also matches "bunch apples"	
+			ptr = any_one_arg(ptr, argword);
+		} while (fill_word(argword));
 	}
 	
 	return ok;
@@ -3923,6 +3937,30 @@ bool search_custom_messages(char *keywords, struct custom_message *list) {
 
 
 /**
+* Looks for certain keywords in a set of extra descriptions. All given keywords
+* must appear in 1 of the descriptions or its keywords to be valid.
+*
+* @param char *keywords The word(s) we are looking for.
+* @param struct extra_descr_data *list The list of extra descs to search.
+* @return bool TRUE if the keywords were found, FALSE if not.
+*/
+bool search_extra_descs(char *keywords, struct extra_descr_data *list) {
+	struct extra_descr_data *iter;
+	
+	LL_FOREACH(list, iter) {
+		if (iter->keyword && multi_isname(keywords, iter->keyword)) {
+			return TRUE;
+		}
+		if (iter->description && multi_isname(keywords, iter->description)) {
+			return TRUE;
+		}
+	}
+	
+	return FALSE;	// not found
+}
+
+
+/**
 * Doubles the & in a string so that color codes are displayed to the user.
 *
 * @param char *string The input string.
@@ -3947,12 +3985,12 @@ char *show_color_codes(char *string) {
 *
 * If you want to save the result somewhere, you should str_dup() it
 *
-* @param char *string The original string.
+* @param const char *string The original string.
 */
-const char *skip_filler(char *string) {	
+const char *skip_filler(const char *string) {	
 	static char remainder[MAX_STRING_LENGTH];
 	char temp[MAX_STRING_LENGTH];
-	char *ptr;
+	char *ptr, *ot;
 	int pos = 0;
 	
 	*remainder = '\0';
@@ -3964,7 +4002,9 @@ const char *skip_filler(char *string) {
 	
 	do {
 		string += pos;
-		skip_spaces(&string);
+		ot = (char*)string;	// just to skip_spaces on it, which won't modify the string
+		skip_spaces(&ot);
+		string = ot;
 		
 		if ((ptr = strchr(string, ' '))) {
 			pos = ptr - string;
@@ -4108,12 +4148,12 @@ void ucwords(char *string) {
 * Generic string replacement function: returns a memory-allocated char* with
 * the resulting string.
 *
-* @param char *search The search string ('foo').
-* @param char *replace The replacement string ('bar').
-* @param char *subject The string to alter ('foodefoo').
+* @param const char *search The search string ('foo').
+* @param const char *replace The replacement string ('bar').
+* @param const char *subject The string to alter ('foodefoo').
 * @return char* A pointer to a new string with the replacements ('bardebar').
 */
-char *str_replace(char *search, char *replace, char *subject) {
+char *str_replace(const char *search, const char *replace, const char *subject) {
 	static char output[MAX_STRING_LENGTH];
 	int spos, opos, slen, rlen;
 	
@@ -4320,6 +4360,49 @@ char *str_str(char *cs, char *ct) {
 	}
 
 	return NULL;
+}
+
+
+/**
+* Takes a number of seconds and returns a string like "5 days, 1 hour, 
+* 30 minutes, 27 seconds".
+*
+* @param int seconds Amount of time.
+* @return char* The string describing the time.
+*/
+char *time_length_string(int seconds) {
+	static char output[MAX_STRING_LENGTH];
+	bool any = FALSE;
+	int left, amt;
+	
+	*output = '\0';
+	left = ABSOLUTE(seconds);	// sometimes we get negative seconds for times in the future?
+	
+	if ((amt = (left / SECS_PER_REAL_DAY)) > 0) {
+		sprintf(output + strlen(output), "%s%d day%s", (any ? ", " : ""), amt, PLURAL(amt));
+		left -= (amt * SECS_PER_REAL_DAY);
+		any = TRUE;
+	}
+	if ((amt = (left / SECS_PER_REAL_HOUR)) > 0) {
+		sprintf(output + strlen(output), "%s%d hour%s", (any ? ", " : ""), amt, PLURAL(amt));
+		left -= (amt * SECS_PER_REAL_HOUR);
+		any = TRUE;
+	}
+	if ((amt = (left / SECS_PER_REAL_MIN)) > 0) {
+		sprintf(output + strlen(output), "%s%d minute%s", (any ? ", " : ""), amt, PLURAL(amt));
+		left -= (amt * SECS_PER_REAL_MIN);
+		any = TRUE;
+	}
+	if (left > 0) {
+		sprintf(output + strlen(output), "%s%d second%s", (any ? ", " : ""), left, PLURAL(left));
+		any = TRUE;
+	}
+	
+	if (!*output) {
+		strcpy(output, "0 seconds");
+	}
+	
+	return output;
 }
 
 
@@ -5292,6 +5375,26 @@ unsigned long long microtime(void) {
 * @return bool TRUE if the room has the function and passed the city check, FALSE if not.
 */
 bool room_has_function_and_city_ok(room_data *room, bitvector_t fnc_flag) {
+	vehicle_data *veh;
+	bool junk;
+	
+	// check vehicles first
+	LL_FOREACH2(ROOM_VEHICLES(room), veh, next_in_room) {
+		if (!VEH_IS_COMPLETE(veh)) {
+			continue;
+		}
+		if (VEH_FLAGGED(veh, MOVABLE_VEH_FLAGS) && IS_SET(fnc_flag, IMMOBILE_FNCS)) {
+			continue;	// exclude certain functions on movable vehicles (functions that require room data)
+		}
+		
+		if (IS_SET(VEH_FUNCTIONS(veh), fnc_flag)) {
+			if (!IS_SET(VEH_FUNCTIONS(veh), FNC_IN_CITY_ONLY) || (ROOM_OWNER(room) && get_territory_type_for_empire(room, ROOM_OWNER(room), TRUE, &junk) == TER_CITY)) {
+				return TRUE;	// vehicle allows it
+			}
+		}
+	}
+	
+	// otherwise check the room itself
 	if (!HAS_FUNCTION(room, fnc_flag) || !IS_COMPLETE(room)) {
 		return FALSE;
 	}

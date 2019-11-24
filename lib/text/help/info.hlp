@@ -1,4 +1,4 @@
-MAP LEGEND TERRAIN
+LEGEND TERRAIN
 
 These are the common map icons:
 
@@ -22,7 +22,7 @@ See HELP CROPS for the icons for various wild crops.
 You can find specific buildings in the HELP BUILDING information as well as
 the other help files listed in its "see also".
 
-See also: TOWER OF SOULS, BUILDING, CROPS
+See also: LOOK, MAP, TOWER OF SOULS, BUILDING, CROPS
 #
 ACCOUNT ACCOUNTS
 
@@ -60,7 +60,7 @@ messages for starting and stopping the action, plus any resources you get.
 The following things will speed up various chores:
 - Faster chores (bonus): dig, gather, chop, build, dismantle, harvest, plant,
    mine, mint, repair, chip, excavate, pick, scrape, fillin, saw, quarry, tan,
-   cook, smelt
+   cook, smelt, burning stumps
 - Faster walking: run
 - Finder: dig, gather, pan, pick
 - Haste: dig, gather, chop, build, dismantle, harvest, plant, mine, repair,
@@ -69,6 +69,7 @@ The following things will speed up various chores:
 - Weapon damage: chop, mine
 - Superior tool: craft, forge
 - Progression goals: excavate, prospect
+- Mastery abilities: forge, sew, crafts in general
 - Certain buildings: sew (tailor), weaving (tailor), craft (clay at potter)
 
 See also: BONUS TRAITS, FINDER, SHOVEL, TOGGLE
@@ -185,6 +186,15 @@ tutorial by typing INFO.
 
 See also: CHOP
 #
+BASE-TERRAIN-ALLOWED "BASE TERRAIN ALLOWED" "ALLOW BASE TERRAIN"
+
+When a building says it can be built facing "base-terrain-allowed", this means
+it can be built facing a tile that has something constructed on it already.
+
+For example, a quarry must be built facing a mountain tile. But because it says
+"You need to build facing: mountain, base-terrain-allowed", you can also build
+it facing a mountain tile with a mine on it.
+#
 BINDING BOUND "BIND ON EQUIP" "BIND ON PICKUP" BIND-ON-EQUIP BIND-ON-PICKUP "OBJECT BINDING" BOE BOP
 
 Some items bind to the player who acquires or equips them. This means that
@@ -287,6 +297,7 @@ Available traits:
  Extra daily bonus experience - 5 extra daily bonus experience points
  Larger inventory - Carry 5 more small items (or 2 more large items)
  Faster walking - Half the lag from normal walking
+ Extra blood - Increases vampire blood pool
 #
 BONUS-HEALING "BONUS HEALING" "HEALING ATTRIBUTE" "HEALING TRAIT"
 
@@ -338,7 +349,7 @@ The "chameleon" trait is the property of some buildings to be invisible at a
 distance. Instead of seeing the building and its owner's banner, you see only
 normal terrain.
 #
-CHANNEL CHANNELS SHOUT /OOC /NEWBIE /RECRUIT /TRADE /DEATH /GRATS /PROGRESS
+CHANNEL CHANNELS SHOUT /OOC /NEWBIE /RECRUIT /TRADE /DEATH /GRATS /PROGRESS /EVENTS
 
 Usage:  say <message>
         shout <message>
@@ -360,6 +371,7 @@ Global channels:
 &V/grats&0 - Player accomplishments
 &T/death&0 - Player death announcements
 &g/progress&0 - Empire progress announcements
+&t/events&0 - Event announcements and discussion
 &yshout&0 - an in-character channel limited to 50 map tiles distance
 &rtell&0 - this is a private channel that is generally considered OOC
 
@@ -395,9 +407,9 @@ within 20 tiles of their homes.
 
 See also: DESIGNATE, MARK, WORKFORCE
 #
-COIN COINS COINAGE CURRENCY GOLD
+COIN COINS COINAGE CURRENCY GOLD "EXCHANGE RATE"
 
-Commands:  coins
+Commands:  coins [type]
            give <number> [empire] coins <person>
            drop <number> [empire] coins
            withdraw <number> coins
@@ -430,6 +442,9 @@ You can create coins from valuable metals at a mint building. You can exchange
 coin types, or treasure for coins, at the mint or vault. You can deposit and
 withdraw coins from the vault. Coins that are left on the ground will autostore
 on claimed land, or disappear over time on unclaimed land.
+
+The 'coins' command also shows special currencies (e.g. from adventures). You
+can search for specific ones by typing the name, such as 'coins permafrost'.
 
 See also: DEPOSIT, EXCHANGE, MINT, SPLIT, WITHDRAW
 #
@@ -487,6 +502,41 @@ This command lists abilities and actions that you currently have cooling down.
 That is, things you can't use yet because the timer hasn't expired. Some
 abilities can only be used every so often, usually for reasons relating to
 game balance.
+#
+DAMAGE "DAMAGE TEXT" "DAMAGE MESSAGES" MAUL MASSACRE DECIMATE OBLITERATE ANNIHILATE MUTILATE SLAUGHTER ERADICATE **ERADICATE** LIQUIDATE **LIQUIDATE**
+
+Use the 'hit' command (or any attack ability) to initiate combat and deal
+damage to other creatures. Getting better gear will increase the a mount of
+damage you can deal. If you want to see more information about your hit rate
+and your total damage, check the 'meters'.
+
+When you deal damage with a weapon, you will see generated text based on the
+type of weapon and the amount of damage you dealt.
+
+Damage text:
+      0 damage: miss
+      1 damage: tickle
+    2-3 damage: barely
+   4-10 damage: [normal]
+  11-14 damage: hard
+  15-16 damage: very hard
+  17-20 damage: extremely hard
+  21-24 damage: maul
+  25-28 damage: massacre
+  29-32 damage: decimate
+  33-45 damage: OBLITERATE
+  46-60 damage: ANNIHILATE
+  61-75 damage: MUTILATE
+ 76-100 damage: SLAUGHTER
+101-125 damage: **ERADICATE**
+   126+ damage: **LIQUIDATE**
+
+Examples:
+  You slash the ship very hard!
+  You SLAUGHTER the pig with your chop!
+  You **LIQUIDATE** the ice sculpture with your fire!
+
+See also: CASTER DPS, DOT, HIT, MELEE DPS, METERS
 #
 DEATH DYING
 
@@ -644,6 +694,8 @@ Newbie island crops:
  &G@@@@&0  Lettuce             &goooo&0  Calabash gourds
 
 Most crops are used to make food and drink. Some, like cotton, have other uses.
+More crops come from adventures. Make sure you claim all your map tiles that
+have special crops as any non-wild crops may vanish at the end of the year.
 
 See also: CHOP, COOK, HARVEST, MILL, PICK, PLANT, TAVERN, WEAVE
 #
@@ -730,7 +782,7 @@ cooldowns.
 
 See also: COOLDOWNS
 #
-HUNGER THIRST HUNGRY THIRSTY STARVING STARVED STARVATION
+HUNGER THIRST HUNGRY THIRSTY STARVING STARVED STARVATION BLOOD-STARVED "BLOOD STARVED"
 
 Over time, you will naturally become hungry and thirsty. This has no effect
 until you accumulate 24 ingame hours' worth of hunger or thirst, at which point
@@ -739,7 +791,8 @@ stack. You will continue to accumulate hunger and thirst (making it harder to
 remove these penalties) until 50 hours have passed.
 
 Vampires with low blood pools suffer a starvation penalty identical to hunger
-and thirst.
+and thirst. They will also aggresively and uncontrollably try to bite anyone
+nearby that has blood.
 
 All timed actions, such as crafting and chores, take twice as long while you
 are hungry, thirsty, or blood-starved.
@@ -842,12 +895,15 @@ This command allows you to find out which oceans and islands lie in a given
 direction from your current location. Use this ability if you are lost at sea
 (or on land).
 
+When used on land, mapscan will also show you the first vision-blocking terrain
+in that direction. Usually this is a mountain range.
+
 Mapscan only checks every 5 tiles up to 70, then every 10 tiles up to its
 maximum distance, which is based on the size of the world map.
 
 You must have Navigation to do this.
 
-See also: SCAN, LOOK
+See also: SCAN, LOOK, MAP
 #
 MOVE MOVES "MOVE POINTS" "MOVEMENT POINTS"
 
@@ -1133,8 +1189,8 @@ mapsize.
 
 You can also scan for nearby tiles matching a given keyword, such as a crop,
 building, or vehicle name. It will scan a distance up to your mapsize. Vehicles
-can only be seen with this command if they are large enough to show up on the
-map.
+and NPCs can only be seen with this command if they are large enough to show up
+on the map.
 
 You can get extra information if you have the 'political' or 'informative'
 toggles turned on. Scanning for 'foreign' tiles will show ones owned by empires
@@ -1183,6 +1239,16 @@ A shovel can help you dig or excavate much faster. It can be made by any
 blacksmith at a forge.
 
 See also: DIG, EXCAVATE, FORGE
+#
+SINGLE-USE 1-USE ONE-USE "SINGLE USE" "1 USE" "ONE USE"
+
+Single-use items will vanish when you unequip them, or otherwise use the for
+something. One example of this include the fireballs from the Ready Fireball
+ability.
+
+Other single-use items include some adventure items that build reward
+buildings. These buildings can only be built once, and cannot be re-built if
+you dismantle them.
 #
 "SLASH CHANNELS" SLASH-CHANNELS SLASHCHANNELS / /JOIN /CHECK /LEAVE /WHO /HISTORY VC "VIRTUAL CHANNELS"
 

@@ -484,7 +484,7 @@ $n tries to hit $N who easily avoids the blow.
 #
 #
 You try to hit $N but hit yourself instead!
-$n tries to hit you but you hits $mself instead!
+$n tries to hit you but hits $mself instead!
 $n tries to hit $N but hits $mself instead!
 M
  15
@@ -955,6 +955,22 @@ Your bullet stops in midair before $N.
 A bullet from $n stops in midair before you.
 A bullet from $n stops in midair before $N.
 
+* Fire Breath
+M
+ 33
+You scorch $N with hotter and hotter fire breath until $E is blackened and dead!
+$n's fire breath burns and burns, until you succumb to the flames!
+$n scorches $N with hotter and hotter fire breath until $E is blackened and dead!
+You breathe fire at $N, but $E skillfully dodges.
+$n breathes fire at you, but you skillfully dodge.
+$n breathes fire at $N but $E dodges out of the way.
+#
+#
+#
+You breathe fire at $N, but it doesn't seem to affect $M.
+$n breathes fire fire at you, but you can barely feel it.
+$n breathes fire fire at $N, who isn't even singed.
+
 * Suffering
 M
  50
@@ -1153,21 +1169,35 @@ You shoot a bolt of fire at $N, but miss!
 $n shoots a bolt of fire from $s hand, but misses you pathetically!
 $n shoots a bolt of fire from $s hand, but misses $N!
 
-* Bleeding -- THIS IS NOW UNUSED
+* Bite attack (Vampire ability)
 M
  59
-#
-You wince in pain as blood seeps from your deep cuts.
-$N winces in pain as blood seeps from $S deep cuts.
-#
-You wince in pain as blood seeps from your deep cuts.
-$N winces in pain as blood seeps from $S deep cuts.
-#
-You wince in pain as blood seeps from your deep cuts.
-$N winces in pain as blood seeps from $S deep cuts.
-#
-You wince in pain as blood seeps from your deep cuts.
-$N winces in pain as blood seeps from $S deep cuts.
+Your fangs sink into $N's neck...
+You feel $n's fangs sink into your neck...
+$n sinks $s fangs into $N's neck...
+You gnash at $N with your fangs, but miss!
+$n gnashes at you with $s fangs, but you dodge!
+$n gnashes at $N with $s fangs, but misses!
+You lunge at $N and take a bite out of $M with your fangs!
+You shout in pain as $n takes a bite out of you with $s fangs!
+$N shouts in pain as $n takes a bite out of $M with $s fangs!
+Your fangs retreat into your gums as you try -- and fail -- to bite $N!
+$n's fangs retreat into $s gums as $e tries -- and fails -- to bite you!
+$n's fangs retreat into $s gums as $e tries -- and fails -- to bite $N!
+M
+ 59
+Your fangs sink into $N's neck...
+You feel $n's fangs sink into your neck...
+$n sinks $s fangs into $N's neck...
+You gnash at $N with your fangs, but miss!
+$n gnashes at you with $s fangs, but you dodge!
+$n gnashes at $N with $s fangs, but misses!
+You rip a chunk out of $N with your fangs!
+$n rips a chunk out of you with $s fangs!
+$n rips a chunk out of $N with $s fangs!
+Your fangs crack and chip as you try -- and fail -- to bite $N!
+$n's fangs crack and chip as $e tries -- and fails -- to bite you!
+$n's fangs crack and chip as $e tries -- and fails -- to bite $N!
 
 * Lightning Bolt
 M

@@ -237,8 +237,29 @@ of fibers are:
  tangle of vines (plant, soft, tropical, basic)
  basket of cotton (plant, soft)
  bag of wool (animal, soft)
+ bale of straw (hard, plant, basic)
+ bird feathers (animal, soft, basic)
 
 See also: COMPONENT, GATHER
+#
+FLINT FLINTS "FLINT STONE"
+
+Used for:  basic tool crafting
+Stored at:  Gravel Pit
+
+Flint is a hard, sedimentary form of quartz that has long been used for tool-
+making by people all over the world. You can dig it up almost anywhere.
+
+Flint can be used to make:
+- a handaxe (using chip)
+- a spear head (using chip)
+- a shiv (using craft)
+- flint arrows (using craft)
+- a firesteel tinderbox (using forge)
+- a road (using lay)
+- any building that requires a generic (rock) component
+
+See also: BUILD, COMPONENT, DIG, CHIP, CRAFT, FORGE, LAY, ROCK COMPONENT
 #
 FLOUR "FLOUR COMPONENT"
 
@@ -336,7 +357,8 @@ Handle (component)
 Used for:  forge, craft
 Stored in:  Utility Shed, Storage room
 
-Create a handle using the craft command.
+Create a handle (from a sapling, or a bone handle from bone) using the craft
+command.
 
 Handles are used in forging and crafting to provide a grasping surface to a
 tool or weapon. The most basic handles are made from saplings.
@@ -442,6 +464,12 @@ usually fine.
 
 Not all types of trees can be sawed into lumber.
 
+Common types of lumber are:
+ stack of lumber (basic)
+ rough boards (basic)
+ fine tropical lumber (basic)
+ stellar magewood (magic)
+
 See also: COMPONENT, CHOP, MAGEWOOD, SAW
 #
 MAGEWOOD "MAGE WOOD" "ENCHANTED TREE" "ENCHANTED FOREST" "ENCHANTED WOODS" "ENCHANTED COPSE" "CRYSTAL SEED" "PRISMATIC SEED" "STRANGE CRYSTAL SEED"
@@ -544,6 +572,11 @@ The most commonly used pillars are simple wooden logs. You can also craft bound
 wooden columns from saplings and rope if you have Basic Crafts. This may be
 useful if you're unable to get logs (for example, rough wood cannot be scraped).
 
+Common types of pillars are:
+ heavy log (basic)
+ bound wooden column (basic)
+ fine wooden pillar (basic)
+
 See also: BASIC CRAFTS, COMPONENT, LOGS
 #
 RETRIEVE
@@ -571,11 +604,12 @@ Rock (component)
 Used for:  basic crafting, basic building
 Stored at:  Gravel Pit
 
-You can find rocks by digging in the ground. They can be used to create
-weapons and as part of some larger buildings. There are multiple types of rock,
-but in most cases where you need a rock, any rock will do.
+You can find rocks by digging in the ground. They can be used as a primitive
+hammer for chipping flint, for laying roads, and as filler for many building.
+There are multiple types of rock, but in most cases where you need a (rock)
+component, any rock will do.
 
-See also: BUILD, COMPONENT, DIG, CHIP, FLINT
+See also: BUILD, COMPONENT, DIG, CHIP, LAY, FLINT
 #
 SEEDS "SEED COMPONENT" "SEEDS COMPONENT"
 
@@ -603,7 +637,8 @@ equipment. Not everything you can get from the skin command counts as a skin.
 
 You can tan some skins into leather at the Tannery.
 
-See also: SKIN COMMAND, SEWING, LEATHERWORKING, RAWHIDE STITCHING, TAN
+See also: SKIN COMMAND, SEWING, LEATHERWORKING, RAWHIDE STITCHING, TAN,
+   HUNTSMAN
 #
 SPLIT
 
@@ -725,7 +760,14 @@ Tailor.
 You can use any type of cloth if a recipe calls for a (textile), but some
 recipes may need a specific type.
 
-See also: COMPONENT, CLOTH, COTTON, HERBCLOTH WEAVING, TAILOR, WEAVE, WOOL
+Common types of textile are:
+ cotton cloth (mundane, basic)
+ wool cloth (mundane, basic)
+ llama wool cloth (mundane, basic)
+ sparkfiber cloth (magic)
+ manasilk cloth (magic)
+
+See also: COMPONENT, COTTON, HERBCLOTH WEAVING, TAILOR, WEAVE, WOOL
 #
 "TRADE COMMAND"
 
@@ -787,7 +829,7 @@ numbers will match up.
 For example, if "trade list sword" shows the item you want at number 4, then
 "trade buy 4.sword" will purchase it. You will receive the item immediately.
 
-See also: TRADE COMMAND, TRADE BUY
+See also: TRADE COMMAND
 #
 "TRADE CANCEL"
 

@@ -35,6 +35,7 @@ void clear_last_act_message(descriptor_data *desc);
 
 // locals
 struct player_slash_channel *find_on_slash_channel(char_data *ch, int id);
+bool is_ignoring(char_data *ch, char_data *victim);
 void process_add_to_channel_history(struct channel_history_data **history, char *message);
 
 
@@ -122,26 +123,89 @@ void add_to_slash_channel_history(char_data *ch, struct slash_channel *chan, cha
 
 
 /**
+* Determines if the majority of online members of an empire are ignoring the
+* victim. If there's a tie, this counts as 'ignoring'. This can be used to
+* prevent spamming with things like diplomacy.
+*
+* @param empire_data *emp The empire to check.
+* @param char_data *victim The person they might be ignoring.
+* @return bool TRUE if the majority of online members are ignoring that person.
+*/
+bool empire_is_ignoring(empire_data *emp, char_data *victim) {
+	descriptor_data *desc;
+	int is = 0, not = 0;
+	
+	LL_FOREACH(descriptor_list, desc) {
+		if (STATE(desc) != CON_PLAYING || !desc->character) {
+			continue;	// skippable
+		}
+		if (GET_LOYALTY(desc->character) != emp) {
+			continue;	// wrong empire
+		}
+		
+		// count how many online members are/not ignoring
+		if (is_ignoring(desc->character, victim)) {
+			++is;
+		}
+		else {
+			++ not;
+		}
+	}
+	
+	if (is > 0 && is >= not) {
+		return TRUE;
+	}
+	else {
+		return FALSE;
+	}
+}
+
+
+/**
+* Checks if the character is ignoring anybody on the victim's account.
+* Immortals cannot be ignored (and cannot ignore). This also counts alts, if
+* ch is ignoring at least 2 of victim's alts.
+*
 * @param char_data *ch The player to check.
 * @param char_data *victim The person talking (potentially ignored by ch).
 * @return bool TRUE if ch is ignoring victim
 */
 bool is_ignoring(char_data *ch, char_data *victim) {
-	int iter;
-	bool found = FALSE;
+	struct account_player *plr;
+	int iter, alts = 0;
 	
-	if (!REAL_NPC(ch) && !REAL_NPC(victim)) {
-		// only bother checking if neither is an immortal -- immortals cannot ignore or be ignored
-		if (!IS_IMMORTAL(REAL_CHAR(ch)) && !IS_IMMORTAL(REAL_CHAR(victim))) {
-			for (iter = 0; iter < MAX_IGNORES && !found; ++iter) {
-				if (GET_IGNORE_LIST(REAL_CHAR(ch), iter) == GET_IDNUM(REAL_CHAR(victim))) {
-					found = TRUE;
+	// shortcuts
+	if (REAL_NPC(ch) || REAL_NPC(victim)) {
+		return FALSE;
+	}
+	if (IS_IMMORTAL(REAL_CHAR(ch)) || IS_IMMORTAL(REAL_CHAR(victim))) {
+		return FALSE;
+	}
+	
+	// check everyone on the victim's account
+	LL_FOREACH(GET_ACCOUNT(REAL_CHAR(victim))->players, plr) {
+		if (!plr->player) {
+			continue;
+		}
+		
+		// compare to idnums on the ignore list
+		for (iter = 0; iter < MAX_IGNORES; ++iter) {
+			if (GET_IGNORE_LIST(REAL_CHAR(ch), iter) == plr->player->idnum) {
+				if (plr->player->idnum == GET_IDNUM(REAL_CHAR(victim))) {
+					// found the actual person
+					return TRUE;
+				}
+				else {	// found an alt
+					if (++alts >= 2) {
+						return TRUE;	// found 2 alts
+					}
 				}
 			}
 		}
 	}
 	
-	return found;
+	// not found
+	return FALSE;
 }
 
 
@@ -158,12 +222,13 @@ int is_tell_ok(char_data *ch, char_data *vict) {
 	else if (!IS_APPROVED(ch) && !IS_IMMORTAL(ch) && !IS_IMMORTAL(vict) && config_get_bool("tell_approval")) {
 		// can always tell immortals
 		send_config_msg(ch, "need_approval_string");
+		msg_to_char(ch, "You can only send tells to immortals.\r\n");
 	}
-	else if (PRF_FLAGGED(ch, PRF_NOTELL))
+	else if (PRF_FLAGGED(ch, PRF_NOTELL) && !IS_IMMORTAL(vict))
 		msg_to_char(ch, "You can't tell other people while you have notell on.\r\n");
 	else if (!REAL_NPC(vict) && !vict->desc)        /* linkless */
 		act("$E's linkless at the moment.", FALSE, ch, 0, vict, TO_CHAR | TO_SLEEP);
-	else if (PRF_FLAGGED(vict, PRF_NOTELL))
+	else if (PRF_FLAGGED(vict, PRF_NOTELL) && !IS_IMMORTAL(ch))
 		act("$E can't hear you.", FALSE, ch, 0, vict, TO_CHAR | TO_SLEEP);
 	else if (is_ignoring(ch, vict)) {
 		msg_to_char(ch, "You cannot send a tell to someone you're ignoring.\r\n");
@@ -224,8 +289,11 @@ void perform_tell(char_data *ch, char_data *vict, char *arg) {
 			add_to_channel_history(ch, CHANNEL_HISTORY_TELLS, ch->desc->last_act_message);
 		}
 	}
-
-	if (IS_AFK(vict)) {
+	
+	if (PRF_FLAGGED(vict, PRF_NOTELL)) {	// immortals can hit this point
+		act("Note: $E has tells toggled off.", FALSE, ch, 0, vict, TO_CHAR);
+	}
+	else if (IS_AFK(vict)) {
 		act("$E is AFK and may not receive your message.", FALSE, ch, 0, vict, TO_CHAR);
 	}
 
@@ -1090,7 +1158,6 @@ ACMD(do_slash_channel) {
 		strcpy(buf, arg2);
 		half_chop(buf, arg2, arg3);
 		skip_slash(arg2);
-		skip_slash(arg3);
 		
 		// list players
 		if (!*arg2 || !*arg3) {

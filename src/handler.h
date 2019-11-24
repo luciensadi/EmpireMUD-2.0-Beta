@@ -119,7 +119,7 @@ extern obj_data *create_money(empire_data *type, int amount);
 #define decrease_coins(ch, emp, amount)  increase_coins(ch, emp, -1 * amount)
 extern double exchange_coin_value(double amount, empire_data *convert_from, empire_data *convert_to);
 double exchange_rate(empire_data *from, empire_data *to);
-extern char *find_coin_arg(char *input, empire_data **emp_found, int *amount_found, bool assume_coins);
+extern char *find_coin_arg(char *input, empire_data **emp_found, int *amount_found, bool assume_coins, bool *gave_coin_type);
 extern struct coin_data *find_coin_entry(struct coin_data *list, empire_data *emp);
 extern int increase_coins(char_data *ch, empire_data *emp, int amount);
 extern const char *money_amount(empire_data *type, int amount);
@@ -149,6 +149,13 @@ extern int increase_empire_coins(empire_data *emp_gaining, empire_data *coin_emp
 void perform_abandon_room(room_data *room);
 void perform_claim_room(room_data *room, empire_data *emp);
 
+// empire production total handlers
+void add_production_total(empire_data *emp, obj_vnum vnum, int amount);
+void add_production_total_for_tag_list(struct mob_tag *list, obj_vnum vnum, int amount);
+extern int get_production_total(empire_data *emp, obj_vnum vnum);
+extern int get_production_total_component(empire_data *emp, int cmp_type, bitvector_t cmp_flags);
+void mark_production_trade(empire_data *emp, obj_vnum vnum, int imported, int exported);
+
 // empire needs handlers
 void add_empire_needs(empire_data *emp, int island, int type, int amount);
 extern struct empire_needs *get_empire_needs(empire_data *emp, int island, int type);
@@ -174,10 +181,12 @@ void join_group(char_data *ch, struct group_data *group);
 void leave_group(char_data *ch);
 
 // interaction handlers
+extern bool can_interact_room(room_data *room, int type);
 extern bool check_exclusion_set(struct interact_exclusion_data **set, char code, double percent);
 extern struct interact_exclusion_data *find_exclusion_data(struct interact_exclusion_data **set, char code);
 void free_exclusion_data(struct interact_exclusion_data *list);
 extern bool has_interaction(struct interaction_item *list, int type);
+extern bool meets_interaction_restrictions(struct interact_restriction *list, char_data *ch, empire_data *emp);
 extern bool run_global_mob_interactions(char_data *ch, char_data *mob, int type, INTERACTION_FUNC(*func));
 extern bool run_interactions(char_data *ch, struct interaction_item *run_list, int type, room_data *inter_room, char_data *inter_mob, obj_data *inter_item, INTERACTION_FUNC(*func));
 extern bool run_room_interactions(char_data *ch, room_data *room, int type, INTERACTION_FUNC(*func));

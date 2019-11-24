@@ -37,6 +37,7 @@
 *   Cooldown Handlers
 *   Currency Handlers
 *   Empire Handlers
+*   Empire Production Total Handlers
 *   Empire Needs Handlers
 *   Empire Targeting Handlers
 *   Follow Handlers
@@ -80,12 +81,14 @@ const struct wear_data_type wear_data[NUM_WEARS];
 void adjust_building_tech(empire_data *emp, room_data *room, bool add);
 EVENT_CANCEL_FUNC(cancel_room_event);
 void check_delayed_load(char_data *ch);
+void clear_obj_eq_sets(obj_data *obj);
 void extract_trigger(trig_data *trig);
 void scale_item_to_level(obj_data *obj, int level);
 
 // locals
 static void add_obj_binding(int idnum, struct obj_binding **list);
 void die_follower(char_data *ch);
+struct empire_production_total *get_production_total_entry(empire_data *emp, any_vnum vnum);
 void remove_lore_record(char_data *ch, struct lore_data *lore);
 void schedule_room_affect_expire(room_data *room, struct affected_type *af);
 
@@ -598,7 +601,8 @@ void affect_remove_room(room_data *room, struct affected_type *af) {
 	}
 	
 	if (af->expire_event) {
-		event_cancel(af->expire_event, cancel_room_expire_event);
+		dg_event_cancel(af->expire_event, cancel_room_expire_event);
+		af->expire_event = NULL;
 	}
 	
 	REMOVE_BIT(ROOM_AFF_FLAGS(room), af->bitvector);
@@ -674,6 +678,8 @@ void affect_to_room(room_data *room, struct affected_type *af) {
 	*affected_alloc = *af;
 	affected_alloc->next = ROOM_AFFECTS(room);
 	ROOM_AFFECTS(room) = affected_alloc;
+	
+	affected_alloc->expire_event = NULL;	// cannot have an event in the copied af at this point
 	
 	SET_BIT(ROOM_AFF_FLAGS(room), affected_alloc->bitvector);
 	schedule_room_affect_expire(room, affected_alloc);
@@ -1016,13 +1022,22 @@ bool room_affected_by_spell(room_data *room, any_vnum type) {
 void schedule_room_affect_expire(room_data *room, struct affected_type *af) {
 	struct room_expire_event_data *expire_data;
 	
-	if (!af->expire_event && af->duration != UNLIMITED) {
+	// check for and remove old event
+	if (af->expire_event) {
+		dg_event_cancel(af->expire_event, cancel_room_expire_event);
+		af->expire_event = NULL;
+	}
+	
+	if (af->duration != UNLIMITED) {
 		// create the event
 		CREATE(expire_data, struct room_expire_event_data, 1);
 		expire_data->room = room;
 		expire_data->affect = af;
 		
-		af->expire_event = event_create(room_affect_expire_event, (void*)expire_data, (af->duration - time(0)) * PASSES_PER_SEC);
+		af->expire_event = dg_event_create(room_affect_expire_event, (void*)expire_data, (af->duration - time(0)) * PASSES_PER_SEC);
+	}
+	else {
+		af->expire_event = NULL;	// ensure null
 	}
 }
 
@@ -1397,7 +1412,7 @@ void perform_idle_out(char_data *ch) {
 	save_char(ch, died ? NULL : IN_ROOM(ch));
 	dismiss_any_minipet(ch);
 	
-	syslog(SYS_LOGIN, GET_INVIS_LEV(ch), TRUE, "%s force-rented and extracted (idle).", GET_NAME(ch));
+	syslog(SYS_LOGIN, GET_INVIS_LEV(ch), TRUE, "%s force-rented and extracted (idle) at %s", GET_NAME(ch), IN_ROOM(ch) ? room_log_identifier(IN_ROOM(ch)) : "an unknown location");
 	
 	pause_affect_total = TRUE;	// save unnecessary processing
 	extract_all_items(ch);
@@ -2178,9 +2193,10 @@ double exchange_rate(empire_data *from, empire_data *to) {
 * @param empire_data **emp_found A place to store the found empire id, if any.
 * @param int *amount_found The numerical argument.
 * @param bool assume_coins If TRUE, the word "coins" can be omitted.
+* @param bool *gave_coin_type Optional: A variable to bind whether or not the person typed a coin type ("10 misc coins" instead of "10 coins")
 * @return char* A pointer to the remaining argument (or the full argument, if no coins).
 */
-char *find_coin_arg(char *input, empire_data **emp_found, int *amount_found, bool assume_coins) {
+char *find_coin_arg(char *input, empire_data **emp_found, int *amount_found, bool assume_coins, bool *gave_coin_type) {
 	char arg[MAX_INPUT_LENGTH];
 	char *pos, *final;
 	int amt;
@@ -2188,6 +2204,9 @@ char *find_coin_arg(char *input, empire_data **emp_found, int *amount_found, boo
 	// clear immediately
 	*emp_found = NULL;
 	*amount_found = 0;
+	if (gave_coin_type) {
+		*gave_coin_type = FALSE;
+	}
 	
 	// quick check: prevent work
 	if (!assume_coins && !strstr(input, "coin")) {
@@ -2211,6 +2230,9 @@ char *find_coin_arg(char *input, empire_data **emp_found, int *amount_found, boo
 		// no empire arg but we're done
 		*amount_found = amt;
 		*emp_found = REAL_OTHER_COIN;
+		if (gave_coin_type) {
+			*gave_coin_type = FALSE;
+		}
 		return pos;
 	}
 	
@@ -2222,6 +2244,11 @@ char *find_coin_arg(char *input, empire_data **emp_found, int *amount_found, boo
 			// no match -- no success
 			return input;
 		}
+	}
+	
+	// at this point they must have specified a type
+	if (gave_coin_type) {
+		*gave_coin_type = TRUE;
 	}
 	
 	// still here? then they provided number and empire; check that the next arg is coins
@@ -2875,9 +2902,220 @@ void perform_claim_room(room_data *room, empire_data *emp) {
 	
 	// claimed rooms are never unloadable anyway
 	if (ROOM_UNLOAD_EVENT(room)) {
-		event_cancel(ROOM_UNLOAD_EVENT(room), cancel_room_event);
+		dg_event_cancel(ROOM_UNLOAD_EVENT(room), cancel_room_event);
 		ROOM_UNLOAD_EVENT(room) = NULL;
 	}
+}
+
+
+ //////////////////////////////////////////////////////////////////////////////
+//// EMPIRE PRODUCTION TOTAL HANDLERS ////////////////////////////////////////
+
+/**
+* Marks that the empire has gathered (or produced, or traded for) an item.
+* If you are adding as the result of an import, you should call
+* mark_production_trade too.
+*
+* @param empire_data *emp Which empire.
+* @param obj_vnum vnum The item gained.
+* @param int amount How many were gained.
+*/
+void add_production_total(empire_data *emp, obj_vnum vnum, int amount) {
+	struct empire_production_total *egt;
+	
+	if (!emp || vnum == NOTHING) {
+		return;	// no work
+	}
+	
+	if ((egt = get_production_total_entry(emp, vnum))) {
+		SAFE_ADD(egt->amount, amount, 0, INT_MAX, FALSE);
+		EMPIRE_NEEDS_STORAGE_SAVE(emp) = TRUE;
+	
+		// update trackers
+		et_change_production_total(emp, vnum, amount);
+	}
+}
+
+
+/**
+* Marks an item as produced for everyone on a mob's tag list, ignoring anybody
+* whose empire has already been done (adds at most 1 per empire).
+*
+* @param struct mob_tag *list The list of mob tags.
+* @param obj_vnum vnum The item gained.
+* @param int amount How many were gained.
+*/
+void add_production_total_for_tag_list(struct mob_tag *list, obj_vnum vnum, int amount) {
+	struct mob_tag *tag;
+	char_data *plr;
+	bool done;
+	
+	// mini data type for preventing duplicates
+	struct agtftl_data {
+		any_vnum eid;
+		struct agtftl_data *next;
+	} *dat, *next_dat, *dat_list = NULL;
+	
+	if (vnum == NOTHING || !list) {
+		return;	// sanity
+	}
+	
+	for (tag = list; tag; tag = tag->next) {
+		if (!(plr = is_playing(tag->idnum))) {
+			continue;	// ignore missing players
+		}
+		if (!GET_LOYALTY(plr)) {
+			continue;	// not in an empire
+		}
+		
+		// check if already done this empire
+		done = FALSE;
+		LL_FOREACH(dat_list, dat) {
+			if (dat->eid == EMPIRE_VNUM(GET_LOYALTY(plr))) {
+				done = TRUE;
+				break;
+			}
+		}
+		if (done) {
+			continue;	// we only do each empire once
+		}
+		
+		// OK: add it
+		add_production_total(GET_LOYALTY(plr), vnum, amount);
+		
+		// and mark the empire
+		CREATE(dat, struct agtftl_data, 1);
+		dat->eid = EMPIRE_VNUM(GET_LOYALTY(plr));
+		LL_PREPEND(dat_list, dat);
+	}
+	
+	// free the data list
+	LL_FOREACH_SAFE(dat_list, dat, next_dat) {
+		free(dat);
+	}
+}
+
+
+/**
+* Gets the total count produced (or traded for) by an empire.
+*
+* @param empire_data *emp Which empire.
+* @param obj_vnum vnum The item to check
+* @return int How many the empire has ever gained.
+*/
+int get_production_total(empire_data *emp, obj_vnum vnum) {
+	struct empire_production_total *egt;
+	
+	if (!emp || vnum == NOTHING) {
+		return 0;	// no work
+	}
+	
+	HASH_FIND_INT(EMPIRE_PRODUCTION_TOTALS(emp), &vnum, egt);
+	if (egt) {
+		// ignores any that may have been exported then imported, to prevent
+		// abuse where 2 empires could constantly import/export from each other
+		return egt->amount - MAX(0, egt->imported - egt->exported);
+	}
+	else {
+		return 0;
+	}
+}
+
+
+/**
+* Gets the total count produced (or traded for) by an empire, for a component.
+*
+* @param empire_data *emp Which empire.
+* @param int cmp_type Which component type.
+* @param bitvector_t cmp_flags Any required component flags.
+* @return int How many matching items the empire has ever gained.
+*/
+int get_production_total_component(empire_data *emp, int cmp_type, bitvector_t cmp_flags) {
+	struct empire_production_total *egt, *next_egt;
+	int count = 0;
+	
+	if (!emp || cmp_type == CMP_NONE) {
+		return count;	// no work
+	}
+	
+	HASH_ITER(hh, EMPIRE_PRODUCTION_TOTALS(emp), egt, next_egt) {
+		if (!egt->proto) {
+			continue;
+		}
+		
+		if (GET_OBJ_CMP_TYPE(egt->proto) == cmp_type && (GET_OBJ_CMP_FLAGS(egt->proto) & cmp_flags) == cmp_flags) {
+			count += (egt->amount - MAX(0, egt->imported - egt->exported));
+		}
+	}
+	
+	return count;
+}
+
+
+/**
+* Finds (or creates) an empire_production_total entry, if possible.
+*
+* @param empire_data *emp The empire.
+* @param any_vnum vnum Which object vnum (must correspond to an object).
+* @return struct empire_production_total* The entry for that object, or NULL if not possible.
+*/
+struct empire_production_total *get_production_total_entry(empire_data *emp, any_vnum vnum) {
+	struct empire_production_total *egt;
+	obj_data *proto;
+	
+	if (!emp || vnum == NOTHING) {
+		return NULL;
+	}
+	
+	HASH_FIND_INT(EMPIRE_PRODUCTION_TOTALS(emp), &vnum, egt);
+	if (!egt) {
+		// ensure real obj now
+		if (!(proto = obj_proto(vnum))) {
+			return NULL;
+		}
+		
+		CREATE(egt, struct empire_production_total, 1);
+		egt->vnum = vnum;
+		egt->proto = proto;
+		HASH_ADD_INT(EMPIRE_PRODUCTION_TOTALS(emp), vnum, egt);
+	}
+	return egt;
+}
+
+
+/**
+* Marks that an empire has imported/exported a resource, which will affect how
+* totals are determined. Note that this only marks an amount as imported or
+* exported; it does not add to the production amount (imports should do this
+* separately).
+*
+* @param empire_data *emp Which empire.
+* @param obj_vnum vnum The item gained.
+* @param int imported The amount that were imported (0 or more).
+* @param int exported The amount that were exported (0 or more).
+*/
+void mark_production_trade(empire_data *emp, obj_vnum vnum, int imported, int exported) {
+	struct empire_production_total *egt;
+	
+	if (!emp || vnum == NOTHING) {
+		return;	// no work
+	}
+	
+	if ((egt = get_production_total_entry(emp, vnum))) {
+		if (imported) {
+			SAFE_ADD(egt->imported, imported, 0, INT_MAX, FALSE);
+		}
+		if (exported) {
+			SAFE_ADD(egt->exported, exported, 0, INT_MAX, FALSE);
+		}
+		EMPIRE_NEEDS_STORAGE_SAVE(emp) = TRUE;
+	}
+}
+
+
+// Simple amount-sorter for production item totals
+int sort_empire_production_totals(struct empire_production_total *a, struct empire_production_total *b) {
+	return b->amount - a->amount;
 }
 
 
@@ -3439,6 +3677,31 @@ struct help_index_element *find_help_entry(int level, const char *word) {
 //// INTERACTION HANDLERS ////////////////////////////////////////////////////
 
 /**
+* Determines if an interaction is available in the room, from any source.
+*
+* @param room_data *room The location.
+* @param int type Any INTERACT_ const.
+* @return bool TRUE if you can, FALSE if not.
+*/ 
+bool can_interact_room(room_data *room, int type) {
+	vehicle_data *veh;
+	
+	if (SECT_CAN_INTERACT_ROOM(room, type) || BLD_CAN_INTERACT_ROOM(room, type) || RMT_CAN_INTERACT_ROOM(room, type) || CROP_CAN_INTERACT_ROOM(room, type)) {
+		return TRUE;	// simple
+	}
+	
+	LL_FOREACH2(ROOM_VEHICLES(room), veh, next_in_room) {
+		if (VEH_IS_COMPLETE(veh) && has_interaction(VEH_INTERACTIONS(veh), type)) {
+			return TRUE;
+		}
+	}
+	
+	// reached end
+	return FALSE;
+}
+
+
+/**
 * Compares an interaction's chances against an exclusion set. Interactions are
 * exclusive with other interactions that share an exclusion code, and the
 * chance rolls on exclusion sets are cumulative.
@@ -3541,6 +3804,46 @@ bool has_interaction(struct interaction_item *list, int type) {
 	}
 	
 	return found;
+}
+
+
+/**
+* Validates a set of restrictions on an interaction.
+*
+* @param struct interact_restriction *list The list of restrictions to check.
+* @param char_data *ch Optional: The person trying to interact (for ability/ptech/local tech; may be NULL).
+* @param empire_data *emp Optional: The empire trying to interact (for techs; may be NULL).
+* @return bool TRUE if okay, FALSE if failed.
+*/
+bool meets_interaction_restrictions(struct interact_restriction *list, char_data *ch, empire_data *emp) {
+	struct interact_restriction *res;
+	
+	LL_FOREACH(list, res) {
+		// INTERACT_RESTRICT_x
+		switch (res->type) {
+			case INTERACT_RESTRICT_ABILITY: {
+				if (!ch || IS_NPC(ch) || !has_ability(ch, res->vnum)) {
+					return FALSE;
+				}
+				break;
+			}
+			case INTERACT_RESTRICT_PTECH: {
+				if (!ch || IS_NPC(ch) || !has_player_tech(ch, res->vnum)) {
+					return FALSE;
+				}
+				break;
+			}
+			case INTERACT_RESTRICT_TECH: {
+				if (!(ch && has_tech_available(ch, res->vnum)) && !(emp && EMPIRE_HAS_TECH(emp, res->vnum))) {
+					return FALSE;
+				}
+				break;
+			}
+			// no default: restriction does not work
+		}
+	}
+	
+	return TRUE;	// made it this far
 }
 
 
@@ -3661,13 +3964,30 @@ bool run_global_mob_interactions(char_data *ch, char_data *mob, int type, INTERA
 bool run_interactions(char_data *ch, struct interaction_item *run_list, int type, room_data *inter_room, char_data *inter_mob, obj_data *inter_item, INTERACTION_FUNC(*func)) {
 	struct interact_exclusion_data *exclusion = NULL;
 	struct interaction_item *interact;
+	struct interact_restriction *res;
 	bool success = FALSE;
 
 	for (interact = run_list; interact; interact = interact->next) {
-		if (interact->type == type && check_exclusion_set(&exclusion, interact->exclusion_code, interact->percent)) {
+		if (interact->type == type && meets_interaction_restrictions(interact->restrictions, ch, GET_LOYALTY(ch)) && check_exclusion_set(&exclusion, interact->exclusion_code, interact->percent)) {
 			if (func) {
 				// run function
 				success |= (func)(ch, interact, inter_room, inter_mob, inter_item);
+				
+				// skill gains?
+				if (!IS_NPC(ch)) {
+					LL_FOREACH(interact->restrictions, res) {
+						switch (res->type) {
+							case INTERACT_RESTRICT_ABILITY: {
+								gain_ability_exp(ch, res->vnum, 5);
+								break;
+							}
+							case INTERACT_RESTRICT_PTECH: {
+								gain_player_tech_exp(ch, res->vnum, 5);
+								break;
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -3688,10 +4008,43 @@ bool run_interactions(char_data *ch, struct interaction_item *run_list, int type
 * @return bool TRUE if any interactions ran successfully, FALSE if not.
 */
 bool run_room_interactions(char_data *ch, room_data *room, int type, INTERACTION_FUNC(*func)) {
-	bool success;
+	vehicle_data *veh;
 	crop_data *crop;
+	bool success;
+	int num;
+	
+	struct temp_veh_helper {
+		vehicle_data *veh;
+		struct temp_veh_helper *next;
+	} *list = NULL, *tvh, *next_tvh;
 	
 	success = FALSE;
+	
+	// first, build a list of vehicles that match this interaction type in the room
+	num = 0;
+	LL_FOREACH2(ROOM_VEHICLES(room), veh, next_in_room) {
+		if (VEH_IS_COMPLETE(veh) && has_interaction(VEH_INTERACTIONS(veh), type)) {
+			CREATE(tvh, struct temp_veh_helper, 1);
+			tvh->veh = veh;
+			
+			// attempt a semi-random order (randomly goes first or else last)
+			if (!number(0, num++) || !list) {
+				LL_PREPEND(list, tvh);
+			}
+			else {
+				LL_APPEND(list, tvh);
+			}
+		}
+	}
+	
+	// now, try vehicles in random order...
+	LL_FOREACH_SAFE(list, tvh, next_tvh) {
+		if (!success) {
+			success |= run_interactions(ch, VEH_INTERACTIONS(tvh->veh), type, room, NULL, NULL, func);
+		}
+		free(tvh);	// clean up
+	}
+	list = NULL;	// already empty
 	
 	// building first
 	if (!success && GET_BUILDING(room)) {
@@ -4598,6 +4951,11 @@ obj_data *fresh_copy_obj(obj_data *obj, int scale_level) {
 	
 	// preserve some flags
 	GET_OBJ_EXTRA(new) |= GET_OBJ_EXTRA(obj) & OBJ_PRESERVE_FLAGS;
+	
+	// remove preservable flags that are absent in the original
+	GET_OBJ_EXTRA(new) &= ~(OBJ_PRESERVE_FLAGS & ~GET_OBJ_EXTRA(obj));
+	
+	// always remove quality flags if it's now generic
 	if (OBJ_FLAGGED(new, OBJ_GENERIC_DROP)) {
 		REMOVE_BIT(GET_OBJ_EXTRA(new), (OBJ_HARD_DROP | OBJ_GROUP_DROP));
 	}
@@ -5253,6 +5611,11 @@ void obj_to_char(obj_data *object, char_data *ch) {
 			bind_obj_to_player(object, ch);
 		}
 		
+		// new owner?
+		if (IS_NPC(ch) || object->last_owner_id != GET_IDNUM(ch)) {
+			clear_obj_eq_sets(object);
+		}
+		
 		// set the timer here; actual rules for it are in limits.c
 		GET_AUTOSTORE_TIMER(object) = time(0);
 		
@@ -5394,8 +5757,9 @@ void obj_to_obj(obj_data *obj, obj_data *obj_to) {
 		// set the timer here; actual rules for it are in limits.c
 		GET_AUTOSTORE_TIMER(obj) = time(0);
 		
-		// clear keep now
+		// clear these now
 		REMOVE_BIT(GET_OBJ_EXTRA(obj), OBJ_KEEP);
+		clear_obj_eq_sets(obj);
 
 		obj->next_content = obj_to->contains;
 		obj_to->contains = obj;
@@ -5426,8 +5790,9 @@ void obj_to_room(obj_data *object, room_data *room) {
 			ROOM_LIGHTS(IN_ROOM(object))++;
 		}
 		
-		// clear keep now
+		// clear these now
 		REMOVE_BIT(GET_OBJ_EXTRA(object), OBJ_KEEP);
+		clear_obj_eq_sets(object);
 
 		// set the timer here; actual rules for it are in limits.c
 		GET_AUTOSTORE_TIMER(object) = time(0);
@@ -5452,8 +5817,9 @@ void obj_to_vehicle(obj_data *object, vehicle_data *veh) {
 		object->in_vehicle = veh;
 		VEH_CARRYING_N(veh) += obj_carry_size(object);
 		
-		// clear keep now
+		// clear these now
 		REMOVE_BIT(GET_OBJ_EXTRA(object), OBJ_KEEP);
+		clear_obj_eq_sets(object);
 		
 		// set the timer here; actual rules for it are in limits.c
 		VEH_LAST_MOVE_TIME(veh) = GET_AUTOSTORE_TIMER(object) = time(0);
@@ -5562,10 +5928,10 @@ obj_data *unequip_char(char_data *ch, int pos) {
 obj_data *unequip_char_to_inventory(char_data *ch, int pos) {
 	obj_data *obj = unequip_char(ch, pos);
 	
-	if (OBJ_FLAGGED(obj, OBJ_SINGLE_USE)) {
+	if (obj && OBJ_FLAGGED(obj, OBJ_SINGLE_USE)) {
 		extract_obj(obj);
 	}
-	else {
+	else if (obj) {
 		obj_to_char(obj, ch);
 		return obj;
 	}
@@ -5585,10 +5951,10 @@ obj_data *unequip_char_to_inventory(char_data *ch, int pos) {
 obj_data *unequip_char_to_room(char_data *ch, int pos) {
 	obj_data *obj = unequip_char(ch, pos);
 	
-	if (OBJ_FLAGGED(obj, OBJ_SINGLE_USE)) {
+	if (obj && OBJ_FLAGGED(obj, OBJ_SINGLE_USE)) {
 		extract_obj(obj);
 	}
-	else if (IN_ROOM(ch)) {
+	else if (obj && IN_ROOM(ch)) {
 		obj_to_room(obj, IN_ROOM(ch));
 		return obj;
 	}
@@ -6647,6 +7013,30 @@ bool meets_requirements(char_data *ch, struct req_data *list, struct instance_da
 				}
 				break;
 			}
+			case REQ_EMPIRE_PRODUCED_OBJECT: {
+				if (!GET_LOYALTY(ch) || get_production_total(GET_LOYALTY(ch), req->vnum) < req->needed) {
+					ok = FALSE;
+				}
+				break;
+			}
+			case REQ_EMPIRE_PRODUCED_COMPONENT: {
+				if (!GET_LOYALTY(ch) || get_production_total_component(GET_LOYALTY(ch), req->vnum, req->misc) < req->needed) {
+					ok = FALSE;
+				}
+				break;
+			}
+			case REQ_EVENT_RUNNING: {
+				if (!find_running_event_by_vnum(req->vnum)) {
+					ok = FALSE;
+				}
+				break;
+			}
+			case REQ_EVENT_NOT_RUNNING: {
+				if (find_running_event_by_vnum(req->vnum)) {
+					ok = FALSE;
+				}
+				break;
+			}
 			
 			// some types do not support pre-reqs
 			case REQ_KILL_MOB:
@@ -6721,7 +7111,7 @@ char *requirement_string(struct req_data *req, bool show_vnums) {
 			break;
 		}
 		case REQ_GET_COMPONENT: {
-			snprintf(output, sizeof(output), "Get component%s: %dx %s%s", PLURAL(req->needed), req->needed, vnum, component_string(req->vnum, req->misc));
+			snprintf(output, sizeof(output), "Get component%s: %dx (%s)", PLURAL(req->needed), req->needed, component_string(req->vnum, req->misc));
 			break;
 		}
 		case REQ_GET_OBJECT: {
@@ -6865,6 +7255,22 @@ char *requirement_string(struct req_data *req, bool show_vnums) {
 		}
 		case REQ_HAVE_CITY: {
 			snprintf(output, sizeof(output), "Have %d cit%s", req->needed, req->needed == 1 ? "y" : "ies");
+			break;
+		}
+		case REQ_EMPIRE_PRODUCED_OBJECT: {
+			snprintf(output, sizeof(output), "Empire has produced: %dx %s%s", req->needed, vnum, get_obj_name_by_proto(req->vnum));
+			break;
+		}
+		case REQ_EMPIRE_PRODUCED_COMPONENT: {
+			snprintf(output, sizeof(output), "Empire has produced: %dx (%s)", req->needed, component_string(req->vnum, req->misc));
+			break;
+		}
+		case REQ_EVENT_RUNNING: {
+			snprintf(output, sizeof(output), "Event is running: %s%s", vnum, get_event_name_by_proto(req->vnum));
+			break;
+		}
+		case REQ_EVENT_NOT_RUNNING: {
+			snprintf(output, sizeof(output), "Event is not running: %s%s", vnum, get_event_name_by_proto(req->vnum));
 			break;
 		}
 		default: {
@@ -7117,9 +7523,7 @@ void detach_building_from_room(room_data *room) {
 				SCRIPT_TYPES(SCRIPT(room)) |= GET_TRIG_TYPE(trig);
 			}
 		}
-		if (!TRIGGERS(SCRIPT(room))) {
-			extract_script(room, WLD_TRIGGER);
-		}
+		check_extract_script(room, WLD_TRIGGER);
 	}
 	
 	affect_total_room(room);
@@ -8134,6 +8538,7 @@ void store_unique_item(char_data *ch, obj_data *obj, empire_data *emp, room_data
 	
 	// empty/clear first
 	REMOVE_BIT(GET_OBJ_EXTRA(obj), OBJ_KEEP);
+	clear_obj_eq_sets(obj);
 	LAST_OWNER_ID(obj) = NOBODY;
 	obj->last_empire_id = NOTHING;
 	empty_obj_before_extract(obj);
@@ -8341,6 +8746,7 @@ int get_number(char **name) {
 * @param vehicle_data *veh The vehicle to extract and free.
 */
 void extract_vehicle(vehicle_data *veh) {
+	void adjust_vehicle_tech(vehicle_data *veh, bool add);
 	void empty_vehicle(vehicle_data *veh);
 	void relocate_players(room_data *room, room_data *to_room);
 	extern char_data *unharness_mob_from_vehicle(struct vehicle_attached_mob *vam, vehicle_data *veh);
@@ -8351,6 +8757,10 @@ void extract_vehicle(vehicle_data *veh) {
 	if (veh == dg_owner_veh) {
 		dg_owner_purged = 1;
 		dg_owner_veh = NULL;
+	}
+	
+	if (VEH_OWNER(veh) && IN_ROOM(veh)) {
+		adjust_vehicle_tech(veh, FALSE);
 	}
 	
 	// delete interior

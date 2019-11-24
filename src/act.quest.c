@@ -43,11 +43,11 @@ extern struct req_data *copy_requirements(struct req_data *from);
 void free_player_quests(struct player_quest *list);
 void free_quest_temp_list(struct quest_temp_list *list);
 extern struct instance_data *get_instance_by_id(any_vnum instance_id);
+void give_quest_rewards(char_data *ch, struct quest_reward *list, int reward_level, empire_data *quest_giver_emp, int instance_id);
 extern struct player_quest *is_on_quest(char_data *ch, any_vnum quest);
 void refresh_one_quest_tracker(char_data *ch, struct player_quest *pq);
 void remove_quest_items_by_quest(char_data *ch, any_vnum vnum);
 extern char *requirement_string(struct req_data *task, bool show_vnums);
-void scale_item_to_level(obj_data *obj, int level);
 
 // local prototypes
 void drop_quest(char_data *ch, struct player_quest *pq);
@@ -136,13 +136,10 @@ const char *color_by_difficulty(char_data *ch, int level) {
 * @param empire_data *giver_emp The empire of the quest-giver, if any.
 */
 void complete_quest(char_data *ch, struct player_quest *pq, empire_data *giver_emp) {
-	void clear_char_abilities(char_data *ch, any_vnum skill);
 	void extract_required_items(char_data *ch, struct req_data *list);
 	
 	quest_data *quest = quest_proto(pq->vnum);
 	struct player_completed_quest *pcq;
-	char buf[MAX_STRING_LENGTH];
-	struct quest_reward *reward;
 	any_vnum vnum;
 	int level;
 	
@@ -196,113 +193,7 @@ void complete_quest(char_data *ch, struct player_quest *pq, empire_data *giver_e
 	}
 	
 	// give rewards
-	LL_FOREACH(QUEST_REWARDS(quest), reward) {
-		// QR_x: reward the rewards
-		switch (reward->type) {
-			case QR_BONUS_EXP: {
-				msg_to_char(ch, "\tyYou gain %d bonus experience point%s!\t0\r\n", reward->amount, PLURAL(reward->amount));
-				SAFE_ADD(GET_DAILY_BONUS_EXPERIENCE(ch), reward->amount, 0, UCHAR_MAX, FALSE);
-				break;
-			}
-			case QR_COINS: {
-				empire_data *coin_emp = (reward->vnum == OTHER_COIN ? NULL : giver_emp);
-				msg_to_char(ch, "\tyYou receive %s!\t0\r\n", money_amount(coin_emp, reward->amount));
-				increase_coins(ch, coin_emp, reward->amount);
-				break;
-			}
-			case QR_CURRENCY: {
-				generic_data *gen;
-				if ((gen = find_generic(reward->vnum, GENERIC_CURRENCY))) {
-					msg_to_char(ch, "\tyYou receive %d %s!\t0\r\n", reward->amount, reward->amount != 1 ? GET_CURRENCY_PLURAL(gen) : GET_CURRENCY_SINGULAR(gen));
-					add_currency(ch, reward->vnum, reward->amount);
-				}
-				break;
-			}
-			case QR_OBJECT: {
-				obj_data *obj = NULL;
-				int iter;
-				for (iter = 0; iter < reward->amount; ++iter) {
-					obj = read_object(reward->vnum, TRUE);
-					scale_item_to_level(obj, level);
-					if (CAN_WEAR(obj, ITEM_WEAR_TAKE)) {
-						obj_to_char(obj, ch);
-					}
-					else {
-						obj_to_room(obj, IN_ROOM(ch));
-					}
-					
-					// ensure binding
-					if (!IS_NPC(ch) && OBJ_FLAGGED(obj, OBJ_BIND_FLAGS)) {
-						bind_obj_to_player(obj, ch);
-						reduce_obj_binding(obj, ch);
-					}
-					
-					load_otrigger(obj);
-				}
-				
-				if (reward->amount > 1) {
-					snprintf(buf, sizeof(buf), "\tyYou receive $p (x%d)!\t0", reward->amount);
-				}
-				else {
-					snprintf(buf, sizeof(buf), "\tyYou receive $p!\t0");
-				}
-				
-				if (obj) {
-					act(buf, FALSE, ch, obj, NULL, TO_CHAR);
-				}
-				break;
-			}
-			case QR_SET_SKILL: {
-				int val = MAX(0, MIN(CLASS_SKILL_CAP, reward->amount));
-				bool loss;
-				
-				loss = (val < get_skill_level(ch, reward->vnum));
-				set_skill(ch, reward->vnum, val);
-				
-				msg_to_char(ch, "\tyYour %s is now level %d!\t0\r\n", get_skill_name_by_vnum(reward->vnum), val);
-				
-				if (loss) {
-					clear_char_abilities(ch, reward->vnum);
-				}
-				
-				break;
-			}
-			case QR_SKILL_EXP: {
-				msg_to_char(ch, "\tyYou gain %s skill experience!\t0\r\n", get_skill_name_by_vnum(reward->vnum));
-				gain_skill_exp(ch, reward->vnum, reward->amount);
-				break;
-			}
-			case QR_SKILL_LEVELS: {
-				if (gain_skill(ch, find_skill_by_vnum(reward->vnum), reward->amount)) {
-					// sends its own message
-					// msg_to_char(ch, "Your %s is now level %d!\r\n", get_skill_name_by_vnum(reward->vnum), get_skill_level(ch, reward->vnum));
-				}
-				break;
-			}
-			case QR_QUEST_CHAIN: {
-				quest_data *start = quest_proto(reward->vnum);
-				struct instance_data *inst = get_instance_by_id(pcq->last_instance_id);
-				
-				if (start && QUEST_FLAGGED(start, QST_TUTORIAL) && PRF_FLAGGED(ch, PRF_NO_TUTORIALS)) {
-					break;	// player does not want tutorials to auto-chain
-				}
-				
-				// shows nothing if the player doesn't qualify
-				if (start && !is_on_quest(ch, reward->vnum) && char_meets_prereqs(ch, start, inst)) {
-					if (!PRF_FLAGGED(ch, PRF_COMPACT)) {
-						msg_to_char(ch, "\r\n");	// add some spacing
-					}
-					start_quest(ch, start, inst);
-				}
-				
-				break;
-			}
-			case QR_REPUTATION: {
-				gain_reputation(ch, reward->vnum, reward->amount, FALSE, TRUE);
-				break;
-			}
-		}
-	}
+	give_quest_rewards(ch, QUEST_REWARDS(quest), level, giver_emp, pq->instance_id);
 	
 	// dailies:
 	if (QUEST_FLAGGED(quest, QST_DAILY)) {
@@ -466,7 +357,7 @@ quest_data *find_local_quest_by_name(char_data *ch, char *argument, bool check_c
 				*find_inst = get_instance_by_id(pq->instance_id);
 				return quest;
 			}
-			else if (!abbrev && is_multiword_abbrev(argument, QUEST_NAME(quest))) {
+			else if (!abbrev && multi_isname(argument, QUEST_NAME(quest))) {
 				abbrev = quest;
 				abbrev_inst = get_instance_by_id(pq->instance_id);
 			}
@@ -487,7 +378,7 @@ quest_data *find_local_quest_by_name(char_data *ch, char *argument, bool check_c
 				*find_inst = inst;
 				return quest;
 			}
-			else if (!abbrev && is_multiword_abbrev(argument, QUEST_NAME(quest))) {
+			else if (!abbrev && multi_isname(argument, QUEST_NAME(quest))) {
 				abbrev = quest;
 				abbrev_inst = inst;
 			}
@@ -692,6 +583,7 @@ bool qcmd_finish_one(char_data *ch, struct player_quest *pq, bool show_errors) {
 	extern int check_finish_quest_trigger(char_data *actor, quest_data *quest, struct instance_data *inst);
 	
 	quest_data *quest = quest_proto(pq->vnum);
+	struct group_member_data *mem;
 	empire_data *giver_emp = NULL;
 	int complete, total;
 	
@@ -742,6 +634,16 @@ bool qcmd_finish_one(char_data *ch, struct player_quest *pq, bool show_errors) {
 	
 	// SUCCESS
 	complete_quest(ch, pq, giver_emp);
+	
+	// group completion
+	if (QUEST_FLAGGED(quest, QST_GROUP_COMPLETION) && GROUP(ch)) {
+		LL_FOREACH(GROUP(ch)->members, mem) {
+			if (mem->member != ch && !IS_NPC(mem->member) && IN_ROOM(mem->member) == IN_ROOM(ch) && (pq = is_on_quest(mem->member, QUEST_VNUM(quest)))) {
+				complete_quest(mem->member, pq, giver_emp);
+			}
+		}
+	}
+	
 	return TRUE;
 }
 
@@ -910,6 +812,10 @@ QCMD(qcmd_info) {
 			
 			msg_to_char(ch, "Turn in at: %s.\r\n", buf);
 		}
+		
+		if (QUEST_FLAGGED(qst, QST_GROUP_COMPLETION)) {
+			msg_to_char(ch, "Group completion: This quest will auto-complete if any member of your group completes it while you're present.\r\n");
+		}
 	}
 }
 
@@ -1010,6 +916,8 @@ QCMD(qcmd_share) {
 
 
 QCMD(qcmd_start) {
+	extern struct player_quest *is_on_quest_by_name(char_data *ch, char *argument);
+	
 	struct quest_temp_list *qtl, *quest_list = NULL;
 	struct instance_data *inst = NULL;
 	char buf[MAX_STRING_LENGTH], vstr[128];
@@ -1095,7 +1003,13 @@ QCMD(qcmd_start) {
 		free_quest_temp_list(quest_list);
 	}
 	else if (!(qst = find_local_quest_by_name(ch, argument, FALSE, TRUE, &inst))) {
-		msg_to_char(ch, "You don't see that quest here.\r\n");
+		if (is_on_quest_by_name(ch, argument)) {
+			msg_to_char(ch, "You are already on that quest.\r\n");
+		}
+		else {
+			msg_to_char(ch, "You don't see that quest here.\r\n");
+			qcmd_start(ch, "");	// list quests available here
+		}
 	}
 	else if (QUEST_FLAGGED(qst, QST_DAILY) && GET_DAILY_QUESTS(ch) >= config_get_int("dailies_per_day")) {
 		msg_to_char(ch, "You can't start any more daily quests today.\r\n");

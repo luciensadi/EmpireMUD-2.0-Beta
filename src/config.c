@@ -69,7 +69,7 @@ void save_config_system();
 //// EMPIREMUD CONFIGS ///////////////////////////////////////////////////////
 
 // slash-channels a player joins automatically upon creation (\n-terminated list)
-const char *default_channels[] = { "newbie", "ooc", "recruit", "trade", "grats", "death", "progress", "\n" };
+const char *default_channels[] = { "newbie", "ooc", "recruit", "trade", "grats", "death", "progress", "events", "\n" };
 
 
 // list of promo funcs
@@ -127,20 +127,20 @@ struct file_lookup_struct file_lookup[] = {
 	{ "syslog", LVL_CIMPL, "../syslog" },
 	{ "oldsyslog", LVL_CIMPL, "../log/syslog.old" },
 	{ "crash", LVL_CIMPL, "../syslog.CRASH" },
-	{ "config", LVL_CIMPL, "../log/config" },
+	{ "config", LVL_ASST, "../log/config" },
 	{ "abuse", LVL_CIMPL, "../log/abuse" },
-	{ "ban", LVL_CIMPL, "../log/ban" },
+	{ "ban", LVL_ASST, "../log/ban" },
 	{ "godcmds", LVL_CIMPL, "../log/godcmds" },
-	{ "validation", LVL_CIMPL, "../log/validation" },
+	{ "validation", LVL_ASST, "../log/validation" },
 	{ "death", LVL_START_IMM, "../log/rip" },
 	{ "badpw", LVL_START_IMM, "../log/badpw" },
-	{ "delete", LVL_CIMPL, "../log/delete" },
+	{ "delete", LVL_ASST, "../log/delete" },
 	{ "newplayers", LVL_START_IMM, "../log/newplayers" },
 	{ "syserr", LVL_CIMPL, "../log/syserr" },
-	{ "level", LVL_CIMPL, "../log/levels" },
-	{ "olc", LVL_CIMPL, "../log/olc" },
-	{ "diplomacy", LVL_CIMPL, "../log/diplomacy" },
-	{ "scripterr", LVL_CIMPL, "../log/scripterr" },
+	{ "level", LVL_ASST, "../log/levels" },
+	{ "olc", LVL_ASST, "../log/olc" },
+	{ "diplomacy", LVL_ASST, "../log/diplomacy" },
+	{ "scripterr", LVL_ASST, "../log/scripterr" },
 
 	// last
 	{ "\n", 0, "\n" }
@@ -151,6 +151,7 @@ struct file_lookup_struct file_lookup[] = {
 extern char *motd;
 extern char *imotd;
 extern char *info;
+extern char *news;
 
 
 // editable files, for do_tedit in act.immortal.c
@@ -158,6 +159,7 @@ struct tedit_struct tedit_option[] = {
 	{ "motd", LVL_GOD, &motd, MAX_MOTD_LENGTH, MOTD_FILE },
 	{ "imotd", LVL_GOD, &imotd, MAX_MOTD_LENGTH, IMOTD_FILE },
 	{ "info", LVL_GOD, &info, 8192, INFO_FILE },
+	{ "news", LVL_GOD, &news, 8192, NEWS_FILE },
 
 	{ "\n", 0, NULL, 0, NULL }
 };
@@ -1666,6 +1668,7 @@ void init_config_system(void) {
 	init_config(CONFIG_APPROVAL, "build_approval", CONFTYPE_BOOL, "build, upgrade, lay roads, roadsigns");
 	init_config(CONFIG_APPROVAL, "chat_approval", CONFTYPE_BOOL, "slash-channels and global channels");
 	init_config(CONFIG_APPROVAL, "craft_approval", CONFTYPE_BOOL, "all crafting commands");
+	init_config(CONFIG_APPROVAL, "event_approval", CONFTYPE_BOOL, "participate in events");
 	init_config(CONFIG_APPROVAL, "gather_approval", CONFTYPE_BOOL, "all resource gathering");
 	init_config(CONFIG_APPROVAL, "join_empire_approval", CONFTYPE_BOOL, "pledge, enroll");
 	init_config(CONFIG_APPROVAL, "manage_empire_approval", CONFTYPE_BOOL, "commands related to having an empire");
@@ -1760,6 +1763,7 @@ void init_config_system(void) {
 	init_config(CONFIG_EMPIRE, "land_min_cap", CONFTYPE_INT, "lowest possible claim cap, to prevent very low numbers");
 	init_config(CONFIG_EMPIRE, "land_outside_city_modifier", CONFTYPE_DOUBLE, "portion of land that can be in the outskirts area of cities");
 	init_config(CONFIG_EMPIRE, "building_population_timer", CONFTYPE_INT, "game hours per citizen move-in");
+	init_config(CONFIG_EMPIRE, "frontier_timeout", CONFTYPE_INT, "after this many days, all frontier territory is lost; 0 to disable this");
 	init_config(CONFIG_EMPIRE, "time_to_empire_delete", CONFTYPE_INT, "weeks until an empire is deleted");
 	init_config(CONFIG_EMPIRE, "time_to_empire_emptiness", CONFTYPE_INT, "weeks until NPCs don't spawn");
 	init_config(CONFIG_EMPIRE, "member_timeout_newbie", CONFTYPE_INT, "days until newbie times out");

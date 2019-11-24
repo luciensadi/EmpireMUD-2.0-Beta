@@ -491,7 +491,7 @@ switch %random.4%
     %echo% You barely dodge a burst of flames from the statue!
   break
   case 4
-    %echo% Smoke bellows from the statue!
+    %echo% Smoke billows from the statue!
   break
 done
 ~
@@ -612,7 +612,7 @@ else
   %send% %actor% &r%self.name% bursts from the swampy ground beneath your feet, sending you flying!
   %send% %actor% %self.name% bursts from the swampy ground beneath %actor.name%'s feet, sending %actor.himher% flying!
   %damage% %actor% 200 physical
-  dg_affect #12957 %actor% HARD-STUNNED on 10
+  dg_affect #10957 %actor% HARD-STUNNED on 10
 end
 dg_affect #10959 %self% off
 ~
@@ -1021,7 +1021,7 @@ switch %random.2%
     %echoaround% %actor% %self.name% withdraws a small dagger and hurls it at %actor.name%!
     %echoaround% %actor% The dagger hits %actor.himher% in the shoulder, drawing blood!
     %damage% %actor% 50 physical
-    %dot% #10985 %actor% 100 15
+    %dot% #10985 %actor% 100 15 physical
   break
 done
 ~
@@ -1266,6 +1266,9 @@ else
 end
 dg_affect #3021 %self% RESIST-MAGICAL 1 35
 wait 1 sec
+if !%actor% || !%self.fighting%
+  halt
+end
 %send% %actor% &r%self.name% pulls out a gnarled wooden staff and smacks you over the head with it!
 %echoaround% %actor% %self.name% pulls out a gnarled wooden staff and smacks %actor.name% over the head with it!
 %damage% %actor% 25 physical

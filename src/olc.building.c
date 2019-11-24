@@ -590,6 +590,197 @@ void olc_delete_building(char_data *ch, bld_vnum vnum) {
 
 
 /**
+* Searches properties of buildings.
+*
+* @param char_data *ch The person searching.
+* @param char *argument The argument they entered.
+*/
+void olc_fullsearch_building(char_data *ch, char *argument) {
+	char buf[MAX_STRING_LENGTH], line[MAX_STRING_LENGTH], type_arg[MAX_INPUT_LENGTH], val_arg[MAX_INPUT_LENGTH], find_keywords[MAX_INPUT_LENGTH];
+	int count;
+	
+	char only_icon[MAX_INPUT_LENGTH], only_commands[MAX_INPUT_LENGTH];
+	bitvector_t only_designate = NOBITS, only_flags = NOBITS, only_functions = NOBITS;
+	bitvector_t find_interacts = NOBITS, not_flagged = NOBITS, found_interacts = NOBITS;
+	bitvector_t only_affs = NOBITS;
+	int only_cits = NOTHING, cits_over = NOTHING, cits_under = NOTHING;
+	int only_fame = NOTHING, fame_over = NOTHING, fame_under = NOTHING;
+	int only_hitpoints = NOTHING, hitpoints_over = NOTHING, hitpoints_under = NOTHING;
+	int only_military = NOTHING, military_over = NOTHING, military_under = NOTHING;
+	int only_rooms = NOTHING, rooms_over = NOTHING, rooms_under = NOTHING;
+	
+	struct interaction_item *inter;
+	bld_data *bld, *next_bld;
+	size_t size;
+	
+	*only_icon = '\0';
+	*only_commands = '\0';
+	
+	if (!*argument) {
+		msg_to_char(ch, "See HELP BEDIT FULLSEARCH for syntax.\r\n");
+		return;
+	}
+	
+	// process argument
+	*find_keywords = '\0';
+	while (*argument) {
+		// figure out a type
+		argument = any_one_arg(argument, type_arg);
+		
+		if (!strcmp(type_arg, "-")) {
+			continue;	// just skip stray dashes
+		}
+		
+		FULLSEARCH_FLAGS("affects", only_affs, room_aff_bits)
+		FULLSEARCH_INT("citizens", only_cits, 0, INT_MAX)
+		FULLSEARCH_INT("citizensover", cits_over, 0, INT_MAX)
+		FULLSEARCH_INT("citizensunder", cits_under, 0, INT_MAX)
+		FULLSEARCH_STRING("commands", only_commands)
+		FULLSEARCH_FLAGS("designate", only_designate, designate_flags)
+		FULLSEARCH_INT("fame", only_fame, 0, INT_MAX)
+		FULLSEARCH_INT("fameover", fame_over, 0, INT_MAX)
+		FULLSEARCH_INT("fameunder", fame_under, 0, INT_MAX)
+		FULLSEARCH_FLAGS("flags", only_flags, bld_flags)
+		FULLSEARCH_FLAGS("flagged", only_flags, bld_flags)
+		FULLSEARCH_FLAGS("unflagged", not_flagged, bld_flags)
+		FULLSEARCH_FLAGS("functions", only_functions, function_flags)
+		FULLSEARCH_STRING("icon", only_icon)
+		FULLSEARCH_FLAGS("interaction", find_interacts, interact_types)
+		FULLSEARCH_INT("hitpoints", only_hitpoints, 0, INT_MAX)
+		FULLSEARCH_INT("hitpointsover", hitpoints_over, 0, INT_MAX)
+		FULLSEARCH_INT("hitpointsunder", hitpoints_under, 0, INT_MAX)
+		FULLSEARCH_INT("rooms", only_rooms, 0, INT_MAX)
+		FULLSEARCH_INT("roomsover", rooms_over, 0, INT_MAX)
+		FULLSEARCH_INT("roomsunder", rooms_under, 0, INT_MAX)
+		FULLSEARCH_INT("military", only_military, 0, INT_MAX)
+		FULLSEARCH_INT("militaryover", military_over, 0, INT_MAX)
+		FULLSEARCH_INT("militaryunder", military_under, 0, INT_MAX)
+		
+		else {	// not sure what to do with it? treat it like a keyword
+			sprintf(find_keywords + strlen(find_keywords), "%s%s", *find_keywords ? " " : "", type_arg);
+		}
+		
+		// prepare for next loop
+		skip_spaces(&argument);
+	}
+	
+	size = snprintf(buf, sizeof(buf), "Building fullsearch: %s\r\n", find_keywords);
+	count = 0;
+	
+	// okay now look up items
+	HASH_ITER(hh, building_table, bld, next_bld) {
+		if (only_affs != NOBITS && (GET_BLD_BASE_AFFECTS(bld) & only_affs) != only_affs) {
+			continue;
+		}
+		if (only_cits != NOTHING && GET_BLD_CITIZENS(bld) != only_cits) {
+			continue;
+		}
+		if (cits_over != NOTHING && GET_BLD_CITIZENS(bld) < cits_over) {
+			continue;
+		}
+		if (cits_under != NOTHING && (GET_BLD_CITIZENS(bld) > cits_under || GET_BLD_CITIZENS(bld) == 0)) {
+			continue;
+		}
+		if (only_designate != NOBITS && (GET_BLD_DESIGNATE_FLAGS(bld) & only_designate) != only_designate) {
+			continue;
+		}
+		if (only_fame != NOTHING && GET_BLD_FAME(bld) != only_fame) {
+			continue;
+		}
+		if (fame_over != NOTHING && GET_BLD_FAME(bld) < fame_over) {
+			continue;
+		}
+		if (fame_under != NOTHING && (GET_BLD_FAME(bld) > fame_under || GET_BLD_FAME(bld) == 0)) {
+			continue;
+		}
+		if (not_flagged != NOBITS && IS_SET(GET_BLD_FLAGS(bld), not_flagged)) {
+			continue;
+		}
+		if (only_flags != NOBITS && (GET_BLD_FLAGS(bld) & only_flags) != only_flags) {
+			continue;
+		}
+		if (only_functions != NOBITS && (GET_BLD_FUNCTIONS(bld) & only_functions) != only_functions) {
+			continue;
+		}
+		if (only_hitpoints != NOTHING && GET_BLD_MAX_DAMAGE(bld) != only_hitpoints) {
+			continue;
+		}
+		if (hitpoints_over != NOTHING && GET_BLD_MAX_DAMAGE(bld) < hitpoints_over) {
+			continue;
+		}
+		if (hitpoints_under != NOTHING && GET_BLD_MAX_DAMAGE(bld) > hitpoints_under) {
+			continue;
+		}
+		if (*only_icon && !GET_BLD_ICON(bld)) {
+			continue;
+		}
+		if (*only_icon && !strstr(only_icon, GET_BLD_ICON(bld)) && !strstr(only_icon, strip_color(GET_BLD_ICON(bld)))) {
+			continue;
+		}
+		if (*only_commands && !GET_BLD_COMMANDS(bld)) {
+			continue;
+		}
+		if (*only_commands && !multi_isname(only_commands, GET_BLD_COMMANDS(bld))) {
+			continue;
+		}
+		if (find_interacts) {	// look up its interactions
+			found_interacts = NOBITS;
+			LL_FOREACH(GET_BLD_INTERACTIONS(bld), inter) {
+				found_interacts |= BIT(inter->type);
+			}
+			if ((find_interacts & found_interacts) != find_interacts) {
+				continue;
+			}
+		}
+		if (only_military != NOTHING && GET_BLD_MILITARY(bld) != only_military) {
+			continue;
+		}
+		if (military_over != NOTHING && GET_BLD_MILITARY(bld) < military_over) {
+			continue;
+		}
+		if (military_under != NOTHING && (GET_BLD_MILITARY(bld) > military_under || GET_BLD_MILITARY(bld) == 0)) {
+			continue;
+		}
+		if (only_rooms != NOTHING && GET_BLD_EXTRA_ROOMS(bld) != only_rooms) {
+			continue;
+		}
+		if (rooms_over != NOTHING && GET_BLD_EXTRA_ROOMS(bld) < rooms_over) {
+			continue;
+		}
+		if (rooms_under != NOTHING && (GET_BLD_EXTRA_ROOMS(bld) > rooms_under || GET_BLD_EXTRA_ROOMS(bld) == 0)) {
+			continue;
+		}
+
+		if (*find_keywords && !multi_isname(find_keywords, GET_BLD_NAME(bld)) && !multi_isname(find_keywords, GET_BLD_TITLE(bld)) && !multi_isname(find_keywords, GET_BLD_DESC(bld)) && !search_extra_descs(find_keywords, GET_BLD_EX_DESCS(bld))) {
+			continue;
+		}
+		
+		// show it
+		snprintf(line, sizeof(line), "[%5d] %s\r\n", GET_BLD_VNUM(bld), GET_BLD_NAME(bld));
+		if (strlen(line) + size < sizeof(buf)) {
+			size += snprintf(buf + size, sizeof(buf) - size, "%s", line);
+			++count;
+		}
+		else {
+			size += snprintf(buf + size, sizeof(buf) - size, "OVERFLOW\r\n");
+			break;
+		}
+	}
+	
+	if (count > 0 && (size + 14) < sizeof(buf)) {
+		size += snprintf(buf + size, sizeof(buf) - size, "(%d buildings)\r\n", count);
+	}
+	else if (count == 0) {
+		size += snprintf(buf + size, sizeof(buf) - size, " none\r\n");
+	}
+	
+	if (ch->desc) {
+		page_string(ch->desc, buf, TRUE);
+	}
+}
+
+
+/**
 * Searches for all uses of a building and displays them.
 *
 * @param char_data *ch The player.
@@ -758,7 +949,6 @@ void save_olc_building(descriptor_data *desc) {
 
 	bld_data *proto, *bdg = GET_OLC_BUILDING(desc);
 	bld_vnum vnum = GET_OLC_VNUM(desc);
-	struct interaction_item *interact;
 	struct trig_proto_list *trig;
 	struct spawn_info *spawn;
 	struct quest_lookup *ql;
@@ -791,10 +981,7 @@ void save_olc_building(descriptor_data *desc) {
 		GET_BLD_SPAWNS(proto) = spawn->next;
 		free(spawn);
 	}
-	while ((interact = GET_BLD_INTERACTIONS(proto))) {
-		GET_BLD_INTERACTIONS(proto) = interact->next;
-		free(interact);
-	}
+	free_interactions(&GET_BLD_INTERACTIONS(proto));
 	while ((trig = GET_BLD_SCRIPTS(proto))) {
 		GET_BLD_SCRIPTS(proto) = trig->next;
 		free(trig);
@@ -977,15 +1164,12 @@ void olc_show_building(char_data *ch) {
 
 	if (!is_room) {
 		sprintf(buf + strlen(buf), "<%shitpoints\t0> %d\r\n", OLC_LABEL_VAL(GET_BLD_MAX_DAMAGE(bdg), 1), GET_BLD_MAX_DAMAGE(bdg));
-		sprintf(buf + strlen(buf), "<%sfame\t0> %d\r\n", OLC_LABEL_VAL(GET_BLD_FAME(bdg), 0), GET_BLD_FAME(bdg));
 		sprintf(buf + strlen(buf), "<%srooms\t0> %d\r\n", OLC_LABEL_VAL(GET_BLD_EXTRA_ROOMS(bdg), 0), GET_BLD_EXTRA_ROOMS(bdg));
 	}
-	
+
+	sprintf(buf + strlen(buf), "<%sfame\t0> %d\r\n", OLC_LABEL_VAL(GET_BLD_FAME(bdg), 0), GET_BLD_FAME(bdg));	
 	sprintf(buf + strlen(buf), "<%scitizens\t0> %d\r\n", OLC_LABEL_VAL(GET_BLD_CITIZENS(bdg), 0), GET_BLD_CITIZENS(bdg));
-	
-	if (!is_room) {
-		sprintf(buf + strlen(buf), "<%smilitary\t0> %d\r\n", OLC_LABEL_VAL(GET_BLD_MILITARY(bdg), 0), GET_BLD_MILITARY(bdg));
-	}
+	sprintf(buf + strlen(buf), "<%smilitary\t0> %d\r\n", OLC_LABEL_VAL(GET_BLD_MILITARY(bdg), 0), GET_BLD_MILITARY(bdg));
 	
 	sprintf(buf + strlen(buf), "<%sartisan\t0> [%d] %s\r\n", OLC_LABEL_VAL(GET_BLD_ARTISAN(bdg), NOTHING), GET_BLD_ARTISAN(bdg), GET_BLD_ARTISAN(bdg) == NOTHING ? "none" : get_mob_name_by_proto(GET_BLD_ARTISAN(bdg)));
 	
@@ -1048,9 +1232,9 @@ void olc_show_building(char_data *ch) {
 
 
 /**
-* Displays the interactions data from a given list.
+* Displays the relationship data from a given list.
 *
-* @param struct interaction_item *list Pointer to the start of a list of interactions.
+* @param struct bld_relation *list Pointer to the start of a list of relations.
 * @param char *save_buffer A buffer to store the result to.
 */
 void get_bld_relations_display(struct bld_relation *list, char *save_buffer) {
@@ -1169,13 +1353,7 @@ OLC_MODULE(bedit_extrarooms) {
 
 OLC_MODULE(bedit_fame) {
 	bld_data *bdg = GET_OLC_BUILDING(ch->desc);
-	
-	if (IS_SET(GET_BLD_FLAGS(bdg), BLD_ROOM)) {
-		msg_to_char(ch, "You can't set that on a ROOM.\r\n");
-	}
-	else {
-		GET_BLD_FAME(bdg) = olc_process_number(ch, argument, "fame", "fame", -1000, 1000, GET_BLD_FAME(bdg));
-	}
+	GET_BLD_FAME(bdg) = olc_process_number(ch, argument, "fame", "fame", -1000, 1000, GET_BLD_FAME(bdg));
 }
 
 
@@ -1230,13 +1408,7 @@ OLC_MODULE(bedit_interaction) {
 
 OLC_MODULE(bedit_military) {
 	bld_data *bdg = GET_OLC_BUILDING(ch->desc);
-	
-	if (IS_SET(GET_BLD_FLAGS(bdg), BLD_ROOM)) {
-		msg_to_char(ch, "You can't set that on a ROOM.\r\n");
-	}
-	else {
-		GET_BLD_MILITARY(bdg) = olc_process_number(ch, argument, "military", "military", 0, 1000, GET_BLD_MILITARY(bdg));
-	}
+	GET_BLD_MILITARY(bdg) = olc_process_number(ch, argument, "military", "military", 0, 1000, GET_BLD_MILITARY(bdg));
 }
 
 

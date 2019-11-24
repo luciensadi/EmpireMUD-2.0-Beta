@@ -68,7 +68,7 @@ if %arg% != pet
 end
 if (%self.master% && %self.master% == %actor%)
   %send% %actor% You dismiss %self.name%.
-  %echoaround %actor% %actor.name% dismisses %self.name%.
+  %echoaround% %actor% %actor.name% dismisses %self.name%.
   %purge% %self%
 else
   if %arg% == pet
@@ -98,6 +98,35 @@ if %count% < 1
   %purge% %self%
 end
 ~
+#9910
+Use: Summon Mob / Mount Whistle~
+1 c 2
+use~
+* use <self>: loads mob vnum val0 and purges self (single-use)
+if %actor.obj_target(%arg%)% != %self%
+  return 0
+  halt
+end
+if (%actor.position% != Standing)
+  %send% %actor% You can't do that right now.
+  halt
+end
+if !%actor.canuseroom_member%
+  %send% %actor% You can't use %self.shortdesc% here because someone else owns this location.
+  halt
+end
+%load% m %self.val0%
+set mob %self.room.people%
+if (%mob% && %mob.vnum% == %self.val0%)
+  %send% %actor% You use %self.shortdesc% and %mob.name% appears!
+  %echoaround% %actor% %actor.name% uses %self.shortdesc% and %mob.name% appears!
+  nop %mob.unlink_instance%
+else
+  %send% %actor% You use %self.shortdesc% but nothing happens.
+  %echoaround% %actor% %actor.name% uses %self.shortdesc% but nothing happens.
+end
+%purge% %self%
+~
 #9926
 Heisenbug!~
 0 btw 25
@@ -115,6 +144,40 @@ else
   %echo% %self.name% vanishes into thin air.
   dg_affect %self% !SEE on -1
   dg_affect %self% SNEAK on -1
+end
+~
+#9999
+Iterative mini-pet reward~
+1 c 2
+use~
+set pet_found 0
+set vnum 9900
+while !%pet_found%
+  if %vnum% >= 9923
+    %send% %actor% You already have all the mini-pets %self.shortdesc% can provide!
+    %send% %actor% Keep it for now, and pester Yvain to add more.
+    halt
+  elseif %vnum% == 9919 || %actor.has_minipet(%vnum%)%
+    eval vnum %vnum%+1
+  else
+    set pet_found %vnum%
+  end
+done
+if %pet_found%
+  %load% mob %pet_found%
+  set mob %self.room.people%
+  if %mob.vnum% != %pet_found%
+    * Uh-oh.
+    %echo% Something went horribly wrong while granting a mini-pet. Please bug-report this error.
+    halt
+  end
+  set mob_string %mob.name%
+  %purge% %mob%
+  %send% %actor% You open %self.shortdesc% and find a whistle inside!
+  %send% %actor% You gain '%mob_string%' as a mini-pet. Use the minipets command to summon it.
+  %echoaround% %actor% %actor.name% opens %self.shortdesc% and takes %mob_string% whistle out.
+  nop %actor.add_minipet(%vnum%)%
+  %purge% %self%
 end
 ~
 $

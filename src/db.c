@@ -108,6 +108,12 @@ double empire_score_average[NUM_SCORES];
 struct trading_post_data *trading_list = NULL;	// global LL of trading post stuff
 bool check_delayed_refresh = FALSE;	// triggers multiple refreshes
 
+// events
+event_data *event_table = NULL;	// global hash table (hh)
+int top_event_id = 0;	// highest unique id used
+struct event_running_data *running_events = NULL;	// list of active events
+bool events_need_save = FALSE;	// triggers a save on running_events
+
 // factions
 faction_data *faction_table = NULL;	// main hash (hh)
 faction_data *sorted_factions = NULL;	// alpha hash (sorted_hh)
@@ -166,6 +172,7 @@ int top_idnum = 0;	// highest idnum in use
 int top_account_id = 0;  // highest account number in use, determined during startup
 struct group_data *group_list = NULL;	// global LL of groups
 bool pause_affect_total = FALSE;	// helps prevent unnecessary calls to affect_total
+int max_inventory_size = 25;	// records how high inventories go right now (for script safety)
 
 // progress
 progress_data *progress_table = NULL;	// hashed by vnum, sorted by vnum
@@ -206,6 +213,7 @@ char *wizlist = NULL;	// list of higher gods
 char *godlist = NULL;	// list of peon gods
 char *handbook = NULL;	// handbook for new immortals
 char *policies = NULL;	// policies page
+char *news = NULL;	// news for players
 
 // tips of the day system
 char **tips_of_the_day = NULL;	// array of tips
@@ -273,6 +281,7 @@ struct db_boot_info_type db_boot_info[NUM_DB_BOOT_TYPES] = {
 	{ GEN_PREFIX, GEN_SUFFIX, TRUE },	// DB_BOOT_GEN
 	{ SHOP_PREFIX, SHOP_SUFFIX, TRUE },	// DB_BOOT_SHOP
 	{ PRG_PREFIX, PRG_SUFFIX, TRUE },	// DB_BOOT_PRG
+	{ EVT_PREFIX, EVT_SUFFIX, TRUE },	// DB_BOOT_EVT
 };
 
 
@@ -340,6 +349,7 @@ void boot_db(void) {
 	file_to_string_alloc(POLICIES_FILE, &policies);
 	file_to_string_alloc(HANDBOOK_FILE, &handbook);
 	file_to_string_alloc(SCREDITS_FILE, &CREDIT_MESSG);
+	file_to_string_alloc(NEWS_FILE, &news);
 	load_intro_screens();
 
 	// Load the world!
@@ -465,11 +475,13 @@ void boot_world(void) {
 	void load_empire_storage();
 	void load_instances();
 	void load_islands();
+	void load_running_events_file();
 	void load_world_map_from_file();
 	void number_and_count_islands(bool reset);
 	void read_ability_requirements();
 	void renum_world();
 	void setup_start_locations();
+	void verify_running_events();
 	extern int sort_abilities_by_data(ability_data *a, ability_data *b);
 	extern int sort_archetypes_by_data(archetype_data *a, archetype_data *b);
 	extern int sort_augments_by_data(augment_data *a, augment_data *b);
@@ -576,6 +588,9 @@ void boot_world(void) {
 	log("Loading empire progression.");
 	index_boot(DB_BOOT_PRG);
 	
+	log("Loading events.");
+	index_boot(DB_BOOT_EVT);
+	
 	log("Loading socials.");
 	index_boot(DB_BOOT_SOC);
 	
@@ -589,6 +604,9 @@ void boot_world(void) {
 	log("Loading daily quest cycles.");
 	load_daily_quest_file();
 	
+	log("Loading active events.");
+	load_running_events_file();
+	
 	// check for bad data
 	log("Verifying data.");
 	check_abilities();
@@ -598,6 +616,7 @@ void boot_world(void) {
 	check_skills();
 	check_for_bad_buildings();
 	check_for_bad_sectors();
+	verify_running_events();
 	read_ability_requirements();
 	check_triggers();
 	
@@ -1689,6 +1708,8 @@ void clear_char(char_data *ch) {
 	MOB_DYNAMIC_NAME(ch) = NOTHING;
 	MOB_PURSUIT_LEASH_LOC(ch) = NOWHERE;
 	GET_ROPE_VNUM(ch) = NOTHING;
+	
+	ch->customized = FALSE;
 }
 
 
@@ -1925,6 +1946,8 @@ const char *versions_list[] = {
 	"b5.45",
 	"b5.47",
 	"b5.48",
+	"b5.58",
+	"b5.60",
 	"\n"	// be sure the list terminates with \n
 };
 
@@ -3392,7 +3415,7 @@ void b5_47_mine_update(void) {
 	
 	// clear mines
 	LL_FOREACH(land_map, tile) {
-		if (!(room = real_real_room(tile->vnum)) || !HAS_FUNCTION(room, FNC_MINE)) {
+		if (!(room = real_real_room(tile->vnum)) || !room_has_function_and_city_ok(room, FNC_MINE)) {
 			remove_extra_data(&tile->shared->extra_data, ROOM_EXTRA_MINE_GLB_VNUM);
 			remove_extra_data(&tile->shared->extra_data, ROOM_EXTRA_MINE_AMOUNT);
 			remove_extra_data(&tile->shared->extra_data, ROOM_EXTRA_PROSPECT_EMPIRE);
@@ -3431,6 +3454,59 @@ void b5_48_rope_update(void) {
 	
 	if (any) {
 		save_whole_world();
+	}
+}
+
+
+// tracks current empire einv as "gathered items" to retroactively set gather totals
+void b5_58_gather_totals(void) {
+	void save_marked_empires();
+	
+	struct empire_island *isle, *next_isle;
+	struct empire_storage_data *store, *next_store;
+	empire_data *emp, *next_emp;
+	
+	log("Applying b5.58 update to empire gather totals...");
+	
+	// each empire
+	HASH_ITER(hh, empire_table, emp, next_emp) {
+		// each island
+		HASH_ITER(hh, EMPIRE_ISLANDS(emp), isle, next_isle) {
+			// storage
+			HASH_ITER(hh, isle->store, store, next_store) {
+				add_production_total(emp, store->vnum, store->amount);
+			}
+		}
+		
+		EMPIRE_NEEDS_STORAGE_SAVE(emp) = TRUE;
+	}
+	
+	save_marked_empires();
+}
+
+
+// add new channel
+PLAYER_UPDATE_FUNC(b5_60_update_players) {
+	extern struct slash_channel *create_slash_channel(char *name);
+	extern struct player_slash_channel *find_on_slash_channel(char_data *ch, int id);
+	extern struct slash_channel *find_slash_channel_by_name(char *name, bool exact);
+	
+	struct player_slash_channel *slash;
+	struct slash_channel *chan;
+	int iter;
+	
+	char *to_join[] = { "events", "\n" };
+	
+	for (iter = 0; *to_join[iter] != '\n'; ++iter) {
+		if (!(chan = find_slash_channel_by_name(to_join[iter], TRUE))) {
+			chan = create_slash_channel(to_join[iter]);
+		}
+		if (!find_on_slash_channel(ch, chan->id)) {
+			CREATE(slash, struct player_slash_channel, 1);
+			slash->next = GET_SLASH_CHANNELS(ch);
+			GET_SLASH_CHANNELS(ch) = slash;
+			slash->id = chan->id;
+		}
 	}
 }
 
@@ -3705,6 +3781,13 @@ void check_version(void) {
 		}
 		if (MATCH_VERSION("b5.48")) {
 			b5_48_rope_update();
+		}
+		if (MATCH_VERSION("b5.58")) {
+			b5_58_gather_totals();
+		}
+		if (MATCH_VERSION("b5.60")) {
+			log("Applying b5.60 channel update to players...");
+			update_all_players(NULL, b5_60_update_players);
 		}
 	}
 	

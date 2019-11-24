@@ -11,10 +11,12 @@ branches. The hut itself looks as though it could be dismantled with a
 moment's notice and moved to another location. It also doesn't seem to offer
 much protection against the elements.
 ~
+F
+d
 R
 1002 1 5 0
 R
-7 2 1 1048848
+1010 1 5 0
 S
 #5101
 Cabin~
@@ -28,10 +30,12 @@ trees from the forest and seems much stronger than the smaller huts found
 elsewhere. The cabin is also more permanent than the huts, it can't be taken
 down. It is, however, still susceptible to fire.
 ~
+F
+d
 R
 1002 1 5 0
 R
-7 2 1 1048848
+1010 1 5 0
 S
 #5102
 Small House~
@@ -46,9 +50,9 @@ here than outside because the better construction traps heat. Even the ground
 is planked with wood to trap in heat.
 ~
 R
-19 1 1 0
-R
 1003 1 5 0
+R
+1010 1 5 0
 S
 #5103
 Mud Hut~
@@ -61,10 +65,12 @@ D
 of mud and rocks and designed to withstand heavy desert heat. It can't be
 burned down, but provides little defense against invaders.
 ~
+F
+d
 R
 1000 1 5 0
 R
-7 2 1 1048848
+1010 1 5 0
 S
 #5104
 Pueblo~
@@ -81,7 +87,7 @@ pueblos can be very large.
 R
 1002 1 5 0
 R
-21 1 1 0
+1010 1 5 0
 S
 #5105
 Cliff Dwelling~
@@ -96,14 +102,14 @@ magnitude and design. In fact, it is nearly indestructible, save for an act
 of god.
 ~
 R
-19 1 1 0
-R
 1003 1 5 0
+R
+1010 1 5 0
 S
 #5106
 Well~
 A Well~
-&0(&c~~&0)~
+&t(&c~~&t)~
 4 0 d 0
 0 0 0 -1
 C
@@ -111,19 +117,23 @@ drink, fill~
 F
 F
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 240 6.00 bc
 M
@@ -283,7 +293,7 @@ A Wooden Gate~
 R
 1003 1 5 0
 R
-25 2 1 1048576
+25 1 1 1048576
 S
 #5114
 Cannery~
@@ -302,7 +312,7 @@ assorted fruit. Some empty jars have been left on one of the tables.
 R
 1002 1 5 0
 R
-7 1 1 1048848
+1010 1 5 0
 S
 #5115
 Foundry~
@@ -322,7 +332,7 @@ v
 R
 1009 1 5 0
 R
-7 1 1 1048848
+1010 1 5 0
 S
 #5116
 Granary~
@@ -343,7 +353,7 @@ corn kernels.
 R
 1002 1 5 0
 R
-7 1 1 1048848
+1010 1 5 0
 S
 #5117
 Gravel Pit~
@@ -362,9 +372,7 @@ are scattered all around the place. A pick that's so worn it looks more like
 a mace is lying at your feet.
 ~
 R
-1002 1 5 0
-R
-7 1 1 1048848
+1002 2 5 0
 S
 #5118
 Lumber Yard~
@@ -384,9 +392,7 @@ scattered around your feet.
 F
 t
 R
-1002 1 5 0
-R
-7 1 1 1048848
+1002 2 5 0
 S
 #5119
 Smokehouse~
@@ -408,7 +414,7 @@ G
 R
 1002 1 5 0
 R
-7 1 1 1048848
+1010 1 5 0
 S
 #5120
 Tannery~
@@ -430,7 +436,7 @@ M
 R
 1002 1 5 0
 R
-7 1 1 1048848
+1010 1 5 0
 S
 #5121
 Utility Shed~
@@ -449,7 +455,7 @@ purpose.
 R
 1002 1 5 0
 R
-7 1 1 1048848
+1010 1 5 0
 S
 #5122
 Quarry~
@@ -477,7 +483,6 @@ C
 dig~
 F
 f
-I 5 100 9.00 1 X  # DIG: a rock
 I 5 101 100.00 1 X  # DIG: a lump of clay
 R
 1000 1 5 0
@@ -504,7 +509,7 @@ Large House~
 A Large Brick House~
 &0[==]~
 24 0 R em
-5 4 0 -1
+7 4 0 -1
 D
    You are standing inside a rather large house. It's made of brick,
 creating a very strong, very protective structure. This house is tall and
@@ -734,9 +739,9 @@ M
 M
 9024 20.00 0
 R
-16 1 1 1048576
+1010 1 5 0
 R
-19 1 1 0
+5136 1 5 0
 S
 #5137
 Tailor~
@@ -824,9 +829,9 @@ many different and curious items.
 F
 E
 R
-16 1 1 1048576
+1002 1 5 0
 R
-19 1 1 0
+1010 1 5 0
 S
 #5140
 Steps~
@@ -1265,19 +1270,23 @@ drink, fill~
 F
 F
 M
-9039 5.00 cg
+9039 5.00 ceg
 M
-9035 5.00 cg
+9035 5.00 ceg
 M
-9033 5.00 cg
+9033 5.00 ceg
 M
-9037 5.00 ch
+9037 5.00 ceh
 M
-9038 5.00 ch
+9038 5.00 ceh
 M
-9036 5.00 ch
+9036 5.00 ceh
 M
-9034 5.00 c
+9034 5.00 ce
+M
+9028 10.00 bdg
+M
+9041 10.00 bdh
 M
 240 6.00 bc
 M
@@ -1547,7 +1556,7 @@ A Terraced Garden~
 0 0 0 -1
 C
 pick~
-I 7 1202 100.00 1  # FIND-HERB: a twig of redthorn
+I 7 1202 100.00 1  # PICK: a twig of redthorn
 R
 16 1 1 1048576
 R
@@ -1561,7 +1570,7 @@ A Garden Made of Rafts~
 0 0 0 -1
 C
 pick~
-I 7 1205 100.00 1  # FIND-HERB: some bileberries
+I 7 1205 100.00 1  # PICK: some bileberries
 R
 16 1 1 1048576
 R
@@ -1575,8 +1584,8 @@ An Oasis Garden~
 0 0 0 -1
 C
 pick~
-I 7 1204 50.00 1 X  # FIND-HERB: a daggerbite frond
-I 7 1203 100.00 1 X  # FIND-HERB: some magewhisper sepals
+I 7 1204 50.00 1 X  # PICK: a daggerbite frond
+I 7 1203 100.00 1 X  # PICK: some magewhisper sepals
 R
 16 1 1 1048576
 R
@@ -1590,7 +1599,7 @@ An Estuary Garden~
 0 0 0 -1
 C
 pick~
-I 7 1200 100.00 1  # FIND-HERB: a handful of whitegrass
+I 7 1200 100.00 1  # PICK: a handful of whitegrass
 R
 16 1 1 1048576
 R
@@ -1604,7 +1613,7 @@ A Shady Garden~
 0 0 0 -1
 C
 pick~
-I 7 1201 100.00 1  # FIND-HERB: a sack of fiveleaf
+I 7 1201 100.00 1  # PICK: a sack of fiveleaf
 R
 16 1 1 1048576
 R
@@ -1811,7 +1820,7 @@ An Astral Nexus~
 C
 summon player <name>~
 F
-x
+xK
 R
 3 1 1 0
 R

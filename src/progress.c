@@ -43,6 +43,7 @@ const char *default_progress_name = "Unnamed Goal";
 extern const char *progress_flags[];
 extern const char *progress_perk_types[];
 extern const char *progress_types[];
+extern const char *requirement_types[];
 extern const char *techs[];
 
 // external funcs
@@ -365,14 +366,24 @@ void get_progress_list_display(struct progress_list *list, char *save_buffer) {
 * The display for a single perk.
 *
 * @param struct progress_perk *perk The perk to get display text for.
+* @param bool show_vnums If true, adds [ 1234] before the name.
 */
-char *get_one_perk_display(struct progress_perk *perk) {
+char *get_one_perk_display(struct progress_perk *perk, bool show_vnums) {
 	extern const char *craft_types[];
 	
 	static char save_buffer[MAX_STRING_LENGTH];
 	craft_data *craft;
+	char numstr[256];
 	
 	*save_buffer = '\0';
+	
+	// only some types will use this
+	if (show_vnums) {
+		sprintf(numstr, "[%5d] ", perk->value);
+	}
+	else {
+		*numstr = '\0';
+	}
 	
 	// PRG_PERK_x: displays for each type
 	switch (perk->type) {
@@ -386,7 +397,11 @@ char *get_one_perk_display(struct progress_perk *perk) {
 		}
 		case PRG_PERK_CRAFT: {
 			if ((craft = craft_proto(perk->value))) {
-				sprintf(save_buffer, "%s: %s", craft_types[GET_CRAFT_TYPE(craft)], GET_CRAFT_NAME(craft));
+				sprintf(save_buffer, "%s: %s%s", craft_types[GET_CRAFT_TYPE(craft)], numstr, GET_CRAFT_NAME(craft));
+				
+				if (GET_CRAFT_ABILITY(craft) != NO_ABIL) {
+					sprintf(save_buffer + strlen(save_buffer), " (%s ability)", get_ability_name_by_vnum(GET_CRAFT_ABILITY(craft)));
+				}
 			}
 			else {
 				strcpy(save_buffer, "UNKNOWN");
@@ -428,14 +443,15 @@ char *get_one_perk_display(struct progress_perk *perk) {
 *
 * @param struct progress_perk *list Pointer to the start of a list of perks.
 * @param char *save_buffer A buffer to store the result to.
+* @param bool show_vnums If true, adds [ 1234] before the name.
 */
-void get_progress_perks_display(struct progress_perk *list, char *save_buffer) {
+void get_progress_perks_display(struct progress_perk *list, char *save_buffer, bool show_vnums) {
 	struct progress_perk *item;
 	int count = 0;
 	
 	*save_buffer = '\0';
 	LL_FOREACH(list, item) {
-		sprintf(save_buffer + strlen(save_buffer), "%2d. %s\r\n", ++count, get_one_perk_display(item));
+		sprintf(save_buffer + strlen(save_buffer), "%2d. %s\r\n", ++count, get_one_perk_display(item, show_vnums));
 	}
 	
 	// empty list not shown
@@ -967,6 +983,22 @@ void refresh_one_goal_tracker(empire_data *emp, struct empire_goal *goal) {
 				task->current = count_cities(emp);
 				break;
 			}
+			case REQ_EMPIRE_PRODUCED_OBJECT: {
+				task->current = get_production_total(emp, task->vnum);
+				break;
+			}
+			case REQ_EMPIRE_PRODUCED_COMPONENT: {
+				task->current = get_production_total_component(emp, task->vnum, task->misc);
+				break;
+			}
+			case REQ_EVENT_RUNNING: {
+				task->current = find_running_event_by_vnum(task->vnum) ? task->needed : 0;
+				break;
+			}
+			case REQ_EVENT_NOT_RUNNING: {
+				task->current = find_running_event_by_vnum(task->vnum) ? 0 : task->needed;
+				break;
+			}
 			
 			/* otherwise... do nothing
 			default: {
@@ -1202,6 +1234,33 @@ void et_change_greatness(empire_data *emp) {
 
 
 /**
+* Empire Tracker: event starts or stops (update all empires)
+*
+* @param any_vnum event_vnum Which event has started or stopped.
+*/
+void et_event_start_stop(any_vnum event_vnum) {
+	struct empire_goal *goal, *next_goal;
+	empire_data *emp, *next_emp;
+	struct req_data *task;
+	
+	HASH_ITER(hh, empire_table, emp, next_emp) {
+		HASH_ITER(hh, EMPIRE_GOALS(emp), goal, next_goal) {
+			LL_FOREACH(goal->tracker, task) {
+				if (task->type == REQ_EVENT_RUNNING && task->vnum == event_vnum) {
+					task->current = find_running_event_by_vnum(task->vnum) ? task->needed : 0;
+					TRIGGER_DELAYED_REFRESH(emp, DELAY_REFRESH_GOAL_COMPLETE);
+				}
+				else if (task->type == REQ_EVENT_NOT_RUNNING && task->vnum == event_vnum) {
+					task->current = find_running_event_by_vnum(task->vnum) ? 0 : task->needed;
+					TRIGGER_DELAYED_REFRESH(emp, DELAY_REFRESH_GOAL_COMPLETE);
+				}
+			}
+		}
+	}
+}
+
+
+/**
 * Empire Tracker: empire gets a building
 *
 * @param empire_data *emp The empire.
@@ -1286,6 +1345,51 @@ void et_gain_vehicle(empire_data *emp, any_vnum vnum) {
 				TRIGGER_DELAYED_REFRESH(emp, DELAY_REFRESH_GOAL_COMPLETE);
 			}
 		}
+	}
+}
+
+
+/**
+* Empire Tracker: empire changes produced-total
+*
+* @param empire_data *emp The empire.
+* @param obj_vnum vnum Which object vnum.
+* @param int amount How much was gained (or lost).
+*/
+void et_change_production_total(empire_data *emp, obj_vnum vnum, int amount) {
+	struct empire_goal *goal, *next_goal;
+	obj_data *proto = obj_proto(vnum);
+	struct req_data *task;
+	descriptor_data *desc;
+	char_data *ch;
+	
+	if (!emp || vnum == NOTHING || amount == 0 || !proto) {
+		return;	// no work
+	}
+	
+	HASH_ITER(hh, EMPIRE_GOALS(emp), goal, next_goal) {
+		LL_FOREACH(goal->tracker, task) {
+			if (task->type == REQ_EMPIRE_PRODUCED_OBJECT && task->vnum == vnum) {
+				SAFE_ADD(task->current, amount, 0, INT_MAX, FALSE);
+				TRIGGER_DELAYED_REFRESH(emp, DELAY_REFRESH_GOAL_COMPLETE);
+			}
+			else if (task->type == REQ_EMPIRE_PRODUCED_COMPONENT && GET_OBJ_CMP_TYPE(proto) == task->vnum && (GET_OBJ_CMP_FLAGS(proto) & task->misc) == task->misc) {
+				SAFE_ADD(task->current, amount, 0, INT_MAX, FALSE);
+				TRIGGER_DELAYED_REFRESH(emp, DELAY_REFRESH_GOAL_COMPLETE);
+			}
+		}
+	}
+	
+	// members online
+	LL_FOREACH(descriptor_list, desc) {
+		if (STATE(desc) != CON_PLAYING || !(ch = desc->character)) {
+			continue;
+		}
+		if (GET_LOYALTY(ch) != emp) {
+			continue;
+		}
+		
+		qt_change_production_total(ch, vnum, amount);
 	}
 }
 
@@ -1718,7 +1822,7 @@ int sort_progress_by_data(progress_data *a, progress_data *b) {
 		return PRG_FLAGGED(a, PRG_SCRIPT_ONLY) ? 1 : -1;
 	}
 	else {
-		return str_cmp(PRG_NAME(a), PRG_NAME(b));
+		return str_cmp(NULLSAFE(PRG_NAME(a)), NULLSAFE(PRG_NAME(b)));
 	}
 }
 
@@ -2173,6 +2277,122 @@ void olc_delete_progress(char_data *ch, any_vnum vnum) {
 
 
 /**
+* Searches properties of progress goals.
+*
+* @param char_data *ch The person searching.
+* @param char *argument The argument they entered.
+*/
+void olc_fullsearch_progress(char_data *ch, char *argument) {
+	char buf[MAX_STRING_LENGTH], line[MAX_STRING_LENGTH], type_arg[MAX_INPUT_LENGTH], val_arg[MAX_INPUT_LENGTH], find_keywords[MAX_INPUT_LENGTH];
+	bitvector_t not_flagged = NOBITS, only_flags = NOBITS;
+	bitvector_t  find_tasks = NOBITS, found_tasks, find_perks = NOBITS, found_perks;
+	int count, only_cost = NOTHING, only_value = NOTHING, only_type = NOTHING;
+	progress_data *prg, *next_prg;
+	struct progress_perk *perk;
+	struct req_data *task;
+	size_t size;
+	
+	if (!*argument) {
+		msg_to_char(ch, "See HELP PROGEDIT FULLSEARCH for syntax.\r\n");
+		return;
+	}
+	
+	// process argument
+	*find_keywords = '\0';
+	while (*argument) {
+		// figure out a type
+		argument = any_one_arg(argument, type_arg);
+		
+		if (!strcmp(type_arg, "-")) {
+			continue;	// just skip stray dashes
+		}
+		
+		FULLSEARCH_INT("cost", only_cost, 0, INT_MAX)
+		FULLSEARCH_FLAGS("flags", only_flags, progress_flags)
+		FULLSEARCH_FLAGS("flagged", only_flags, progress_flags)
+		FULLSEARCH_FLAGS("perks", find_perks, progress_perk_types)
+		FULLSEARCH_FLAGS("tasks", find_tasks, requirement_types)
+		FULLSEARCH_LIST("type", only_type, progress_types)
+		FULLSEARCH_FLAGS("unflagged", not_flagged, progress_flags)
+		FULLSEARCH_INT("value", only_value, 0, INT_MAX)
+		
+		else {	// not sure what to do with it? treat it like a keyword
+			sprintf(find_keywords + strlen(find_keywords), "%s%s", *find_keywords ? " " : "", type_arg);
+		}
+		
+		// prepare for next loop
+		skip_spaces(&argument);
+	}
+	
+	size = snprintf(buf, sizeof(buf), "Progress goal fullsearch: %s\r\n", find_keywords);
+	count = 0;
+	
+	// okay now look up items
+	HASH_ITER(hh, progress_table, prg, next_prg) {
+		if (only_value != NOTHING && PRG_VALUE(prg) != only_value) {
+			continue;
+		}
+		if (only_cost != NOTHING && PRG_COST(prg) != only_cost) {
+			continue;
+		}
+		
+		if (only_type != NOTHING && PRG_TYPE(prg) != only_type) {
+			continue;
+		}
+		if (not_flagged != NOBITS && PRG_FLAGGED(prg, not_flagged)) {
+			continue;
+		}
+		if (only_flags != NOBITS && (PRG_FLAGS(prg) & only_flags) != only_flags) {
+			continue;
+		}
+		if (find_perks) {	// look up its perks
+			found_perks = NOBITS;
+			LL_FOREACH(PRG_PERKS(prg), perk) {
+				found_perks |= BIT(perk->type);
+			}
+			if ((find_perks & found_perks) != find_perks) {
+				continue;
+			}
+		}
+		if (find_tasks) {	// look up its tasks
+			found_tasks = NOBITS;
+			LL_FOREACH(PRG_TASKS(prg), task) {
+				found_tasks |= BIT(task->type);
+			}
+			if ((find_tasks & found_tasks) != find_tasks) {
+				continue;
+			}
+		}
+		if (*find_keywords && !multi_isname(find_keywords, PRG_NAME(prg)) && !multi_isname(find_keywords, PRG_DESCRIPTION(prg))) {
+			continue;
+		}
+		
+		// show it
+		snprintf(line, sizeof(line), "[%5d] %s\r\n", PRG_VNUM(prg), PRG_NAME(prg));
+		if (strlen(line) + size < sizeof(buf)) {
+			size += snprintf(buf + size, sizeof(buf) - size, "%s", line);
+			++count;
+		}
+		else {
+			size += snprintf(buf + size, sizeof(buf) - size, "OVERFLOW\r\n");
+			break;
+		}
+	}
+	
+	if (count > 0 && (size + 14) < sizeof(buf)) {
+		size += snprintf(buf + size, sizeof(buf) - size, "(%d progress goals)\r\n", count);
+	}
+	else if (count == 0) {
+		size += snprintf(buf + size, sizeof(buf) - size, " none\r\n");
+	}
+	
+	if (ch->desc) {
+		page_string(ch->desc, buf, TRUE);
+	}
+}
+
+
+/**
 * Function to save a player's changes to a progress entry (or a new one).
 *
 * @param descriptor_data *desc The descriptor who is saving.
@@ -2311,7 +2531,7 @@ void do_stat_progress(char_data *ch, progress_data *prg) {
 	get_requirement_display(PRG_TASKS(prg), part);
 	size += snprintf(buf + size, sizeof(buf) - size, "Tasks:\r\n%s", *part ? part : " none\r\n");
 	
-	get_progress_perks_display(PRG_PERKS(prg), part);
+	get_progress_perks_display(PRG_PERKS(prg), part, TRUE);
 	size += snprintf(buf + size, sizeof(buf) - size, "Perks:\r\n%s", *part ? part : " none\r\n");
 	
 	page_string(ch->desc, buf, TRUE);
@@ -2358,7 +2578,7 @@ void olc_show_progress(char_data *ch) {
 		sprintf(buf + strlen(buf), "Tasks: <%stasks\t0>\r\n%s", PRG_FLAGGED(prg, PRG_PURCHASABLE) ? "\tr" : OLC_LABEL_PTR(PRG_TASKS(prg)), lbuf);
 	}
 	
-	get_progress_perks_display(PRG_PERKS(prg), lbuf);
+	get_progress_perks_display(PRG_PERKS(prg), lbuf, TRUE);
 	sprintf(buf + strlen(buf), "Perks: <%sperks\t0>\r\n%s", OLC_LABEL_PTR(PRG_PERKS(prg)), lbuf);
 	
 	page_string(ch->desc, buf, TRUE);
@@ -2583,7 +2803,7 @@ OLC_MODULE(progedit_perks) {
 				if (--num == 0) {
 					found = TRUE;
 					
-					msg_to_char(ch, "You remove the perk: %s\r\n", get_one_perk_display(iter));
+					msg_to_char(ch, "You remove the perk: %s\r\n", get_one_perk_display(iter, TRUE));
 					LL_DELETE(PRG_PERKS(prg), iter);
 					free(iter);
 					break;
@@ -2685,7 +2905,7 @@ OLC_MODULE(progedit_perks) {
 			item->value = vnum;
 			LL_APPEND(PRG_PERKS(prg), item);
 			
-			msg_to_char(ch, "You add the perk: %s\r\n", get_one_perk_display(item));
+			msg_to_char(ch, "You add the perk: %s\r\n", get_one_perk_display(item, TRUE));
 		}
 	}	// end 'add'
 	else {

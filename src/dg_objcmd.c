@@ -32,6 +32,7 @@ extern const char *alt_dirs[];
 extern struct instance_data *quest_instance_global;
 
 // external functions
+void adjust_vehicle_tech(vehicle_data *veh, bool add);
 void obj_command_interpreter(obj_data *obj, char *argument);
 void send_char_pos(char_data *ch, int dam);
 extern struct instance_data *find_instance_by_room(room_data *room, bool check_homeroom, bool allow_fake_loc);
@@ -598,6 +599,12 @@ OCMD(do_otransform) {
 }
 
 
+OCMD(do_omod) {
+	void script_modify(char *argument);
+	script_modify(argument);
+}
+
+
 OCMD(do_omorph) {
 	char tar_arg[MAX_INPUT_LENGTH], num_arg[MAX_INPUT_LENGTH];
 	morph_data *morph = NULL;
@@ -857,8 +864,8 @@ OCMD(do_oquest) {
 
 
 OCMD(do_osiege) {
-	void besiege_room(char_data *attacker, room_data *to_room, int damage);
-	extern bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int siege_type);
+	void besiege_room(char_data *attacker, room_data *to_room, int damage, vehicle_data *by_vehicle);
+	extern bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int siege_type, vehicle_data *by_vehicle);
 	extern room_data *dir_to_room(room_data *room, int dir, bool ignore_entrance);
 	extern bool find_siege_target_for_vehicle(char_data *ch, vehicle_data *veh, char *arg, room_data **room_targ, int *dir, vehicle_data **veh_targ);
 	extern bool validate_siege_target_room(char_data *ch, vehicle_data *veh, room_data *to_room);
@@ -906,14 +913,46 @@ OCMD(do_osiege) {
 	
 	if (room_targ) {
 		if (validate_siege_target_room(NULL, NULL, room_targ)) {
-			besiege_room(NULL, room_targ, dam);
+			besiege_room(NULL, room_targ, dam, NULL);
 		}
 	}
 	else if (veh_targ) {
-		besiege_vehicle(NULL, veh_targ, dam, SIEGE_PHYSICAL);
+		besiege_vehicle(NULL, veh_targ, dam, SIEGE_PHYSICAL, NULL);
 	}
 	else {
 		obj_log(obj, "osiege: invalid target");
+	}
+}
+
+
+// kills the target
+OCMD(do_oslay) {
+	char name[MAX_INPUT_LENGTH];
+	char_data *vict;
+	
+	argument = one_argument(argument, name);
+
+	if (!*name) {
+		obj_log(obj, "oslay: no target");
+		return;
+	}
+	
+	if (*name == UID_CHAR) {
+		if (!(vict = get_char(name))) {
+			obj_log(obj, "oslay: victim (%s) does not exist", name);
+			return;
+		}
+	}
+	else if (!(vict = get_char_by_obj(obj, name))) {
+		obj_log(obj, "oslay: victim (%s) does not exist", name);
+		return;
+	}
+	
+	if (IS_IMMORTAL(vict)) {
+		msg_to_char(vict, "Being the cool immortal you are, you sidestep a trap, obviously placed to kill you.\r\n");
+	}
+	else {
+		die(vict, vict);
 	}
 }
 
@@ -924,6 +963,7 @@ OCMD(do_oteleport) {
 	char arg1[MAX_INPUT_LENGTH], arg2[MAX_INPUT_LENGTH];
 	struct instance_data *inst;
 	vehicle_data *veh;
+	obj_data *tobj;
 	int iter;
 
 	two_arguments(argument, arg1, arg2);
@@ -1004,9 +1044,14 @@ OCMD(do_oteleport) {
 			}
 		}
 		else if ((veh = get_vehicle_near_obj(obj, arg1))) {
+			adjust_vehicle_tech(veh, FALSE);
 			vehicle_from_room(veh);
 			vehicle_to_room(veh, target);
+			adjust_vehicle_tech(veh, TRUE);
 			entry_vtrigger(veh);
+		}
+		else if ((tobj = get_obj_by_obj(obj, arg1))) {
+			obj_to_room(tobj, target);
 		}
 		else {
 			obj_log(obj, "oteleport: no target found");
@@ -1238,6 +1283,11 @@ OCMD(do_dgoload) {
 		
 		tch = get_char_near_obj(obj, arg1);
 		if (tch) {
+			// mark as "gathered" like a resource
+			if (!IS_NPC(tch) && GET_LOYALTY(tch)) {
+				add_production_total(GET_LOYALTY(tch), GET_OBJ_VNUM(object), 1);
+			}
+			
 			if (*arg2 && (pos = find_eq_pos_script(arg2)) >= 0 && !GET_EQ(tch, pos) && can_wear_on_pos(object, pos)) {
 				equip_char(tch, object, pos);
 				load_otrigger(object);
@@ -1694,6 +1744,7 @@ const struct obj_command_info obj_cmd_info[] = {
 	{ "oforce", do_oforce, NO_SCMD },
 	{ "oheal", do_oheal, NO_SCMD },
 	{ "oload", do_dgoload, NO_SCMD },
+	{ "omod", do_omod, NO_SCMD },
 	{ "omorph", do_omorph, NO_SCMD },
 	{ "oown", do_oown, NO_SCMD },
 	{ "opurge", do_opurge, NO_SCMD },
@@ -1703,6 +1754,7 @@ const struct obj_command_info obj_cmd_info[] = {
 	{ "osend", do_osend, SCMD_OSEND },
 	{ "osetval", do_osetval, NO_SCMD },
 	{ "osiege", do_osiege, NO_SCMD },
+	{ "oslay", do_oslay, NO_SCMD },
 	{ "oteleport", do_oteleport, NO_SCMD },
 	{ "oterracrop", do_oterracrop, NO_SCMD },
 	{ "oterraform", do_oterraform, NO_SCMD },

@@ -26,8 +26,6 @@
 // NOTE: many of these are used just for spawn data and if we could do that in
 // file instead of code, these would not be needed
 
-// TODO: guard towers could use a flag plus a damage config of some kind
-
 #define BUILDING_RUINS_OPEN  5006	// custom icons and db.world.c
 #define BUILDING_RUINS_CLOSED  5007	// custom icons and db.world.c
 #define BUILDING_TUNNEL  5008  // building.c
@@ -72,7 +70,6 @@
 #define o_ROCK  100	// TODO: rocks are special-cased for chipping
 #define o_LIGHTNING_STONE  103
 #define o_BLOODSTONE  104
-#define o_FLOWER  123	// TODO: find-herbs could be a global type and "flower" is the only one that requires no skill
 #define o_WHEAT  141
 #define o_HOPS  143
 #define o_BARLEY  145
@@ -104,7 +101,11 @@
 #define o_IMPERIUM_SPIKE  1114
 #define o_NEXUS_CRYSTAL  1115
 #define o_BLOODSTAFF  1116
+#define o_BLOODWHIP  1117
+#define o_BLOODAXE  1118
 #define o_NOCTURNIUM_SPIKE  1119
+#define o_BLOODMAUL  1120
+#define o_BLOODMATTOCK  1122
 
 // herbs
 #define o_IRIDESCENT_IRIS  1206
@@ -173,6 +174,7 @@
 #define BUILDER  209
 #define STEALTH_MASTER  221
 #define DIGGER  224
+#define STUMP_BURNER  226
 #define SCRAPER  227
 #define REPAIRMAN  229
 #define THUG  230
@@ -227,6 +229,7 @@
 #define ATYPE_COUNTERSPELL  3021
 #define ATYPE_REJUVENATE  3023
 #define ATYPE_ENTANGLE  3024
+#define ATYPE_BITE_PENALTY  3025	// called "biting" / ATYPE_BITING (search hint)
 #define ATYPE_INSPIRE  3026
 #define ATYPE_JABBED  3027
 #define ATYPE_REGEN_POTION  3029
@@ -265,6 +268,8 @@
 #define ATYPE_ASTRALCLAW  3067
 #define ATYPE_CHRONOBLAST  3068
 #define ATYPE_DISPIRIT  3069
+#define ATYPE_BITE  3070
+#define ATYPE_CANT_STOP  3071	// for vampires
 #define ATYPE_SHADOWLASH_BLIND  3072
 #define ATYPE_SHADOWLASH_DOT  3073
 #define ATYPE_SOULCHAIN  3074
@@ -313,7 +318,8 @@
 #define COOLDOWN_SUMMON_GUARDS  2029
 #define COOLDOWN_SUMMON_BODYGUARD  2030
 #define COOLDOWN_SUMMON_THUG  2031
-#define COOLDOWN_SUMMON_SWIFT  2032
+#define COOLDOWN_SUMMON_SWIFT  2032 
+#define COOLDOWN_TAME  2033
 #define COOLDOWN_SEARCH  2034
 #define COOLDOWN_TERRIFY  2035
 #define COOLDOWN_DARKNESS  2036
@@ -342,6 +348,7 @@
 #define COOLDOWN_CHRONOBLAST  2059
 #define COOLDOWN_DEATHTOUCH  2060
 #define COOLDOWN_DISPIRIT  2061
+#define COOLDOWN_BITE  2062
 #define COOLDOWN_SHADOWLASH  2064
 #define COOLDOWN_SOULCHAIN  2065
 #define COOLDOWN_STARSTRIKE  2066

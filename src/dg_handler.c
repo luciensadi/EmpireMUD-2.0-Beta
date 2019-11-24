@@ -127,7 +127,7 @@ void free_varlist(struct trig_var_data *vd) {
 */
 void free_trigger(trig_data *trig) {
 	if (GET_TRIG_WAIT(trig)) {
-		event_cancel(GET_TRIG_WAIT(trig), cancel_wait_event);
+		dg_event_cancel(GET_TRIG_WAIT(trig), cancel_wait_event);
 		GET_TRIG_WAIT(trig) = NULL;
 	}
 	
@@ -144,7 +144,7 @@ void actually_free_trigger(trig_data *trig) {
 	struct cmdlist_element *cmd, *next_cmd;
 	
 	if (GET_TRIG_WAIT(trig)) {
-		event_cancel(GET_TRIG_WAIT(trig), cancel_wait_event);
+		dg_event_cancel(GET_TRIG_WAIT(trig), cancel_wait_event);
 	}
 	
 	if (trig->name && (!proto || trig->name != proto->name)) {
@@ -172,7 +172,7 @@ void actually_free_trigger(trig_data *trig) {
 /* remove a single trigger from a mob/obj/room */
 void extract_trigger(trig_data *trig) {
 	if (GET_TRIG_WAIT(trig)) {
-		event_cancel(GET_TRIG_WAIT(trig), cancel_wait_event);
+		dg_event_cancel(GET_TRIG_WAIT(trig), cancel_wait_event);
 		GET_TRIG_WAIT(trig) = NULL;
 	}
 
@@ -271,6 +271,103 @@ void extract_script_mem(struct script_memory *sc) {
 			free(sc->cmd);
 		free(sc);
 		sc = next;
+	}
+}
+
+
+/**
+* Checks if all script data is empty and it's safe to free the script data
+* from the 'go'.
+*
+* @param void *go The mob, obj, etc to check.
+* @param int type The corresponding *_TRIGGER type for 'go' (e.g. MOB_TRIGGER).
+*/
+void check_extract_script(void *go, int type) {
+	// x_TRIGGER: attach types
+	switch (type) {
+		case MOB_TRIGGER: {
+			char_data *mob = (char_data*)go;
+			if (SCRIPT(mob) && !TRIGGERS(SCRIPT(mob)) && !SCRIPT(mob)->global_vars) {
+				extract_script(mob, MOB_TRIGGER);
+			}
+			break;
+		}
+		case OBJ_TRIGGER: {
+			obj_data *obj = (obj_data*)go;
+			if (SCRIPT(obj) && !TRIGGERS(SCRIPT(obj)) && !SCRIPT(obj)->global_vars) {
+				extract_script(obj, OBJ_TRIGGER);
+			}
+			break;
+		}
+		case WLD_TRIGGER:
+		case RMT_TRIGGER:
+		case ADV_TRIGGER:
+		case BLD_TRIGGER: {
+			room_data *room = (room_data*)go;
+			if (SCRIPT(room) && !TRIGGERS(SCRIPT(room)) && !SCRIPT(room)->global_vars) {
+				extract_script(room, WLD_TRIGGER);
+			}
+			type = WLD_TRIGGER;	// override other types
+			break;
+		}
+		case VEH_TRIGGER: {
+			vehicle_data *veh = (vehicle_data*)go;
+			if (SCRIPT(veh) && !TRIGGERS(SCRIPT(veh)) && !SCRIPT(veh)->global_vars) {
+				extract_script(veh, VEH_TRIGGER);
+			}
+			break;
+		}
+	}
+}
+
+
+/**
+* Removes all the triggers from a given thing. This will also call
+* check_extract_script() to see if more memory can be freed too.
+*
+* @param void *thing The thing to remove from (mob, obj, room, veh).
+* @param int type The *_TRIGGER type that corresponds to that thing.
+*/
+void remove_all_triggers(void *thing, int type) {
+	struct script_data *sc = NULL;
+	trig_data *trig, *next_trig;
+	
+	// x_TRIGGER: attach types
+	switch (type) {
+		case MOB_TRIGGER: {
+			char_data *mob = (char_data*)thing;
+			sc = SCRIPT(mob);
+			break;
+		}
+		case OBJ_TRIGGER: {
+			obj_data *obj = (obj_data*)thing;
+			sc = SCRIPT(obj);
+			break;
+		}
+		case WLD_TRIGGER: {
+			room_data *room = (room_data*)thing;
+			sc = SCRIPT(room);
+			break;
+		}
+		case VEH_TRIGGER: {
+			vehicle_data *veh = (vehicle_data*)thing;
+			sc = SCRIPT(veh);
+			break;
+		}
+		default: {
+			log("SYSERR: Invalid type called for remove_all_triggers()");
+			return;
+		}
+	}
+	
+	if (sc) {
+		LL_FOREACH_SAFE(TRIGGERS(sc), trig, next_trig) {
+			extract_trigger(trig);
+		}
+		TRIGGERS(sc) = NULL;
+	
+		// checks if there's more we can free
+		check_extract_script(thing, type);
 	}
 }
 

@@ -29,6 +29,22 @@ It can also be used to abandon vehicles.
 
 See also: CEDE, CLAIM, PRIVILEGE, PUBLICIZE
 #
+ALLIANCE "DIPLOMACY ALLIANCE" ALLY ALLIES ALLIED
+
+Usage:  diplomacy alliance <empire>
+
+When two empires form an alliance, they gain full access to each other's lands,
+buildings, and portals. Allies can also pick up items on the ground, and can
+lead non-allied players into their allies' lands.
+
+Guards and guard towers will never attack their own allies.
+
+The exchange rate in an alliance is 75%.
+
+You can break an alliance by declaring distrust.
+
+See also: DIPLOMACY, DISTRUST
+#
 "ALMOST FAMOUS" "ALMOST FAMOUS GOAL"
 
 Almost Famous (Prestige goal)
@@ -67,40 +83,35 @@ See also: CLAIM, POLICY, PRIVILEGE, ABANDON, TOGGLE
 #
 CITY
 
-(Disambiguation: Did you mean HELP CITY INFORMATION or HELP CITY COMMANDS ?)
+(Disambiguation: Did you mean HELP CITY INFORMATION, HELP CITY COMMANDS,
+or HELP CITY TYPES ?)
 #
 "CITY COMMANDS"
 
 Usage:  city <command> [city name]
 
+Commands:
 - &ccity list [empire]&0: This lists the cities already established in the
     empire, as well as how many city points are available to spend. You can
     also use this command to find other empires' cities (but it can't find
     their outposts).
-
 - &ccity found <name>&0: This founds a new city on the spot where you're standing.
     It creates a "city center" building, which is open (does not block move-
     ment). It costs 1 city point. You must be 25 tiles away from a starting
     location and 30 from another empire's city (10 tiles if allied).
-
 - &ccity upgrade <name>&0: This upgrades the given city by 1 level at the cost of
     1 city point.
-
 - &ccity downgrade <name>&0: This downgrades the given city by 1 level, or
     removes its city status entirely if it was at the minimum.
-
 - &ccity claim <name> [all]&0: This claims all unclaimed structures within
     the borders of the city, up to your maximum territory -- or, all tiles with
     the 'all' option.
-
 - &ccity abandon <name>&0: This abolishes the city, refunds your city points, and
     un-claims all territory within the city border.
-
 - &ccity rename <number> <new name>&0: This allows you to rename a city.
-
 - &ccity traits <name> [add | remove] <trait(s)>&0: Change city traits.
 
-See also: CITY INFORMATION, CITY TRAITS, CLAIM
+See also: CITY INFORMATION, CITY TRAITS, CLAIM, ESTABLISHING
 #
 "CITY INFORMATION" CITIES
 
@@ -235,7 +246,7 @@ currency.
 
 See also: DEPOSITORY, EXCHANGE, MINT, VAULT, WITHDRAW
 #
-DIPLOMACY PEACE WAR ALLIANCE TRUCE DISTRUST
+DIPLOMACY "DIPLOMACY COMMAND"
 
 Usage:  diplomacy <option> <empire>
         diplomacy cancel <option> <empire>
@@ -244,29 +255,35 @@ Engage in politics with another empire. This command is used to offer, accept,
 or demand political relations. You can also cancel open offers. Check the
 empire detail page to see current relationships.
 
+If an empire's members are ignoring you, you will not be able to make or accept
+diplomatic offers with them.
+
 You can only burn down or besiege another empires buildings if you are at war.
 You can only go to war with or steal from an empire if at least one of their
-members is online.
+members is online (you can also steal with a thievery permit).
 
-Options:
-  &ypeace&0 - end a war or state of distrust
-  &ytruce&0 - end a war without declaring peace
-  &yalliance&0 - propose or accept a full alliance
-  &ynonaggression&0 - propose or accept a pact of non-aggression
-  &ytrade&0 - propose or accept a trade agreement
-  &ydistrust&0 - declare that your empire distrusts but is not at war with another
-  &ywar&0 - declare war on an empire! (requires war cost)
-  &ybattle&0 - suggest a friendly war
-  &ythievery&0 - purchase permission to steal from an empire (requires war cost)
+Options (see help files on each of these commands for more info):
+  Friendly options: &ypeace&0, &ytruce&0, &ynonaggression&0, &yalliance&0
+  Trade relations: &ytrade&0 (help TRADE RELATIONS)
+  Hostile relations: &ydistrust&0, &ythievery&0, &ywar&0
+  Friendly war: &ybattle&0
 
-* To declare war, an empire must immediately spend an amount of money based
-on the difference between the two empires' composite scores. You can see the
-cost to declare war on the empire detail page for any empire you're not in
-a non-aggression pact (or better) with. This also applies to thievery permits.
+See also: EMPIRE SCORE, IGNORE, THIEVERY
+#
+"DIPLOMACY BATTLE" "FRIENDLY WAR" "BATTLE WAR" "OFFER BATTLE"
 
-You do not need a thievery permit if you're already at war.
+Usage:  diplomacy battle <empire>
 
-See also: EMPIRE SCORE, THIEVERY
+An offer of 'battle' is similar to declaring war, but it has no 'war cost',
+and the other side must agree to it (like most diplomatic offers). Like a
+regular war, the battle will end on its own if either side is logged off after
+the battle has been going on for more than an hour. You can also end it by
+offering peace or a truce.
+
+During a battle, you can attack all members of the other empire, can besiege
+their buildings, and can steal from their storage buildings.
+
+See also: DIPLOMACY, WAR
 #
 DISMANTLE-MINES "DISMANTLE MINES"
 
@@ -275,6 +292,29 @@ matically when they are empty. You can prevent this on individual mines using
 the nodismantle command.
 
 See also: NODISMANTLE, WORKFORCE
+#
+DISTRUST "DIPLOMACY DISTRUST" DISTRUSTFUL
+
+Usage:  diplomacy distrust <empire>
+        eedit frontiertraits <add | remove> distrustful
+        city traits <city> <add | remove> distrustful
+
+When an empire distrusts you, their guards and guard towers will attack you on
+sight. Most offenses, including infiltrating your buildings or killing your
+citizens, will automatically trigger a state of distrust.
+
+If you declare distrust with the 'diplomacy' command, your empire will always
+be hostile to members of the other empire.
+
+If you set the 'distrustful' trait on your cities or frontier, your guards will
+be hostile to neutral players (ones with no diplomatic relationship, or where
+you have a truce but not peace with them).
+
+If your empire is not distrustful, your guards will not attack neutral players.
+
+The exchange rate with distrust is 25%.
+
+See also: DIPLOMACY, PEACE, TRUCE
 #
 EEDIT "EMPIRE EDITOR" "EDIT EMPIRE"
 
@@ -466,6 +506,18 @@ Examples:
  > etalk #high_lord Hi, High Lords!
  > etalk #lord *bows before the other lords.
 #
+ESTABLISH ESTABLISHED ESTABLISHING "NOT ESTABLISHED" "CITY DELAY"
+
+A city is not fully "established" until 2 game days (60 minutes) after you
+found it. In-city-only buildings and functions won't work during this period,
+and it will show as (establishing) on your city list.
+
+Administrators: Time can be configured with config city minutes_to_full_city.
+The purpose of this delay is to prevent exploits created by temporarily using
+a spare city point, such as allowing city teleportation or guard towers.
+
+See also: CITY COMMAND
+#
 EXCHANGE
 
 Usage:  exchange <item>
@@ -517,7 +569,7 @@ another item is matching the name, try having the correct item in your own
 inventory. This command will try to match an item in your inventory before
 searching the item database.
 
-See also: COINS
+See also: COINS, EXCHANGE RATE
 #
 FAME
 
@@ -709,6 +761,19 @@ maintain your buildings.
 
 See also: FINDMAINTENANCE, RUINS, WORKFORCE
 #
+MANAGE MANAGEMENT "LAND MANAGEMENT" NOWORK NO-WORK NODISMANTLE NO-DISMANTLE PUBLIC PUBLICIZE
+
+Usage:  manage [option] [on/off]
+
+This command allows you to manage land use. You can configure the following
+options:
+ &cpublic&0 - Non-members can use the room/building.
+ &cno-dismantle&0 - The building cannot be dismantled.
+ &cno-work&0 - Workforce will not work the tile.
+
+Immortals can also configure additional options:
+ &cunclaimable&0 - Players cannot claim the tile.
+#
 MEMBERS MEMBERSHIP "EMPIRE MEMBERS" "EMPIRE MEMBERSHIP" "EMPIRE GREATNESS" "TIMED-OUT" "TIMED OUT" TIMEOUTS "EMPIRE TIMEOUT"
 
 You can add other players to your empire by having them type "pledge empire
@@ -756,6 +821,20 @@ Rewards the following buildings:
 
 See also: PROGRESS, TUNNEL
 #
+NONAGGRESSION "NON-AGGRESSION" "DIPLOMACY NONAGGRESSION"
+
+Usage:  diplomacy nonaggression <empire>
+
+A non-aggression pact is a formal declaration that two empires will not attack
+each other. Like 'peace', it protects members of both empires from each other's
+guards and guard towers.
+
+The exchange rate in a non-aggression pact is 65%.
+
+You can break non-aggression by declaring distrust.
+
+See also: DIPLOMACY, DISTRUST
+#
 OFFENSES
 
 Usage:  offenses [-e empire] [-p player] [-n number to show]
@@ -768,6 +847,19 @@ unviewed offenses.
 
 Immortals can view offenses from other empires by giving an empire name (in
 quotes if necessary) as the first argument.
+#
+PEACE "DIPLOMACY PEACE"
+
+Usage:  diplomacy peace <empire>
+
+A state of peace between two empires means guards from those empires will not
+attack each other's members. This is above 'truce' but below 'nonaggression'.
+You can offer peace (or truce) to end a war.
+
+The exchange rate at peace is 50% (the same as no relations).
+
+See also: DIPLOMACY, TRUCE
+Immortals: See HELP PEACE COMMAND
 #
 PLEDGE JOIN
 
@@ -933,6 +1025,7 @@ Rewards the following buildings:
   &0(&a~~&0)  oceanfishery
   &0(&c~~&0)  riverfishery
   &0(&c~~&0)  lakefishery
+  |--|  stilthouse
   &c~&0__&c~&0  swampplatform
 
 See also: PROGRESS
@@ -1024,7 +1117,23 @@ The other empire will not be notified that you can steal from them. However,
 they gain the ability to attack members of your empire until the permit
 expires.
 
-See also: DIPLOMACY, OFFENSE, STEAL
+See also: DIPLOMACY, OFFENSE, STEAL, WAR COST
+#
+"TRADE RELATIONS" "TRADE PACT"
+
+Usage:  diplomacy trade <empire>
+
+Trade relations are required in order to import and export goods from/to
+another empire.
+
+Trade also allows you to store and withdrawl your empire's items from the other
+empire's buildings (if you also have permission to use that building, for
+example due to an alliance or if it's a public building). These resources still
+go to/from your own empire's storage.
+
+Trade relations raise your exchange rate with the other empire by 25%.
+
+See also: DIPLOMACY, EXCHANGE RATE
 #
 "TRADE ROUTES" "TRADE ROUTES GOAL"
 
@@ -1114,6 +1223,22 @@ using the city command. For frontier traits -- the traits far from your cities
 
 See also: EEDIT, CITY, FRONTIER, OUTSKIRTS
 #
+TRUCE "DIPLOMACY TRUCE"
+
+Usage:  diplomacy truce <empire>
+
+To end a war without establishing peace, offer a truce. A truce returns the
+two empires to a state of "no formal relations" -- neither able to attack,
+nor protected from attacks by guards.
+
+If you have a truce with a distrustful empire, their guards will attack you.
+However if you have a truce with an empire that isn't distrustful, the guards
+will ignore you.
+
+The exchnage rate with a truce is 50% (the same as no relations).
+
+See also: DIPLOMACY, PEACE
+#
 UNPUBLICIZE
 
 Usage:  unpublicize
@@ -1146,6 +1271,31 @@ Rewards the following buildings:
   VVVV  wall
 
 See also: GREAT WALLS GOAL, PROGRESS
+#
+WAR "WAR COST" "DIPLOMACY WAR"
+
+Usage:  diplomacy war <empire>
+
+You can unilaterally declare war on another empire so long as at least one of
+their members is online. A state of war allows you to attack their members,
+besiege their buildings, and steal from their storage buildings.
+
+A war automatically ends if there are no members online from one of the two
+empires and at least 1 hour has passed since the war began. You can also end
+a war by offering a truce or peace (with the diplomacy command).
+
+To declare war, you must immediately pay the war cost out of your empire's
+treasury. The war cost depends on the difference between the two empire's
+scores, as well as the number of offenses the other empire has committed
+against you recently. Check the empire detail page for the cost to declare war
+on an empire.
+
+Some EmpireMUDs require a certain number of offenses before you can declare
+war, to prevent unprovoked wars.
+
+The exchange rate at war it 10%.
+
+See also: DIPLOMACY, EMPIRE SCORE, OFFENSES, THIEVERY PERMIT
 #
 WEALTH
 
@@ -1180,7 +1330,7 @@ Usage:  workforce [chore] [on | off | <limit>] [island name | all]
         workforce copy <island name>
         workforce keep [number | all] <item name>
 
-Once at least one member of an empire has the Workforce reward, the empire's
+Once your empire has purchased the Workforce progress reward, the empire's
 citizens (NPCs) will start performing simple tasks for the empire. You can
 enable or disable each specific task using the "workforce" command. The work-
 force is generally much slower than a player would be at the same task. Most
@@ -1206,11 +1356,7 @@ You can use the "workforce copy" command to copy the workforce limit
 configuration of another island into the island you are currently in. Using
 "workforce keep" lets you prevent some or all of the item from being used.
 
-Note: Your workforce will only do chores if your empire has less than a certain
-amount of the resource provided by the chore. This amount is 100 per member,
-plus any additional workforce cap provided by progression goals. This does not
-apply to dismantling. Workers on each island will still collect a small amount
-of each resource if your empire is over the cap globally.
+Note: Your workforce will only produce resources up to your workforce cap.
 
 See &cHELP WORKFORCE CHORES&0 for a list of all workforce chores with descriptions.
 
@@ -1221,10 +1367,18 @@ See also: WORKFORCE CHORES, WORKFORCE WHERE, WORKFORCE WHY, NO-WORK,
 
 Workforce will only gather resources up to a certain limit. Workers will not
 work chores that would give you more of an item than that cap. You can see your
-workforce caps on your empire detail.
+current workforce cap on your empire detail page.
 
 You can set your own caps on chores by choosing a limit with the 'workforce'
 command.
+
+The maximum workforce cap is 100 per member, plus any additional amount earned
+from progression goals. This is a global cap, but workers on each of your
+islands will produce up to 25 of something, even if you're above the global
+cap.
+
+The workforce cap does not apply to dismantling buildings -- workers can still
+dismantle and store the resources.
 
 See also: WORKFORCE
 #
@@ -1266,6 +1420,7 @@ Workforce types:
   &yrepair-vehicles&0: Will keep vehicles maintained.
   &yoilmaking:&0 Will press oil.
   &yfishing:&0 Will catch fish at the fishery. Costs no food.
+  &yburn-stumps:&0 Will burn down 'stumps' tiles.
   
 Items marked (skilled) require the Skilled Labor goal. Skilled Labor chores
 tend to cost more food.

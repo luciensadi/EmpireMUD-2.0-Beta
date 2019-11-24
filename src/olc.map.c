@@ -96,8 +96,8 @@ OLC_MODULE(mapedit_build) {
 			herd_animals_out(IN_ROOM(ch));
 		}
 		
-		special_building_setup(ch, IN_ROOM(ch));
 		complete_building(IN_ROOM(ch));
+		special_building_setup(ch, IN_ROOM(ch));
 
 		msg_to_char(ch, "You create %s %s!\r\n", AN(GET_BLD_NAME(bld)), GET_BLD_NAME(bld));
 		sprintf(buf, "$n creates %s %s!", AN(GET_BLD_NAME(bld)), GET_BLD_NAME(bld));
@@ -107,6 +107,7 @@ OLC_MODULE(mapedit_build) {
 
 
 OLC_MODULE(mapedit_decay) {
+	void annual_update_depletions(struct depletion_data **list);	// db.world.c
 	void annual_update_map_tile(struct map_data *tile);	// db.world.c
 	
 	room_data *room = HOME_ROOM(IN_ROOM(ch));
@@ -117,6 +118,7 @@ OLC_MODULE(mapedit_decay) {
 	else {
 		msg_to_char(ch, "Ok.\r\n");
 		annual_update_map_tile(&(world_map[FLAT_X_COORD(room)][FLAT_Y_COORD(room)]));
+		annual_update_depletions(&(SHARED_DATA(room)->depletion));
 	}
 }
 
@@ -127,7 +129,7 @@ OLC_MODULE(mapedit_terrain) {
 	void finish_trench(room_data *room);
 	
 	struct empire_city_data *city, *temp;
-	empire_data *emp;
+	empire_data *emp, *rescan_emp = NULL;
 	int count;
 	sector_data *sect = NULL, *next_sect, *old_sect = NULL;
 	crop_data *crop, *next_crop;
@@ -171,6 +173,7 @@ OLC_MODULE(mapedit_terrain) {
 				free(city->name);
 			}
 			free(city);
+			rescan_emp = emp;
 			EMPIRE_NEEDS_SAVE(emp) = TRUE;
 		}
 		
@@ -207,6 +210,11 @@ OLC_MODULE(mapedit_terrain) {
 		}
 		else {
 			remove_room_extra_data(IN_ROOM(ch), ROOM_EXTRA_TRENCH_ORIGINAL_SECTOR);
+		}
+		
+		// rescan territory at the end
+		if (rescan_emp) {
+			read_empire_territory(rescan_emp, FALSE);
 		}
 	}
 }
@@ -753,12 +761,30 @@ OLC_MODULE(mapedit_remember) {
 OLC_MODULE(mapedit_roomtype) {
 	extern bld_data *get_building_by_name(char *name, bool room_only);
 	
-	bld_data *id;
+	bld_data *id = NULL;
 
-	if (!IS_INSIDE(IN_ROOM(ch)))
+	if (!IS_INSIDE(IN_ROOM(ch))) {
 		msg_to_char(ch, "You need to be in one of the interior rooms of a building first.\r\n");
-	else if (!*argument || !(id = get_building_by_name(argument, TRUE))) {
+		return;
+	}
+	if (!*argument) {
 		msg_to_char(ch, "What type of room would you like to set (use 'vnum b <name>' to search)?\r\n");
+		return;
+	}
+	
+	// parse arg
+	if (isdigit(*argument) && !(id = building_proto(atoi(argument)))) {
+		msg_to_char(ch, "Invalid building (room) vnum '%s'.\r\n", argument);
+		return;
+	}
+	else if (!id && !(id = get_building_by_name(argument, TRUE))) {
+		msg_to_char(ch, "Invalid building (room) type name '%s'.\r\n", argument);
+		return;
+	}
+	
+	// final handling
+	if (!id || !IS_SET(GET_BLD_FLAGS(id), BLD_ROOM)) {
+		msg_to_char(ch, "Invalid room type. You must specify a building with the ROOM flag.\r\n");
 	}
 	else {
 		dismantle_wtrigger(IN_ROOM(ch), ch, FALSE);

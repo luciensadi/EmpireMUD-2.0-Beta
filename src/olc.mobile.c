@@ -199,7 +199,8 @@ bool delete_from_interaction_list(struct interaction_item **list, int vnum_type,
 		if (interact_vnum_types[inter->type] == vnum_type && inter->vnum == vnum) {
 			found = TRUE;
 			REMOVE_FROM_LIST(inter, *list, next);
-			free(inter);
+			inter->next = NULL;
+			free_interactions(&inter);
 		}
 	}
 	
@@ -313,6 +314,7 @@ void olc_delete_mobile(char_data *ch, mob_vnum vnum) {
 	quest_data *quest, *next_quest;
 	progress_data *prg, *next_prg;
 	room_template *rmt, *next_rmt;
+	vehicle_data *veh, *next_veh;
 	sector_data *sect, *next_sect;
 	crop_data *crop, *next_crop;
 	shop_data *shop, *next_shop;
@@ -467,6 +469,15 @@ void olc_delete_mobile(char_data *ch, mob_vnum vnum) {
 		}
 	}
 	
+	// update vehicles
+	HASH_ITER(hh, vehicle_table, veh, next_veh) {
+		found = delete_mob_from_spawn_list(&VEH_SPAWNS(veh), vnum);
+		found |= delete_from_interaction_list(&VEH_INTERACTIONS(veh), TYPE_MOB, vnum);
+		if (found) {
+			save_library_file_for_vnum(DB_BOOT_VEH, VEH_VNUM(veh));
+		}
+	}
+	
 	// remove spawn locations and interactions from active editors
 	for (desc = descriptor_list; desc; desc = desc->next) {
 		if (GET_OLC_BUILDING(desc)) {
@@ -545,6 +556,14 @@ void olc_delete_mobile(char_data *ch, mob_vnum vnum) {
 				msg_to_desc(desc, "A mobile required by the social you are editing was deleted.\r\n");
 			}
 		}
+		if (GET_OLC_VEHICLE(desc)) {
+			if (delete_mob_from_spawn_list(&VEH_SPAWNS(GET_OLC_VEHICLE(desc)), vnum)) {
+				msg_to_char(desc->character, "One of the mobs that spawns in the vehicle you're editing was deleted.\r\n");
+			}
+			if (delete_from_interaction_list(&VEH_INTERACTIONS(GET_OLC_VEHICLE(desc)), TYPE_MOB, vnum)) {
+				msg_to_char(desc->character, "One of the mobs in an interaction for the vehicle you're editing was deleted.\r\n");
+			}
+		}
 	}
 	
 	syslog(SYS_OLC, GET_INVIS_LEV(ch), TRUE, "OLC: %s has deleted mobile %d", GET_NAME(ch), vnum);
@@ -561,11 +580,13 @@ void olc_delete_mobile(char_data *ch, mob_vnum vnum) {
 * @param char *argument The argument they entered.
 */
 void olc_fullsearch_mob(char_data *ch, char *argument) {
+	extern int get_attack_type_by_name(char *name);
+	
 	char buf[MAX_STRING_LENGTH], line[MAX_STRING_LENGTH], type_arg[MAX_INPUT_LENGTH], val_arg[MAX_INPUT_LENGTH], find_keywords[MAX_INPUT_LENGTH];
 	bitvector_t  find_interacts = NOBITS, found_interacts, find_custom = NOBITS, found_custom;
 	bitvector_t not_flagged = NOBITS, only_flags = NOBITS, only_affs = NOBITS;
 	int only_attack = NOTHING, only_move = NOTHING, only_nameset = NOTHING;
-	int count, lookup, only_level = NOTHING, only_sex = NOTHING, only_size = NOTHING;
+	int count, only_level = NOTHING, only_sex = NOTHING, only_size = NOTHING;
 	faction_data *only_fct = NULL;
 	struct interaction_item *inter;
 	struct custom_message *cust;
@@ -586,105 +607,21 @@ void olc_fullsearch_mob(char_data *ch, char *argument) {
 		if (!strcmp(type_arg, "-")) {
 			continue;	// just skip stray dashes
 		}
-		else if (is_abbrev(type_arg, "-allegiance") || is_abbrev(type_arg, "-faction")) {
-			argument = any_one_word(argument, val_arg);
-			if (!(only_fct = find_faction(val_arg))) {
-				msg_to_char(ch, "Invalid faction '%s'.\r\n", val_arg);
-				return;
-			}
-		}
-		else if (is_abbrev(type_arg, "-affects")) {
-			argument = any_one_word(argument, val_arg);
-			if ((lookup = search_block(val_arg, affected_bits, FALSE)) != NOTHING) {
-				only_affs |= BIT(lookup);
-			}
-			else {
-				msg_to_char(ch, "Invalid affect flag '%s'.\r\n", val_arg);
-				return;
-			}
-		}
-		else if (is_abbrev(type_arg, "-attack")) {
-			argument = any_one_word(argument, val_arg);
-			if ((only_attack = search_block(val_arg, (const char**)get_weapon_types_string(), FALSE)) == NOTHING) {
-				msg_to_char(ch, "Invalid attack type '%s'.\r\n", val_arg);
-				return;
-			}
-		}
-		else if (is_abbrev(type_arg, "-custom")) {
-			argument = any_one_word(argument, val_arg);
-			if ((lookup = search_block(val_arg, mob_custom_types, FALSE)) != NOTHING) {
-				find_custom |= BIT(lookup);
-			}
-			else {
-				msg_to_char(ch, "Invalid custom message type '%s'.\r\n", val_arg);
-				return;
-			}
-		}
-		else if (is_abbrev(type_arg, "-flags") || is_abbrev(type_arg, "-flagged")) {
-			argument = any_one_word(argument, val_arg);
-			if ((lookup = search_block(val_arg, action_bits, FALSE)) != NOTHING) {
-				only_flags |= BIT(lookup);
-			}
-			else {
-				msg_to_char(ch, "Invalid flag '%s'.\r\n", val_arg);
-				return;
-			}
-		}
-		else if (is_abbrev(type_arg, "-interaction")) {
-			argument = any_one_word(argument, val_arg);
-			if ((lookup = search_block(val_arg, interact_types, FALSE)) != NOTHING) {
-				find_interacts |= BIT(lookup);
-			}
-			else {
-				msg_to_char(ch, "Invalid interaction type '%s'.\r\n", val_arg);
-				return;
-			}
-		}
-		else if (is_abbrev(type_arg, "-level")) {
-			argument = any_one_word(argument, val_arg);
-			if (!isdigit(*val_arg) || (only_level = atoi(val_arg)) < 0) {
-				msg_to_char(ch, "Invalid level '%s'.\r\n", val_arg);
-				return;
-			}
-		}
-		else if (is_abbrev(type_arg, "-movetype")) {
-			argument = any_one_word(argument, val_arg);
-			if ((only_move = search_block(val_arg, mob_move_types, FALSE)) == NOTHING) {
-				msg_to_char(ch, "Invalid move type '%s'.\r\n", val_arg);
-				return;
-			}
-		}
-		else if (is_abbrev(type_arg, "-nameset")) {
-			argument = any_one_word(argument, val_arg);
-			if ((only_nameset = search_block(val_arg, name_sets, FALSE)) == NOTHING) {
-				msg_to_char(ch, "Invalid name set '%s'.\r\n", val_arg);
-				return;
-			}
-		}
-		else if (is_abbrev(type_arg, "-sex") || is_abbrev(type_arg, "-gender")) {
-			argument = any_one_word(argument, val_arg);
-			if ((only_sex = search_block(val_arg, genders, FALSE)) == NOTHING) {
-				msg_to_char(ch, "Invalid gender '%s'.\r\n", val_arg);
-				return;
-			}
-		}
-		else if (is_abbrev(type_arg, "-size")) {
-			argument = any_one_word(argument, val_arg);
-			if ((only_size = search_block(val_arg, size_types, FALSE)) == NOTHING) {
-				msg_to_char(ch, "Invalid size '%s'.\r\n", val_arg);
-				return;
-			}
-		}
-		else if (is_abbrev(type_arg, "-unflagged")) {
-			argument = any_one_word(argument, val_arg);
-			if ((lookup = search_block(val_arg, action_bits, FALSE)) != NOTHING) {
-				not_flagged |= BIT(lookup);
-			}
-			else {
-				msg_to_char(ch, "Invalid flag '%s'.\r\n", val_arg);
-				return;
-			}
-		}
+		FULLSEARCH_FUNC("allegiance", only_fct, find_faction(val_arg))
+		FULLSEARCH_FUNC("faction", only_fct, find_faction(val_arg))
+		FULLSEARCH_FLAGS("affects", only_affs, affected_bits)
+		FULLSEARCH_FUNC("attack", only_attack, get_attack_type_by_name(val_arg))
+		FULLSEARCH_FLAGS("custom", find_custom, mob_custom_types)
+		FULLSEARCH_FLAGS("flags", only_flags, action_bits)
+		FULLSEARCH_FLAGS("flagged", only_flags, action_bits)
+		FULLSEARCH_FLAGS("interaction", find_interacts, interact_types)
+		FULLSEARCH_INT("level", only_level, 0, INT_MAX)
+		FULLSEARCH_LIST("movetype", only_move, mob_move_types)
+		FULLSEARCH_LIST("nameset", only_nameset, name_sets)
+		FULLSEARCH_LIST("sex", only_sex, genders)
+		FULLSEARCH_LIST("gender", only_sex, genders)
+		FULLSEARCH_LIST("size", only_size, size_types)
+		FULLSEARCH_FLAGS("unflagged", not_flagged, action_bits)
 		
 		else {	// not sure what to do with it? treat it like a keyword
 			sprintf(find_keywords + strlen(find_keywords), "%s%s", *find_keywords ? " " : "", type_arg);
@@ -802,6 +739,7 @@ void olc_search_mob(char_data *ch, mob_vnum vnum) {
 	quest_data *quest, *next_quest;
 	progress_data *prg, *next_prg;
 	room_template *rmt, *next_rmt;
+	vehicle_data *veh, *next_veh;
 	sector_data *sect, *next_sect;
 	crop_data *crop, *next_crop;
 	shop_data *shop, *next_shop;
@@ -971,6 +909,27 @@ void olc_search_mob(char_data *ch, mob_vnum vnum) {
 		}
 	}
 	
+	// vehicles
+	HASH_ITER(hh, vehicle_table, veh, next_veh) {
+		any = FALSE;
+		for (spawn = VEH_SPAWNS(veh); spawn && !any; spawn = spawn->next) {
+			if (spawn->vnum == vnum) {
+				any = TRUE;
+				++found;
+			}
+		}
+		for (inter = VEH_INTERACTIONS(veh); inter && !any; inter = inter->next) {
+			if (interact_vnum_types[inter->type] == TYPE_MOB && inter->vnum == vnum) {
+				any = TRUE;
+				++found;
+			}
+		}
+		
+		if (any) {
+			size += snprintf(buf + size, sizeof(buf) - size, "VEH [%5d] %s\r\n", VEH_VNUM(veh), VEH_SHORT_DESC(veh));
+		}
+	}
+	
 	if (found > 0) {
 		size += snprintf(buf + size, sizeof(buf) - size, "%d location%s shown\r\n", found, PLURAL(found));
 	}
@@ -992,7 +951,6 @@ void save_olc_mobile(descriptor_data *desc) {
 
 	char_data *mob = GET_OLC_MOBILE(desc), *mob_iter, *proto;
 	mob_vnum vnum = GET_OLC_VNUM(desc);
-	struct interaction_item *interact;
 	struct quest_lookup *ql;
 	struct shop_lookup *sl;
 	UT_hash_handle hh;
@@ -1050,7 +1008,7 @@ void save_olc_mobile(descriptor_data *desc) {
 
 			// remove old scripts
 			if (SCRIPT(mob_iter)) {
-				extract_script(mob_iter, MOB_TRIGGER);
+				remove_all_triggers(mob_iter, MOB_TRIGGER);
 			}
 			if (mob_iter->proto_script && mob_iter->proto_script != proto->proto_script) {
 				free_proto_scripts(&mob_iter->proto_script);
@@ -1076,10 +1034,7 @@ void save_olc_mobile(descriptor_data *desc) {
 		free(GET_LOOK_DESC(proto));
 	}
 
-	while ((interact = proto->interactions)) {
-		proto->interactions = interact->next;
-		free(interact);
-	}
+	free_interactions(&proto->interactions);
 	free_custom_messages(MOB_CUSTOM_MSGS(proto));
 	
 	if (proto->proto_script) {
@@ -1164,7 +1119,8 @@ char_data *setup_olc_mobile(char_data *input) {
 void olc_show_mobile(char_data *ch) {
 	void get_interaction_display(struct interaction_item *list, char *save_buffer);
 	void get_script_display(struct trig_proto_list *list, char *save_buffer);
-
+	
+	char buf[MAX_STRING_LENGTH * 4];	// these get long
 	char_data *mob = GET_OLC_MOBILE(ch->desc);
 	struct custom_message *mcm;
 	int count;

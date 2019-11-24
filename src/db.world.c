@@ -439,7 +439,6 @@ void delete_room(room_data *room, bool check_exits) {
 	void relocate_players(room_data *room, room_data *to_room);
 	void remove_instance_fake_loc(struct instance_data *inst);
 	void remove_room_from_vehicle(room_data *room, vehicle_data *veh);
-	void set_instance_fake_loc(struct instance_data *inst, room_data *loc);
 
 	struct room_direction_data *ex, *next_ex, *temp;
 	struct empire_territory_data *ter;
@@ -467,7 +466,7 @@ void delete_room(room_data *room, bool check_exits) {
 	
 	// delete this first
 	if (ROOM_UNLOAD_EVENT(room)) {
-		event_cancel(ROOM_UNLOAD_EVENT(room), cancel_room_event);
+		dg_event_cancel(ROOM_UNLOAD_EVENT(room), cancel_room_event);
 		ROOM_UNLOAD_EVENT(room) = NULL;
 	}
 	
@@ -581,7 +580,7 @@ void delete_room(room_data *room, bool check_exits) {
 	while ((af = ROOM_AFFECTS(room))) {
 		ROOM_AFFECTS(room) = af->next;
 		if (af->expire_event) {
-			event_cancel(af->expire_event, cancel_room_expire_event);
+			dg_event_cancel(af->expire_event, cancel_room_expire_event);
 		}
 		free(af);
 	}
@@ -729,9 +728,10 @@ void finish_trench(room_data *room) {
 * requirements.
 *
 * @param room_data *room The room to choose a mine type for.
-* @param char_data *ch The character setting up mine data (for abilities).
+* @param char_data *ch Optional: The character setting up mine data (for abilities).
+* @param empire_data *emp Optional: The empire/owner (for techs).
 */
-void init_mine(room_data *room, char_data *ch) {
+void init_mine(room_data *room, char_data *ch, empire_data *emp) {
 	extern adv_data *get_adventure_for_vnum(rmt_vnum vnum);
 	
 	struct global_data *glb, *next_glb, *choose_last, *found;
@@ -758,7 +758,7 @@ void init_mine(room_data *room, char_data *ch) {
 		if (GET_GLOBAL_ABILITY(glb) != NO_ABIL && (!ch || !has_ability(ch, GET_GLOBAL_ABILITY(glb)))) {
 			continue;
 		}
-		if (IS_SET(GET_GLOBAL_FLAGS(glb), GLB_FLAG_RARE) && (!GET_LOYALTY(ch) || !EMPIRE_HAS_TECH(GET_LOYALTY(ch), TECH_RARE_METALS))) {
+		if (IS_SET(GET_GLOBAL_FLAGS(glb), GLB_FLAG_RARE) && (!emp || !EMPIRE_HAS_TECH(emp, TECH_RARE_METALS)) && (!ch || !GET_LOYALTY(ch) || !EMPIRE_HAS_TECH(GET_LOYALTY(ch), TECH_RARE_METALS))) {
 			continue;	// missing rare metals
 		}
 		
@@ -827,7 +827,7 @@ void init_mine(room_data *room, char_data *ch) {
 		set_room_extra_data(room, ROOM_EXTRA_MINE_GLB_VNUM, GET_GLOBAL_VNUM(found));
 		set_room_extra_data(room, ROOM_EXTRA_MINE_AMOUNT, number(GET_GLOBAL_VAL(found, GLB_VAL_MAX_MINE_SIZE) / 2, GET_GLOBAL_VAL(found, GLB_VAL_MAX_MINE_SIZE)));
 		
-		if (ch && (has_player_tech(ch, PTECH_DEEP_MINES) || (GET_LOYALTY(ch) && EMPIRE_HAS_TECH(GET_LOYALTY(ch), TECH_DEEP_MINES)))) {
+		if (ch && (has_player_tech(ch, PTECH_DEEP_MINES) || (emp && EMPIRE_HAS_TECH(emp, TECH_DEEP_MINES)) || (GET_LOYALTY(ch) && EMPIRE_HAS_TECH(GET_LOYALTY(ch), TECH_DEEP_MINES)))) {
 			multiply_room_extra_data(room, ROOM_EXTRA_MINE_AMOUNT, 1.5);
 			gain_player_tech_exp(ch, PTECH_DEEP_MINES, 15);
 		}
@@ -1127,6 +1127,22 @@ void annual_update_map_tile(struct map_data *tile) {
 		}
 	}
 	
+	// 33% chance that unclaimed non-wild crops vanish
+	if (tile->crop_type && (!room || !ROOM_OWNER(room)) && CROP_FLAGGED(tile->crop_type, CROPF_NOT_WILD) && !number(0, 2)) {
+		if (!room) {	// load room if needed
+			room = real_room(tile->vnum);
+		}
+		
+		// change to base sect
+		change_terrain(room, climate_default_sector[GET_CROP_CLIMATE(ROOM_CROP(room))]);
+		
+		// stop all possible chores here since the sector changed
+		stop_room_action(room, ACT_HARVESTING, CHORE_FARMING);
+		stop_room_action(room, ACT_CHOPPING, CHORE_CHOPPING);
+		stop_room_action(room, ACT_PICKING, CHORE_HERB_GARDENING);
+		stop_room_action(room, ACT_GATHERING, NOTHING);
+	}
+	
 	// fill in trenches slightly
 	if (SECT_FLAGGED(tile->sector_type, SECTF_IS_TRENCH) && (!room || !ROOM_OWNER(room)) && (trenched = get_extra_data(tile->shared->extra_data, ROOM_EXTRA_TRENCH_PROGRESS)) < 0) {
 		// move halfway toward initial: remember initial value is negative
@@ -1158,7 +1174,7 @@ void annual_update_map_tile(struct map_data *tile) {
 	}
 	
 	// clean mine data from anything that's not currently a mine
-	if (!room || !HAS_FUNCTION(room, FNC_MINE)) {
+	if (!room || !room_has_function_and_city_ok(room, FNC_MINE)) {
 		remove_extra_data(&tile->shared->extra_data, ROOM_EXTRA_MINE_GLB_VNUM);
 		remove_extra_data(&tile->shared->extra_data, ROOM_EXTRA_MINE_AMOUNT);
 		remove_extra_data(&tile->shared->extra_data, ROOM_EXTRA_PROSPECT_EMPIRE);
@@ -1225,7 +1241,7 @@ void annual_world_update(void) {
 	bool naturalize_newbie_islands = config_get_bool("naturalize_newbie_islands");
 	bool naturalize_unclaimable = config_get_bool("naturalize_unclaimable");
 	
-	snprintf(message, sizeof(message), "\r\n%s\r\n", config_get_string("newyear_message"));
+	snprintf(message, sizeof(message), "\r\n%s\r\n\r\n", config_get_string("newyear_message"));
 	
 	// MESSAGE TO ALL
 	for (d = descriptor_list; d; d = d->next) {
@@ -1503,14 +1519,14 @@ EVENT_CANCEL_FUNC(cancel_burn_event) {
 */
 void schedule_burn_down(room_data *room) {
 	struct room_event_data *burn_data;
-	struct event *ev;
+	struct dg_event *ev;
 	
 	if (COMPLEX_DATA(room) && COMPLEX_DATA(room)->burn_down_time > 0) {
 		// create the event
 		CREATE(burn_data, struct room_event_data, 1);
 		burn_data->room = room;
 		
-		ev = event_create(burn_down_event, burn_data, (COMPLEX_DATA(room)->burn_down_time - time(0)) * PASSES_PER_SEC);
+		ev = dg_event_create(burn_down_event, burn_data, (COMPLEX_DATA(room)->burn_down_time - time(0)) * PASSES_PER_SEC);
 		add_stored_event_room(room, SEV_BURN_DOWN, ev);
 	}
 }
@@ -1687,9 +1703,11 @@ void reset_one_room(room_data *room) {
 	void setup_generic_npc(char_data *mob, empire_data *emp, int name, int sex);
 	void objpack_load_room(room_data *room);
 	
+	char field[256], str[MAX_INPUT_LENGTH];
 	struct reset_com *reset;
 	char_data *tmob = NULL; /* for trigger assignment */
 	char_data *mob = NULL;
+	char_data *m_proto;
 	trig_data *trig;
 	
 	// shortcut
@@ -1753,6 +1771,39 @@ void reset_one_room(room_data *room) {
 
 			case 'O': {	// load an obj pack
 				objpack_load_room(room);
+				break;
+			}
+			
+			case 'S': { // custom string
+				if (mob) {
+					m_proto = mob_proto(GET_MOB_VNUM(mob));
+					half_chop(reset->sarg1, field, str);
+					if (is_abbrev(field, "keywords")) {
+						if (GET_PC_NAME(mob) && (!m_proto || GET_PC_NAME(mob) != GET_PC_NAME(m_proto))) {
+							free(GET_PC_NAME(mob));
+						}
+						GET_PC_NAME(mob) = str_dup(str);
+						mob->customized = TRUE;
+					}
+					else if (is_abbrev(field, "longdescription")) {
+						if (GET_LONG_DESC(mob) && (!m_proto || GET_LONG_DESC(mob) != GET_LONG_DESC(m_proto))) {
+							free(GET_LONG_DESC(mob));
+						}
+						strcat(str, "\r\n");	// required by long descs
+						GET_LONG_DESC(mob) = str_dup(str);
+						mob->customized = TRUE;
+					}
+					else if (is_abbrev(field, "shortdescription")) {
+						if (GET_SHORT_DESC(mob) && (!m_proto || GET_SHORT_DESC(mob) != GET_SHORT_DESC(m_proto))) {
+							free(GET_SHORT_DESC(mob));
+						}
+						GET_SHORT_DESC(mob) = str_dup(str);
+						mob->customized = TRUE;
+					}
+					else {
+						log("Warning: Unknown mob string in resets for room %d: C S %s", GET_ROOM_VNUM(room), reset->sarg1);
+					}
+				}
 				break;
 			}
 
@@ -2084,7 +2135,7 @@ EVENTFUNC(tavern_update) {
 */
 void check_tavern_setup(room_data *room) {
 	struct room_event_data *data;
-	struct event *ev;
+	struct dg_event *ev;
 	
 	if (!ROOM_OWNER(room) || !room_has_function_and_city_ok(room, FNC_TAVERN)) {
 		// not a tavern or not set up
@@ -2101,7 +2152,7 @@ void check_tavern_setup(room_data *room) {
 		data->room = room;
 		
 		// schedule every 7.5 minutes -- the same frequency this ran under the old system
-		ev = event_create(tavern_update, (void*)data, (7.5 * 60) RL_SEC);
+		ev = dg_event_create(tavern_update, (void*)data, (7.5 * 60) RL_SEC);
 		add_stored_event_room(room, SEV_TAVERN, ev);
 	}
 }
@@ -2137,19 +2188,19 @@ void adjust_building_tech(empire_data *emp, room_data *room, bool add) {
 	
 	// WARNING: do not check in-city status on these ... it can change at a time when territory is not re-scanned
 	
-	if (room_has_function_and_city_ok(room, FNC_APIARY)) {
+	if (HAS_FUNCTION(room, FNC_APIARY)) {
 		EMPIRE_TECH(emp, TECH_APIARIES) += amt;
 		if (isle || (isle = get_empire_island(emp, island))) {
 			isle->tech[TECH_APIARIES] += amt;
 		}
 	}
-	if (room_has_function_and_city_ok(room, FNC_GLASSBLOWER)) {
+	if (HAS_FUNCTION(room, FNC_GLASSBLOWER)) {
 		EMPIRE_TECH(emp, TECH_GLASSBLOWING) += amt;
 		if (isle || (isle = get_empire_island(emp, island))) {
 			isle->tech[TECH_GLASSBLOWING] += amt;
 		}
 	}
-	if (room_has_function_and_city_ok(room, FNC_DOCKS)) {
+	if (HAS_FUNCTION(room, FNC_DOCKS)) {
 		EMPIRE_TECH(emp, TECH_SEAPORT) += amt;
 		if (isle || (isle = get_empire_island(emp, island))) {
 			isle->tech[TECH_SEAPORT] += amt;
@@ -2159,6 +2210,61 @@ void adjust_building_tech(empire_data *emp, room_data *room, bool add) {
 	// other traits from buildings?
 	EMPIRE_MILITARY(emp) += GET_BLD_MILITARY(GET_BUILDING(room)) * amt;
 	EMPIRE_FAME(emp) += GET_BLD_FAME(GET_BUILDING(room)) * amt;
+}
+
+
+/**
+* Tech/fame marker for vehicles. Call this after you finish a vehicle or
+* destroy it.
+*
+* Note: Vehicles inside of moving vehicles do not contribute tech or fame.
+*
+* @param vehicle_data *veh The vehicle to update.
+* @param bool add Adds the techs if TRUE, or removes them if FALSE.
+*/
+void adjust_vehicle_tech(vehicle_data *veh, bool add) {
+	int amt = add ? 1 : -1;	// adding or removing 1
+	struct empire_island *isle = NULL;
+	empire_data *emp = NULL;
+	room_data *room = NULL;
+	int island = NO_ISLAND;
+	
+	if (veh) {
+		emp = VEH_OWNER(veh);
+		room = IN_ROOM(veh);
+		island = GET_ISLAND_ID(room);
+	}
+	
+	// only care about
+	if (!emp || !veh || !VEH_IS_COMPLETE(veh) || !room) {
+		return;
+	}
+	if (GET_ROOM_VEHICLE(room) && VEH_FLAGGED(GET_ROOM_VEHICLE(room), VEH_DRIVING | VEH_SAILING | VEH_FLYING)) {
+		return;	// do NOT adjust tech if inside a moving vehicle
+	}
+	
+	if (IS_SET(VEH_FUNCTIONS(veh), FNC_APIARY)) {
+		EMPIRE_TECH(emp, TECH_APIARIES) += amt;
+		if (island != NO_ISLAND && (isle || (isle = get_empire_island(emp, island)))) {
+			isle->tech[TECH_APIARIES] += amt;
+		}
+	}
+	if (IS_SET(VEH_FUNCTIONS(veh), FNC_GLASSBLOWER)) {
+		EMPIRE_TECH(emp, TECH_GLASSBLOWING) += amt;
+		if (island != NO_ISLAND && (isle || (isle = get_empire_island(emp, island)))) {
+			isle->tech[TECH_GLASSBLOWING] += amt;
+		}
+	}
+	if (IS_SET(VEH_FUNCTIONS(veh), FNC_DOCKS)) {
+		EMPIRE_TECH(emp, TECH_SEAPORT) += amt;
+		if (island != NO_ISLAND && (isle || (isle = get_empire_island(emp, island)))) {
+			isle->tech[TECH_SEAPORT] += amt;
+		}
+	}
+	
+	// other traits from buildings?
+	EMPIRE_MILITARY(emp) += VEH_MILITARY(veh) * amt;
+	EMPIRE_FAME(emp) += VEH_FAME(veh) * amt;
 }
 
 
@@ -2362,6 +2468,7 @@ void reread_empire_tech(empire_data *emp) {
 	
 	struct empire_island *isle, *next_isle;
 	empire_data *iter, *next_iter;
+	vehicle_data *veh;
 	int sub;
 	
 	// nowork
@@ -2376,6 +2483,18 @@ void reread_empire_tech(empire_data *emp) {
 	// re-read both things
 	read_empire_members(emp, TRUE);
 	read_empire_territory(emp, TRUE);
+	
+	// also read vehicles for tech/etc
+	LL_FOREACH(vehicle_list, veh) {
+		if (emp && VEH_OWNER(veh) != emp) {
+			continue;	// only checking one
+		}
+		if (!VEH_OWNER(veh) || !VEH_IS_COMPLETE(veh)) {
+			continue;	// skip unowned/unfinished
+		}
+		
+		adjust_vehicle_tech(veh, TRUE);
+	}
 	
 	// special-handling for imm-only empires: give them all techs
 	HASH_ITER(hh, empire_table, iter, next_iter) {
@@ -2443,13 +2562,13 @@ EVENTFUNC(trench_fill_event) {
 void schedule_trench_fill(struct map_data *map) {
 	long when = get_extra_data(map->shared->extra_data, ROOM_EXTRA_TRENCH_FILL_TIME);
 	struct map_event_data *trench_data;
-	struct event *ev;
+	struct dg_event *ev;
 	
 	if (!find_stored_event(map->shared->events, SEV_TRENCH_FILL)) {
 		CREATE(trench_data, struct map_event_data, 1);
 		trench_data->map = map;
 		
-		ev = event_create(trench_fill_event, (void*)trench_data, (when > 0 ? ((when - time(0)) * PASSES_PER_SEC) : 1));
+		ev = dg_event_create(trench_fill_event, (void*)trench_data, (when > 0 ? ((when - time(0)) * PASSES_PER_SEC) : 1));
 		add_stored_event(&map->shared->events, SEV_TRENCH_FILL, ev);
 	}
 }
@@ -3308,7 +3427,7 @@ void schedule_check_unload(room_data *room, bool offset) {
 		if (offset) {
 			mins += number(-300, 300) / 100.0;
 		}
-		ROOM_UNLOAD_EVENT(room) = event_create(check_unload_room, (void*)data, (mins * 60) RL_SEC);
+		ROOM_UNLOAD_EVENT(room) = dg_event_create(check_unload_room, (void*)data, (mins * 60) RL_SEC);
 	}
 }
 
@@ -3320,7 +3439,7 @@ void schedule_check_unload(room_data *room, bool offset) {
 */
 void schedule_crop_growth(struct map_data *map) {
 	struct map_event_data *data;
-	struct event *ev;
+	struct dg_event *ev;
 	long when;
 	
 	// cancel any existing event
@@ -3333,7 +3452,7 @@ void schedule_crop_growth(struct map_data *map) {
 		CREATE(data, struct map_event_data, 1);
 		data->map = map;
 		
-		ev = event_create(grow_crop_event, data, (when - time(0)) * PASSES_PER_SEC);
+		ev = dg_event_create(grow_crop_event, data, (when - time(0)) * PASSES_PER_SEC);
 		add_stored_event(&map->shared->events, SEV_GROW_CROP, ev);
 	}
 }

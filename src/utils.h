@@ -27,6 +27,7 @@
 *   Crop Utils
 *   Descriptor Utils
 *   Empire Utils
+*   Event Utils
 *   Faction Utils
 *   Fight Utils
 *   Generic Utils
@@ -265,7 +266,7 @@
 
 
 #define MORT_CAN_SEE_NO_DARK(sub, obj)  (INVIS_OK(sub, obj))
-#define MORT_CAN_SEE_LIGHT(sub, obj)  (LIGHT_OK(sub) || (!AFF_FLAGGED(sub, AFF_BLIND) && IN_ROOM(sub) == IN_ROOM(obj) && has_player_tech((sub), PTECH_SEE_CHARS_IN_DARK) && (!MAGIC_DARKNESS(IN_ROOM(sub)) || CAN_SEE_IN_MAGIC_DARKNESS(sub))))
+#define MORT_CAN_SEE_LIGHT(sub, obj)  (LIGHT_OK(sub) || (!AFF_FLAGGED(sub, AFF_BLIND) && IN_ROOM(sub) == IN_ROOM(obj) && (has_player_tech((sub), PTECH_SEE_CHARS_IN_DARK) || (IS_OUTDOORS(sub) && has_player_tech((sub), PTECH_SEE_IN_DARK_OUTDOORS))) && (!MAGIC_DARKNESS(IN_ROOM(sub)) || CAN_SEE_IN_MAGIC_DARKNESS(sub))))
 #define MORT_CAN_SEE(sub, obj)  (MORT_CAN_SEE_LIGHT(sub, obj) && MORT_CAN_SEE_NO_DARK(sub, obj))
 
 #define IMM_CAN_SEE(sub, obj)  (MORT_CAN_SEE(sub, obj) || (!IS_NPC(sub) && PRF_FLAGGED(sub, PRF_HOLYLIGHT)))
@@ -289,7 +290,7 @@
 //// CAN SEE OBJ UTILS ///////////////////////////////////////////////////////
 
 #define CAN_SEE_OBJ_CARRIER(sub, obj)  ((!obj->carried_by || CAN_SEE(sub, obj->carried_by)) && (!obj->worn_by || CAN_SEE(sub, obj->worn_by)))
-#define MORT_CAN_SEE_OBJ(sub, obj)  ((LIGHT_OK(sub) || obj->worn_by == sub || obj->carried_by == sub || (IN_ROOM(sub) == IN_ROOM(obj) && !AFF_FLAGGED((sub), AFF_BLIND) && has_player_tech((sub), PTECH_SEE_OBJS_IN_DARK) && (!MAGIC_DARKNESS(IN_ROOM(sub)) || CAN_SEE_IN_MAGIC_DARKNESS(sub)))) && CAN_SEE_OBJ_CARRIER(sub, obj))
+#define MORT_CAN_SEE_OBJ(sub, obj)  ((LIGHT_OK(sub) || obj->worn_by == sub || obj->carried_by == sub || (IN_ROOM(sub) == IN_ROOM(obj) && !AFF_FLAGGED((sub), AFF_BLIND) && (has_player_tech((sub), PTECH_SEE_OBJS_IN_DARK) || (IS_OUTDOORS(sub) && has_player_tech((sub), PTECH_SEE_IN_DARK_OUTDOORS))) && (!MAGIC_DARKNESS(IN_ROOM(sub)) || CAN_SEE_IN_MAGIC_DARKNESS(sub)))) && CAN_SEE_OBJ_CARRIER(sub, obj))
 #define CAN_SEE_OBJ(sub, obj)  (MORT_CAN_SEE_OBJ(sub, obj) || (!IS_NPC(sub) && PRF_FLAGGED((sub), PRF_HOLYLIGHT)))
 
 
@@ -398,7 +399,7 @@ extern int GET_MAX_BLOOD(char_data *ch);	// this one is different than the other
 #define CAN_RECOGNIZE(ch, vict)  (IS_IMMORTAL(ch) || (!AFF_FLAGGED(vict, AFF_NO_SEE_IN_ROOM) && ((GET_LOYALTY(ch) && GET_LOYALTY(ch) == GET_LOYALTY(vict)) || (GROUP(ch) && in_same_group(ch, vict)) || (!CHAR_MORPH_FLAGGED((vict), MORPHF_ANIMAL) && !IS_DISGUISED(vict)))))
 #define CAN_RIDE_FLYING_MOUNT(ch)  (has_player_tech((ch), PTECH_RIDING_FLYING))
 #define CAN_SEE_IN_DARK(ch)  (HAS_INFRA(ch) || (!IS_NPC(ch) && PRF_FLAGGED(ch, PRF_HOLYLIGHT)))
-#define CAN_SEE_IN_DARK_ROOM(ch, room)  ((WOULD_BE_LIGHT_WITHOUT_MAGIC_DARKNESS(room) || (room == IN_ROOM(ch) && (has_player_tech((ch), PTECH_SEE_CHARS_IN_DARK) || has_player_tech((ch), PTECH_SEE_OBJS_IN_DARK))) || CAN_SEE_IN_DARK(ch)) && (!MAGIC_DARKNESS(room) || CAN_SEE_IN_MAGIC_DARKNESS(ch)))
+#define CAN_SEE_IN_DARK_ROOM(ch, room)  ((WOULD_BE_LIGHT_WITHOUT_MAGIC_DARKNESS(room) || (room == IN_ROOM(ch) && (has_player_tech((ch), PTECH_SEE_CHARS_IN_DARK) || (IS_OUTDOORS(ch) && has_player_tech((ch), PTECH_SEE_IN_DARK_OUTDOORS)) || has_player_tech((ch), PTECH_SEE_OBJS_IN_DARK))) || CAN_SEE_IN_DARK(ch)) && (!MAGIC_DARKNESS(room) || CAN_SEE_IN_MAGIC_DARKNESS(ch)))
 #define CAN_SEE_IN_MAGIC_DARKNESS(ch)  (IS_NPC(ch) ? (get_approximate_level(ch) > 100) : has_ability((ch), ABIL_DARKNESS))
 #define CAN_SPEND_BLOOD(ch)  (!AFF_FLAGGED(ch, AFF_CANT_SPEND_BLOOD))
 #define CAST_BY_ID(ch)  (IS_NPC(ch) ? (-1 * GET_MOB_VNUM(ch)) : GET_IDNUM(ch))
@@ -509,6 +510,7 @@ extern int GET_MAX_BLOOD(char_data *ch);	// this one is different than the other
 #define GET_OLC_CLASS(desc)  ((desc)->olc_class)
 #define GET_OLC_CRAFT(desc)  ((desc)->olc_craft)
 #define GET_OLC_CROP(desc)  ((desc)->olc_crop)
+#define GET_OLC_EVENT(desc)  ((desc)->olc_event)
 #define GET_OLC_FACTION(desc)  ((desc)->olc_faction)
 #define GET_OLC_GENERIC(desc)  ((desc)->olc_generic)
 #define GET_OLC_GLOBAL(desc)  ((desc)->olc_global)
@@ -567,6 +569,7 @@ extern int GET_MAX_BLOOD(char_data *ch);	// this one is different than the other
 #define EMPIRE_NEEDS_LOGS_SAVE(emp)  ((emp)->needs_logs_save)
 #define EMPIRE_NEEDS_STORAGE_SAVE(emp)  ((emp)->needs_storage_save)
 #define EMPIRE_NEXT_TIMEOUT(emp)  ((emp)->next_timeout)
+#define EMPIRE_PRODUCTION_TOTALS(emp)  ((emp)->production_totals)
 #define EMPIRE_PROGRESS_POINTS(emp, type)  ((emp)->progress_points[(type)])
 #define EMPIRE_PROGRESS_POOL(emp)  EMPIRE_ATTRIBUTE((emp), EATT_PROGRESS_POOL)
 #define EMPIRE_GREATNESS(emp)  ((emp)->greatness)
@@ -609,6 +612,28 @@ extern int GET_MAX_BLOOD(char_data *ch);	// this one is different than the other
 // deprecated
 #define EMPIRE_CITY_TERRITORY(emp)  EMPIRE_TERRITORY(emp, TER_CITY)
 #define EMPIRE_OUTSIDE_TERRITORY(emp)  EMPIRE_TERRITORY(emp, TER_OUTSKIRTS)
+
+
+ //////////////////////////////////////////////////////////////////////////////
+//// EVENT UTILS /////////////////////////////////////////////////////////////
+
+#define EVT_VNUM(evt)  ((evt)->vnum)
+#define EVT_COMPLETE_MSG(evt)  ((evt)->complete_msg)
+#define EVT_DESCRIPTION(evt)  ((evt)->description)
+#define EVT_DURATION(evt)  ((evt)->duration)
+#define EVT_FLAGS(evt)  ((evt)->flags)
+#define EVT_MAX_LEVEL(evt)  ((evt)->max_level)
+#define EVT_MIN_LEVEL(evt)  ((evt)->min_level)
+#define EVT_NAME(evt)  ((evt)->name)
+#define EVT_NOTES(evt)  ((evt)->notes)
+#define EVT_RANK_REWARDS(evt)  ((evt)->rank_rewards)
+#define EVT_REPEATS_AFTER(evt)  ((evt)->repeats_after)
+#define EVT_THRESHOLD_REWARDS(evt)  ((evt)->threshold_rewards)
+#define EVT_TYPE(evt)  ((evt)->type)
+#define EVT_VERSION(evt)  ((evt)->version)
+
+// helpers
+#define EVT_FLAGGED(evt, fl)  IS_SET(EVT_FLAGS(evt), (fl))
 
 
  //////////////////////////////////////////////////////////////////////////////
@@ -837,6 +862,7 @@ extern int Y_COORD(room_data *room);	// formerly #define Y_COORD(room)  FLAT_Y_C
 #define GET_OBJ_CMP_TYPE(obj)  ((obj)->obj_flags.cmp_type)
 #define GET_OBJ_CMP_FLAGS(obj)  ((obj)->obj_flags.cmp_flags)
 #define GET_OBJ_CURRENT_SCALE_LEVEL(obj)  ((obj)->obj_flags.current_scale_level)
+#define GET_OBJ_EQ_SETS(obj)  ((obj)->eq_sets)
 #define GET_OBJ_EXTRA(obj)  ((obj)->obj_flags.extra_flags)
 #define GET_OBJ_KEYWORDS(obj)  ((obj)->name)
 #define GET_OBJ_LONG_DESC(obj)  ((obj)->description)
@@ -873,11 +899,11 @@ extern int Y_COORD(room_data *room);	// formerly #define Y_COORD(room)  FLAT_Y_C
 #define CAN_WEAR(obj, part)  (IS_SET(GET_OBJ_WEAR(obj), (part)))
 
 // for stacking, sotring, etc
-#define OBJ_CAN_STACK(obj)  (GET_OBJ_TYPE(obj) != ITEM_CONTAINER && !OBJ_FLAGGED((obj), OBJ_ENCHANTED) && !IS_AMMO(obj))
+#define OBJ_CAN_STACK(obj)  (GET_OBJ_TYPE(obj) != ITEM_CONTAINER && !IS_AMMO(obj))
 #define OBJ_CAN_STORE(obj)  ((obj)->storage && !OBJ_BOUND_TO(obj) && !OBJ_FLAGGED((obj), OBJ_NO_STORE | OBJ_SUPERIOR | OBJ_ENCHANTED) && !IS_STOLEN(obj))
 #define UNIQUE_OBJ_CAN_STORE(obj)  (!OBJ_BOUND_TO(obj) && !OBJ_CAN_STORE(obj) && !OBJ_FLAGGED((obj), OBJ_NO_STORE | OBJ_JUNK) && GET_OBJ_TIMER(obj) == UNLIMITED && !IS_STOLEN(obj) && GET_OBJ_REQUIRES_QUEST(obj) == NOTHING && !IS_STOLEN(obj))
-#define OBJ_STACK_FLAGS  (OBJ_SUPERIOR | OBJ_KEEP)
-#define OBJS_ARE_SAME(o1, o2)  (GET_OBJ_VNUM(o1) == GET_OBJ_VNUM(o2) && ((GET_OBJ_EXTRA(o1) & OBJ_STACK_FLAGS) == (GET_OBJ_EXTRA(o2) & OBJ_STACK_FLAGS)) && (!IS_DRINK_CONTAINER(o1) || GET_DRINK_CONTAINER_TYPE(o1) == GET_DRINK_CONTAINER_TYPE(o2)) && (IS_STOLEN(o1) == IS_STOLEN(o2)))
+#define OBJ_STACK_FLAGS  (OBJ_SUPERIOR | OBJ_KEEP | OBJ_ENCHANTED)
+#define OBJS_ARE_SAME(o1, o2)  (GET_OBJ_VNUM(o1) == GET_OBJ_VNUM(o2) && ((GET_OBJ_EXTRA(o1) & OBJ_STACK_FLAGS) == (GET_OBJ_EXTRA(o2) & OBJ_STACK_FLAGS)) && (GET_OBJ_SHORT_DESC(o1) == GET_OBJ_SHORT_DESC(o2) || !strcmp(GET_OBJ_SHORT_DESC(o1), GET_OBJ_SHORT_DESC(o2))) && (GET_OBJ_LONG_DESC(o1) == GET_OBJ_LONG_DESC(o2) || !strcmp(GET_OBJ_LONG_DESC(o1), GET_OBJ_LONG_DESC(o2))) && (!IS_DRINK_CONTAINER(o1) || GET_DRINK_CONTAINER_TYPE(o1) == GET_DRINK_CONTAINER_TYPE(o2)) && (!IS_BOOK(o1) || !IS_BOOK(o2) || GET_BOOK_ID(o1) == GET_BOOK_ID(o2)) && (!IS_AMMO(o1) || !IS_AMMO(o2) || GET_AMMO_QUANTITY(o1) == GET_AMMO_QUANTITY(o2)) && (IS_STOLEN(o1) == IS_STOLEN(o2)))
 
 
  //////////////////////////////////////////////////////////////////////////////
@@ -954,6 +980,7 @@ extern int Y_COORD(room_data *room);	// formerly #define Y_COORD(room)  FLAT_Y_C
 // ITEM_CORPSE
 #define IS_CORPSE(obj)  (GET_OBJ_TYPE(obj) == ITEM_CORPSE)
 #define VAL_CORPSE_IDNUM  0
+#define VAL_CORPSE_SIZE  1
 #define VAL_CORPSE_FLAGS  2
 #define IS_NPC_CORPSE(obj)  (IS_CORPSE(obj) && GET_OBJ_VAL((obj), VAL_CORPSE_IDNUM) >= 0)
 #define IS_PC_CORPSE(obj)  (IS_CORPSE(obj) && GET_OBJ_VAL((obj), VAL_CORPSE_IDNUM) < 0)
@@ -961,6 +988,7 @@ extern int Y_COORD(room_data *room);	// formerly #define Y_COORD(room)  FLAT_Y_C
 #define GET_CORPSE_PC_ID(obj)  (IS_PC_CORPSE(obj) ? (-1 * GET_OBJ_VAL((obj), VAL_CORPSE_IDNUM)) : NOBODY)
 #define GET_CORPSE_FLAGS(obj)  (IS_CORPSE(obj) ? GET_OBJ_VAL((obj), VAL_CORPSE_FLAGS) : 0)
 #define IS_CORPSE_FLAG_SET(obj, flag)  (GET_CORPSE_FLAGS(obj) & (flag))
+#define GET_CORPSE_SIZE(obj)  (IS_CORPSE(obj) ? GET_OBJ_VAL((obj), VAL_CORPSE_SIZE) : SIZE_NORMAL)
 
 // ITEM_COINS
 #define IS_COINS(obj)  (GET_OBJ_TYPE(obj) == ITEM_COINS)
@@ -1091,6 +1119,8 @@ extern int Y_COORD(room_data *room);	// formerly #define Y_COORD(room)  FLAT_Y_C
 #define GET_DAILY_QUESTS(ch)  CHECK_PLAYER_SPECIAL((ch), ((ch)->player_specials->daily_quests))
 #define GET_DISGUISED_NAME(ch)  CHECK_PLAYER_SPECIAL((ch), ((ch)->player_specials->disguised_name))
 #define GET_DISGUISED_SEX(ch)  CHECK_PLAYER_SPECIAL((ch), ((ch)->player_specials->disguised_sex))
+#define GET_EQ_SETS(ch)  CHECK_PLAYER_SPECIAL((ch), ((ch)->player_specials->eq_sets))
+#define GET_EVENT_DATA(ch)  CHECK_PLAYER_SPECIAL((ch), ((ch)->player_specials->event_data))
 #define GET_EXP_TODAY(ch)  CHECK_PLAYER_SPECIAL((ch), ((ch)->player_specials->exp_today))
 #define GET_FACTIONS(ch)  CHECK_PLAYER_SPECIAL((ch), ((ch)->player_specials->factions))
 #define GET_FIGHT_MESSAGES(ch)  CHECK_PLAYER_SPECIAL((ch), ((ch)->player_specials->fight_messages))
@@ -1302,7 +1332,7 @@ extern int Y_COORD(room_data *room);	// formerly #define Y_COORD(room)  FLAT_Y_C
 
 // definitions
 #define BLD_ALLOWS_MOUNTS(room)  (ROOM_IS_CLOSED(room) ? (ROOM_BLD_FLAGGED((room), BLD_ALLOW_MOUNTS | BLD_OPEN) || RMT_FLAGGED((room), RMT_OUTDOOR)) : TRUE)
-#define CAN_CHOP_ROOM(room)  (has_evolution_type(SECT(room), EVO_CHOPPED_DOWN) || CAN_INTERACT_ROOM((room), INTERACT_CHOP) || (ROOM_SECT_FLAGGED((room), SECTF_CROP) && ROOM_CROP_FLAGGED((room), CROPF_IS_ORCHARD)))
+#define CAN_CHOP_ROOM(room)  (has_evolution_type(SECT(room), EVO_CHOPPED_DOWN) || can_interact_room((room), INTERACT_CHOP) || (ROOM_SECT_FLAGGED((room), SECTF_CROP) && ROOM_CROP_FLAGGED((room), CROPF_IS_ORCHARD)))
 #define DEPLETION_LIMIT(room)  (ROOM_BLD_FLAGGED((room), BLD_HIGH_DEPLETION) ? config_get_int("high_depletion") : config_get_int("common_depletion"))
 #define HAS_MINOR_DISREPAIR(room)  (HOME_ROOM(room) == room && GET_BUILDING(room) && BUILDING_DAMAGE(room) > 0 && (BUILDING_DAMAGE(room) >= (GET_BLD_MAX_DAMAGE(GET_BUILDING(room)) * config_get_int("disrepair_minor") / 100)))
 #define HAS_MAJOR_DISREPAIR(room)  (HOME_ROOM(room) == room && GET_BUILDING(room) && BUILDING_DAMAGE(room) > 0 && (BUILDING_DAMAGE(room) >= (GET_BLD_MAX_DAMAGE(GET_BUILDING(room)) * config_get_int("disrepair_major") / 100)))
@@ -1313,17 +1343,19 @@ extern int Y_COORD(room_data *room);	// formerly #define Y_COORD(room)  FLAT_Y_C
 #define IS_RUINS(room)  (BUILDING_VNUM(room) == BUILDING_RUINS_OPEN || BUILDING_VNUM(room) == BUILDING_RUINS_CLOSED || BUILDING_VNUM(room) == BUILDING_RUINS_FLOODED)	// TODO: some new designation for ruins and a more procedural way to set it up or configure it in-game?
 #define ISLAND_FLAGGED(room, flag)  (GET_ISLAND(room) ? IS_SET(GET_ISLAND(room)->flags, (flag)) : FALSE)
 #define MAGIC_DARKNESS(room)  (ROOM_AFF_FLAGGED((room), ROOM_AFF_DARK))
-#define ROOM_CAN_MINE(room)  (ROOM_SECT_FLAGGED((room), SECTF_CAN_MINE) || HAS_FUNCTION((room), FNC_MINE) || (IS_ROAD(room) && SECT_FLAGGED(BASE_SECT(room), SECTF_CAN_MINE)))
+#define ROOM_CAN_MINE(room)  (ROOM_SECT_FLAGGED((room), SECTF_CAN_MINE) || room_has_function_and_city_ok((room), FNC_MINE) || (IS_ROAD(room) && SECT_FLAGGED(BASE_SECT(room), SECTF_CAN_MINE)))
 #define ROOM_IS_CLOSED(room)  (IS_INSIDE(room) || IS_ADVENTURE_ROOM(room) || (IS_ANY_BUILDING(room) && !ROOM_BLD_FLAGGED(room, BLD_OPEN) && (IS_COMPLETE(room) || ROOM_BLD_FLAGGED(room, BLD_CLOSED))))
 #define SHOW_PEOPLE_IN_ROOM(room)  (!ROOM_IS_CLOSED(room) && !ROOM_SECT_FLAGGED(room, SECTF_OBSCURE_VISION))
 #define WOULD_BE_LIGHT_WITHOUT_MAGIC_DARKNESS(room)  (RMT_FLAGGED((room), RMT_LIGHT) || IS_ANY_BUILDING(room) || !IS_DARK(room) || adjacent_room_is_light(room))
 
-// interaction checks (leading up to CAN_INTERACT_ROOM)
+// interaction checks (by type)
 #define BLD_CAN_INTERACT_ROOM(room, type)  (GET_BUILDING(room) && has_interaction(GET_BLD_INTERACTIONS(GET_BUILDING(room)), (type)))
 #define CROP_CAN_INTERACT_ROOM(room, type)  (ROOM_SECT_FLAGGED(room, SECTF_CROP) && ROOM_CROP(room) && has_interaction(GET_CROP_INTERACTIONS(ROOM_CROP(room)), (type)))
 #define RMT_CAN_INTERACT_ROOM(room, type)  (GET_ROOM_TEMPLATE(room) && has_interaction(GET_RMT_INTERACTIONS(GET_ROOM_TEMPLATE(room)), (type)))
 #define SECT_CAN_INTERACT_ROOM(room, type)  has_interaction(GET_SECT_INTERACTIONS(SECT(room)), (type))
-#define CAN_INTERACT_ROOM(room, type)  (SECT_CAN_INTERACT_ROOM((room), (type)) || BLD_CAN_INTERACT_ROOM((room), (type)) || RMT_CAN_INTERACT_ROOM((room), (type)) || CROP_CAN_INTERACT_ROOM((room), (type)))
+// room interactions including vehicles: bool can_interact_room(room, type)
+// if you don't want to check vehicles, you can use this macro:
+#define CAN_INTERACT_ROOM_NO_VEH(room, type)  (SECT_CAN_INTERACT_ROOM((room), (type)) || BLD_CAN_INTERACT_ROOM((room), (type)) || RMT_CAN_INTERACT_ROOM((room), (type)) || CROP_CAN_INTERACT_ROOM((room), (type)))
 
 // fundamental types
 #define BUILDING_VNUM(room)  (GET_BUILDING(room) ? GET_BLD_VNUM(GET_BUILDING(room)) : NOTHING)
@@ -1332,7 +1364,6 @@ extern int Y_COORD(room_data *room);	// formerly #define Y_COORD(room)  FLAT_Y_C
 // helpers
 #define BLD_DESIGNATE_FLAGGED(room, flag)  (GET_BUILDING(HOME_ROOM(room)) && IS_SET(GET_BLD_DESIGNATE_FLAGS(GET_BUILDING(HOME_ROOM(room))), (flag)))
 #define CHECK_CHAMELEON(from_room, to_room)  (ROOM_AFF_FLAGGED(to_room, ROOM_AFF_CHAMELEON) && IS_COMPLETE(to_room) && compute_distance(from_room, to_room) >= 2)
-#define HAS_FUNCTION(room, flag)  ((GET_BUILDING(room) && IS_SET(GET_BLD_FUNCTIONS(GET_BUILDING(room)), (flag))) || (GET_ROOM_TEMPLATE(room) && IS_SET(GET_RMT_FUNCTIONS(GET_ROOM_TEMPLATE(room)), (flag))))
 #define RMT_FLAGGED(room, flag)  (GET_ROOM_TEMPLATE(room) && IS_SET(GET_RMT_FLAGS(GET_ROOM_TEMPLATE(room)), (flag)))
 #define ROOM_AFF_FLAGGED(r, flag)  (IS_SET(ROOM_AFF_FLAGS(r), (flag)))
 #define ROOM_BLD_FLAGGED(room, flag)  (GET_BUILDING(room) && IS_SET(GET_BLD_FLAGS(GET_BUILDING(room)), (flag)))
@@ -1340,6 +1371,9 @@ extern int Y_COORD(room_data *room);	// formerly #define Y_COORD(room)  FLAT_Y_C
 #define ROOM_SECT_FLAGGED(room, flg)  SECT_FLAGGED(SECT(room), (flg))
 #define SHIFT_CHAR_DIR(ch, room, dir)  SHIFT_DIR((room), confused_dirs[get_north_for_char(ch)][0][(dir)])
 #define SHIFT_DIR(room, dir)  real_shift((room), shift_dir[(dir)][0], shift_dir[(dir)][1])
+
+// use 'room_has_function_and_city_ok' instead of HAS_FUNCTION for almost all uses; HAS_FUNCTION does not detect vehicles or check city status
+#define HAS_FUNCTION(room, flag)  ((GET_BUILDING(room) && IS_SET(GET_BLD_FUNCTIONS(GET_BUILDING(room)), (flag))) || (GET_ROOM_TEMPLATE(room) && IS_SET(GET_RMT_FUNCTIONS(GET_ROOM_TEMPLATE(room)), (flag))))
 
 // room types
 #define IS_ADVENTURE_ROOM(room)  ROOM_SECT_FLAGGED((room), SECTF_ADVENTURE)
@@ -1507,13 +1541,19 @@ extern int Y_COORD(room_data *room);	// formerly #define Y_COORD(room)  FLAT_Y_C
 #define VEH_ANIMALS_REQUIRED(veh)  ((veh)->attributes->animals_required)
 #define VEH_CAPACITY(veh)  ((veh)->attributes->capacity)
 #define VEH_DESIGNATE_FLAGS(veh)  ((veh)->attributes->designate_flags)
+#define VEH_EX_DESCS(veh)  ((veh)->attributes->ex_description)
+#define VEH_FAME(veh)  ((veh)->attributes->fame)
+#define VEH_FUNCTIONS(veh)  ((veh)->attributes->functions)
+#define VEH_INTERACTIONS(veh)  ((veh)->attributes->interactions)
 #define VEH_INTERIOR_ROOM_VNUM(veh)  ((veh)->attributes->interior_room_vnum)
 #define VEH_MAX_HEALTH(veh)  ((veh)->attributes->maxhealth)
 #define VEH_MAX_ROOMS(veh)  ((veh)->attributes->max_rooms)
 #define VEH_MAX_SCALE_LEVEL(veh)  ((veh)->attributes->max_scale_level)
+#define VEH_MILITARY(veh)  ((veh)->attributes->military)
 #define VEH_MIN_SCALE_LEVEL(veh)  ((veh)->attributes->min_scale_level)
 #define VEH_MOVE_TYPE(veh)  ((veh)->attributes->move_type)
 #define VEH_YEARLY_MAINTENANCE(veh)  ((veh)->attributes->yearly_maintenance)
+#define VEH_SPAWNS(veh)  ((veh)->attributes->spawns)
 #define VEH_SPEED_BONUSES(veh)  ((veh)->attributes->veh_move_speed)
 
 // helpers
@@ -1538,7 +1578,7 @@ extern struct weather_data weather_info;	// db.c
 
 // basic functions from utils.c
 extern bool any_players_in_room(room_data *room);
-extern char *PERS(char_data *ch, char_data *vict, bool real);
+extern const char *PERS(char_data *ch, char_data *vict, bool real);
 extern double diminishing_returns(double val, double scale);
 extern int att_max(char_data *ch);
 extern int count_bits(bitvector_t bitset);
@@ -1639,8 +1679,9 @@ extern char *CAP(char *txt);
 extern char *fname(const char *namelist);
 extern char *reverse_strstr(char *haystack, char *needle);
 extern bool search_custom_messages(char *keywords, struct custom_message *list);
+extern bool search_extra_descs(char *keywords, struct extra_descr_data *list);
 extern char *str_dup(const char *source);
-extern char *str_replace(char *search, char *replace, char *subject);
+extern char *str_replace(const char *search, const char *replace, const char *subject);
 extern char *str_str(char *cs, char *ct);
 extern char *strip_color(char *input);
 void strip_crlf(char *buffer);
@@ -1654,9 +1695,10 @@ extern int str_cmp(const char *arg1, const char *arg2);
 extern int strn_cmp(const char *arg1, const char *arg2, int n);
 void prettier_sprintbit(bitvector_t bitvector, const char *names[], char *result);
 void prune_crlf(char *txt);
-extern const char *skip_filler(char *string);
+extern const char *skip_filler(const char *string);
 void sprintbit(bitvector_t vektor, const char *names[], char *result, bool space);
 void sprinttype(int type, const char *names[], char *result);
+extern char *time_length_string(int seconds);
 extern char *trim(char *string);
 
 // world functions in utils.c
@@ -1718,6 +1760,9 @@ extern bool adjacent_room_is_light(room_data *room);
 void look_at_room_by_loc(char_data *ch, room_data *room, bitvector_t options);
 #define look_at_room(ch)  look_at_room_by_loc((ch), IN_ROOM(ch), NOBITS)
 
+// utils from morph.c
+extern const char *get_morph_desc(char_data *ch, bool long_desc_if_true);
+
 // utils from olc.building.c
 extern bool bld_has_relation(bld_data *bld, int type, bld_vnum vnum);
 extern int count_bld_relations(bld_data *bld, int type);
@@ -1726,6 +1771,7 @@ extern char *get_bld_name_by_proto(bld_vnum vnum);
 // utils from quest.c
 extern char *get_quest_name_by_proto(any_vnum vnum);
 void qt_change_ability(char_data *ch, any_vnum abil);
+void qt_change_production_total(char_data *ch, any_vnum vnum, int amount);
 void qt_change_reputation(char_data *ch, any_vnum faction);
 void qt_change_skill_level(char_data *ch, any_vnum skl);
 void qt_drop_obj(char_data *ch, obj_data *obj);
@@ -1738,6 +1784,7 @@ void qt_gain_tile_sector(char_data *ch, sector_vnum vnum);
 void qt_change_coins(char_data *ch);
 void qt_change_currency(char_data *ch, any_vnum vnum, int total);
 void qt_empire_wealth(char_data *ch, any_vnum amount);
+void qt_event_start_stop(any_vnum event_vnum);
 void qt_gain_vehicle(char_data *ch, any_vnum vnum);
 void qt_get_obj(char_data *ch, obj_data *obj);
 void qt_keep_obj(char_data *ch, obj_data *obj, bool true_for_keep);
@@ -1759,9 +1806,11 @@ void et_change_cities(empire_data *emp);
 void et_change_coins(empire_data *emp, int amount);
 void et_change_diplomacy(empire_data *emp);
 void et_change_greatness(empire_data *emp);
+void et_event_start_stop(any_vnum event_vnum);
 void et_gain_building(empire_data *emp, any_vnum vnum);
 void et_gain_tile_sector(empire_data *emp, sector_vnum vnum);
 void et_gain_vehicle(empire_data *emp, any_vnum vnum);
+void et_change_production_total(empire_data *emp, obj_vnum vnum, int amount);
 void et_get_obj(empire_data *emp, obj_data *obj, int amount, int new_total);
 void et_lose_building(empire_data *emp, any_vnum vnum);
 void et_lose_tile_sector(empire_data *emp, sector_vnum vnum);

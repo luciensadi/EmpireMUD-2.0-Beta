@@ -42,6 +42,7 @@ extern bool can_claim(char_data *ch);
 extern struct resource_data *copy_resource_list(struct resource_data *input);
 void delete_room_npcs(room_data *room, struct empire_territory_data *ter);
 void free_complex_data(struct complex_room_data *data);
+extern char *get_room_name(room_data *room, bool color);
 extern room_data *create_room(room_data *home);
 extern bool has_learned_craft(char_data *ch, any_vnum vnum);
 void scale_item_to_level(obj_data *obj, int level);
@@ -72,11 +73,11 @@ const char *interlink_codes[11] = { "AX", "RB",	"UN", "DD", "WZ", "FG", "VI", "Q
 * @param room_data *room The location to set up.
 */
 void special_building_setup(char_data *ch, room_data *room) {
-	void init_mine(room_data *room, char_data *ch);
+	void init_mine(room_data *room, char_data *ch, empire_data *emp);
 		
 	// mine data
-	if (HAS_FUNCTION(room, FNC_MINE)) {
-		init_mine(room, ch);
+	if (room_has_function_and_city_ok(room, FNC_MINE)) {
+		init_mine(room, ch, ROOM_OWNER(room) ? ROOM_OWNER(room) : (ch ? GET_LOYALTY(ch) : NULL));
 	}
 }
 
@@ -95,6 +96,7 @@ bool can_build_on(room_data *room, bitvector_t flags) {
 
 	return (!IS_SET(flags, BLD_ON_NOT_PLAYER_MADE) || !IS_PLAYER_MADE(room)) && (
 		IS_SET(GET_SECT_BUILD_FLAGS(SECT(room)), flags) || 
+		(IS_SET(flags, BLD_ON_BASE_TERRAIN_ALLOWED) && IS_SET(GET_SECT_BUILD_FLAGS(BASE_SECT(room)), flags)) ||
 		(IS_SET(flags, BLD_FACING_OPEN_BUILDING) && CLEAR_OPEN_BUILDING(room))
 	);
 }
@@ -1176,6 +1178,7 @@ ACMD(do_build) {
 	void show_craft_info(char_data *ch, char *argument, int craft_types);
 	
 	room_data *to_room = NULL, *to_rev = NULL;
+	any_vnum missing_abil = NO_ABIL;
 	obj_data *found_obj = NULL;
 	empire_data *e = NULL;
 	int dir = NORTH, ter_type;
@@ -1183,8 +1186,13 @@ ACMD(do_build) {
 	bool found = FALSE, found_any, this_line, is_closed, needs_facing, needs_reverse;
 	bool junk, wait;
 	
-	// simple rules for ch building a given craft
-	#define CHAR_CAN_BUILD(ch, ttype)  (GET_CRAFT_TYPE((ttype)) == CRAFT_TYPE_BUILD && (!IS_SET(GET_CRAFT_FLAGS(ttype), CRAFT_LEARNED) || has_learned_craft(ch, GET_CRAFT_VNUM(ttype))) && !IS_SET(GET_CRAFT_FLAGS((ttype)), CRAFT_UPGRADE | CRAFT_DISMANTLE_ONLY) && (IS_IMMORTAL(ch) || !IS_SET(GET_CRAFT_FLAGS((ttype)), CRAFT_IN_DEVELOPMENT)) && (GET_CRAFT_ABILITY((ttype)) == NO_ABIL || has_ability((ch), GET_CRAFT_ABILITY((ttype)))) && (GET_CRAFT_REQUIRES_OBJ(ttype) == NOTHING || get_obj_in_list_vnum(GET_CRAFT_REQUIRES_OBJ(ttype), ch->carrying)))
+	// rules for ch building a given craft
+	#define CHAR_CAN_BUILD_BASIC(ch, ttype)  (GET_CRAFT_TYPE((ttype)) == CRAFT_TYPE_BUILD && !IS_SET(GET_CRAFT_FLAGS((ttype)), CRAFT_UPGRADE | CRAFT_DISMANTLE_ONLY) && (IS_IMMORTAL(ch) || !IS_SET(GET_CRAFT_FLAGS((ttype)), CRAFT_IN_DEVELOPMENT)))
+	#define CHAR_CAN_BUILD_LEARNED(ch, ttype)  (!IS_SET(GET_CRAFT_FLAGS(ttype), CRAFT_LEARNED) || has_learned_craft(ch, GET_CRAFT_VNUM(ttype)))
+	#define CHAR_CAN_BUILD_ABIL(ch, ttype)  (GET_CRAFT_ABILITY((ttype)) == NO_ABIL || has_ability((ch), GET_CRAFT_ABILITY((ttype))))
+	#define CHAR_CAN_BUILD_REQOBJ(ch, ttype)  (GET_CRAFT_REQUIRES_OBJ(ttype) == NOTHING || get_obj_in_list_vnum(GET_CRAFT_REQUIRES_OBJ(ttype), ch->carrying))
+	// all rules combined:
+	#define CHAR_CAN_BUILD(ch, ttype)  (CHAR_CAN_BUILD_BASIC(ch, ttype) && CHAR_CAN_BUILD_LEARNED(ch, ttype) && CHAR_CAN_BUILD_ABIL(ch, ttype) && CHAR_CAN_BUILD_REQOBJ(ch, ttype))
 	
 	skip_spaces(&argument);
 	
@@ -1218,6 +1226,14 @@ ACMD(do_build) {
 	// this figures out if the argument was a build recipe
 	if (*arg) {
 		HASH_ITER(sorted_hh, sorted_crafts, iter, next_iter) {
+			if (!CHAR_CAN_BUILD_BASIC(ch, iter)) {
+				continue;	// basic checks first
+			}
+			if (!is_abbrev(arg, GET_CRAFT_NAME(iter))) {
+				continue;	// preliminary arg test saves some lookups
+			}
+			
+			// ok, probably a match: test if they can build it
 			if (CHAR_CAN_BUILD(ch, iter)) {
 				if (!str_cmp(arg, GET_CRAFT_NAME(iter))) {
 					type = iter;
@@ -1226,6 +1242,10 @@ ACMD(do_build) {
 				else if (!abbrev_match && is_abbrev(arg, GET_CRAFT_NAME(iter))) {
 					abbrev_match = iter;
 				}
+			}
+			else if (!CHAR_CAN_BUILD_ABIL(ch, iter) && CHAR_CAN_BUILD_LEARNED(ch, iter) && CHAR_CAN_BUILD_REQOBJ(ch, iter)) {
+				// if ONLY missing the ability
+				missing_abil = GET_CRAFT_ABILITY(iter);
 			}
 		}
 	}
@@ -1239,8 +1259,11 @@ ACMD(do_build) {
 	if (type && GET_CRAFT_REQUIRES_OBJ(type) != NOTHING) {
 		found_obj = get_obj_in_list_vnum(GET_CRAFT_REQUIRES_OBJ(type), ch->carrying);
 	}
-
-	if (!*arg || !type) {
+	
+	if (!type && missing_abil != NOTHING) {
+		msg_to_char(ch, "You need the %s ability to build that.\r\n", get_ability_name_by_vnum(missing_abil));
+	}
+	else if (!*arg || !type) {
 		/* Cancel building */
 		if (GET_ACTION(ch) == ACT_BUILDING) {
 			msg_to_char(ch, "You stop building.\r\n");
@@ -1278,8 +1301,13 @@ ACMD(do_build) {
 		
 		/* Send output */
 		else {
-			msg_to_char(ch, "Usage: build <structure> [direction]\r\n");
-			msg_to_char(ch, "       build info <structure>\r\n");
+			if (*arg) {
+				msg_to_char(ch, "You don't know how to build '%s'.\r\n", arg);
+			}
+			else {
+				msg_to_char(ch, "Usage: build <structure> [direction]\r\n");
+				msg_to_char(ch, "       build info <structure>\r\n");
+			}
 			msg_to_char(ch, "You know how to build:\r\n");
 			this_line = FALSE;
 			found_any = FALSE;
@@ -1409,10 +1437,10 @@ ACMD(do_build) {
 	construct_building(IN_ROOM(ch), GET_CRAFT_BUILD_TYPE(type));
 	set_room_extra_data(IN_ROOM(ch), ROOM_EXTRA_BUILD_RECIPE, GET_CRAFT_VNUM(type));
 	
+	special_building_setup(ch, IN_ROOM(ch));
 	SET_BIT(ROOM_BASE_FLAGS(IN_ROOM(ch)), ROOM_AFF_INCOMPLETE);
 	SET_BIT(ROOM_AFF_FLAGS(IN_ROOM(ch)), ROOM_AFF_INCOMPLETE);
 	GET_BUILDING_RESOURCES(IN_ROOM(ch)) = copy_resource_list(GET_CRAFT_RESOURCES(type));
-	special_building_setup(ch, IN_ROOM(ch));
 	
 	// can_claim checks total available land, but the outside is check done within this block
 	if (!ROOM_OWNER(IN_ROOM(ch)) && can_claim(ch) && !ROOM_AFF_FLAGGED(IN_ROOM(ch), ROOM_AFF_UNCLAIMABLE)) {
@@ -1456,7 +1484,7 @@ ACMD(do_dismantle) {
 	craft_data *type;
 	
 	skip_spaces(&argument);
-	if (*argument) {
+	if (*argument && !isname(arg, get_room_name(IN_ROOM(ch), FALSE))) {
 		msg_to_char(ch, "Dismantle is only used to dismantle buildings. Just type 'dismantle'. (You get this error if you typed an argument.)\r\n");
 		return;
 	}
@@ -1511,7 +1539,7 @@ ACMD(do_dismantle) {
 	}
 	
 	if (ROOM_AFF_FLAGGED(IN_ROOM(ch), ROOM_AFF_HAS_INSTANCE)) {
-		msg_to_char(ch, "You can't dismantle this building.\r\n");
+		msg_to_char(ch, "You can't dismantle this building because an adventure is currently linked here.\r\n");
 		return;
 	}
 
@@ -1523,7 +1551,7 @@ ACMD(do_dismantle) {
 	}
 
 	if (ROOM_AFF_FLAGGED(IN_ROOM(ch), ROOM_AFF_UNCLAIMABLE)) {
-		msg_to_char(ch, "You can't dismantle this.\r\n");
+		msg_to_char(ch, "You can't dismantle this building because the tile is unclaimable.\r\n");
 		return;
 	}
 
@@ -1543,7 +1571,7 @@ ACMD(do_dismantle) {
 	}
 
 	if (ROOM_AFF_FLAGGED(IN_ROOM(ch), ROOM_AFF_NO_DISMANTLE)) {
-		msg_to_char(ch, "You can't dismantle this building (use 'nodismantle' to toggle).\r\n");
+		msg_to_char(ch, "You can't dismantle this building (use 'manage no-dismantle' to toggle).\r\n");
 		return;
 	}
 	
@@ -1869,7 +1897,6 @@ ACMD(do_designate) {
 
 ACMD(do_interlink) {
 	extern int count_flagged_sect_between(bitvector_t sectf_bits, room_data *start, room_data *end, bool check_base_sect);
-	extern char *get_room_name(room_data *room, bool color);
 	
 	char arg2[MAX_INPUT_LENGTH];
 	room_vnum vnum;
@@ -1883,6 +1910,9 @@ ACMD(do_interlink) {
 		
 		if (IS_INSIDE(IN_ROOM(ch))) {
 			msg_to_char(ch, "This room's code is: %s\r\n", vnum_to_interlink(GET_ROOM_VNUM(IN_ROOM(ch))));
+		}
+		else {
+			msg_to_char(ch, "You can't interlink to this room -- only to the additional interior rooms of buildings.\r\n");
 		}
 	}
 	else if (!IS_INSIDE(IN_ROOM(ch))) {

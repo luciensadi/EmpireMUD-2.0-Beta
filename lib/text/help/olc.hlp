@@ -20,11 +20,11 @@ Available types are:
  .aug - augments                 .arch - archetypes
  .b - buildings                  .book - books
  .c - crafts                     .class - classes
- .crop - crops                   .f - factions
- .g - globals                    .gen - generics
- .m - mobiles                    .map - map tiles/interiors
- .morph - morphs                 .o - objects
- .prog - empire progression goal
+ .crop - crops                   .ev - events
+ .f - factions                   .g - globals
+ .gen - generics                 .m - mobiles
+ .map - map tiles/interiors      .morph - morphs
+ .o - objects                    .prog - empire progression goal
  .q - quests                     .r - room templates
  .sect - map sectors             .shop - shops
  .skill - skills                 .soc - socials
@@ -74,6 +74,7 @@ bld (or bdg) - building (these include designated rooms)
 cft - craft
 cls - class
 crp - crop
+ev/evt - event
 fct - faction
 gen - generic
 glb - global
@@ -214,6 +215,9 @@ Crops (CROPEDIT):
 - Orchard crops need a CHOP interaction if they will give trees. Orchards are
   still choppable without this, though.
 
+Events (EVEDIT):
+- Use quests or scripts to give event points.
+
 Factions (FEDIT):
 - The REP-FROM-KILLS flag causes you to lose reputation if you kill a mob who
   belongs to this faction or its allies (SHARED-GAINS relationship), and gain
@@ -290,6 +294,9 @@ Morphs (MORPHEDIT):
   scalable item. Scalable items will refund at the wrong level.
 - If the morph requires a synergy ability, you should also set the CHECK-SOLO
   flag. This is necessary to use it in the Solo role.
+- If you use the #n code to pass through the morph's real name, put it in the
+  short and/or long description, but not the keywords. You should not combine
+  the #n code with the ANIMAL flag (which makes it a disguise morph).
 
 Objects (OEDIT):
 - The most significant keyword should always be first. A fiery torch should put
@@ -504,7 +511,7 @@ Usage:  .abil <command>
 The .olc ability editor allows you to configure the data for various abilities.
 The main properties set up here are names and mastery abilities.
 
-All commands in the editor arg highlighted in yellow/green and placed inside
+All commands in the editor are highlighted in yellow/green and placed inside
 <angle braces>. You can get help on these commands by typing:
   &yHELP ABILEDIT <COMMAND>&0
 
@@ -809,8 +816,8 @@ Examples:
  > .abil fullsearch -scaleover 50 -scaleunder 99
 
 To search other fields, you can generally use the normal "search" option for
-other OLC types. For example, to find all objects with the "Mini-pet Use"
-trigger, use ".t search 9900".
+other OLC types. For example, to find all abilities with a certain cooldown,
+use ".gen search 1234".
 #d
 "ABILEDIT GAINHOOKS" "ABILEDIT GAIN HOOKS" "GAIN HOOKS"
 
@@ -977,6 +984,11 @@ Available techs are:
  &cWhere-Upgrade&0 * - Increases the range of the 'where' command.
  &cDodge-Cap&0 - Improves the player's maximum dodge percent.
  &cSkinning-Upgrade&0 - Skinning always succeeds.
+ &cBarde&0 - Can barde animals.
+ &cHerd&0 - Can herd animals.
+ &cMilk&0 - Can milk animals (in a stable).
+ &cShear&0 - Can shear animals (in a stable).
+ &cTame&0 - Can tame animals.
 
 * Marked techs trigger ability gains on their own without gain hooks.
 
@@ -1774,7 +1786,7 @@ tokens on the mob itself, if it is only loaded as an artisan:
 
 You can use the "none" argument to this command in order to remove the artisan.
 
-See also: OLC BUILDINGS, MEDIT NAMESET, VNUM
+See also: OLC BUILDINGS, OLC VEHICLES, MEDIT NAMESET, VNUM
 #d
 "BEDIT CITIZENS"
 
@@ -1862,16 +1874,16 @@ Available designate flags:
 
 See also: OLC BUILDINGS
 #d
-"BEDIT FAME"
+"BEDIT FAME" "VEDIT FAME"
 
 Usage:  .fame <amount>
 
-This number is added to an empire's fame for each instance of this building
-they own.
+This number is added to an empire's fame for each instance of this building or
+vehicle they own.
 
 You can set negative fame to penalize empires for certain buildings.
 
-Most buildings should have 0 fame, unless they are monuments.
+Most buildings and vehicles should have 0 fame, unless they are monuments.
 
 See also: OLC BUILDINGS
 #d
@@ -1882,9 +1894,6 @@ Usage:  .flags [add | remove] <flags>
 When set on a building, these flags affect all interior rooms, too. When set
 on a designate-able room (a building where the ROOM flag is set), they only
 affect players in that room.
-
-(Some former building flags were moved to the 'functions' list, and their
-former building flags still show up in the editor as DEPRECATED.)
 
 Available flags:
  ROOM - this is a room that can be added with the designate command if it has
@@ -1924,12 +1933,45 @@ Available flags:
 
 See also: BEDIT FUNCTIONS, INTERLINK, OLC BUILDINGS
 #d
-"BEDIT FUNCTIONS" "REDIT FUNCTIONS" "FUNCTION FLAGS"
+"BEDIT FULLSEARCH"
+
+Usage:  .b fullsearch -<field> <argument> <...>
+
+This command allows you to search for buildings matching certain criteria. You
+can specify multiple fields if you want. Any arguments that don't start
+with a dash (-) are matched to the building's name and other text.
+
+Fields:
+  &c-affects&0 - see HELP BEDIT AFFECTS
+  &c-citizens -citizensover -citizensunder&0 - specific number of citizens
+  &c-commands&0 - match the text of the commands line, if any
+  &c-designate&0 - see HELP DESIGNATE FLAGS
+  &c-fame -fameover -fameunder&0 - specific fame amount
+  &c-flagged -unflagged&0 - see HELP BEDIT FLAGS
+  &c-functions&0 - see HELP BEDIT FUNCTIONS
+  &c-icon&0 - match the text of the icon, if any
+  &c-interactions&0 - has a specific type, see HELP BEDIT INTERACTION
+  &c-hitpoints -hitpointsover -hitpointsunder&0 - specific hitpoint amount
+  &c-military -militaryover -militaryunder&0 - specific military value
+  &c-rooms -roomsover -roomsunder&0 - specific extra rooms value
+
+Examples:
+ > .b fullsearch -hitpointsover 50
+ > .b fullsearch -unflagged ROOM -function FORGE
+ > .b fullsearch -flagged ROOM -citizensover 1
+
+To search other fields, you can generally use the normal "search" option for
+other OLC types. For example, to find all buildings that have a certain artisan
+vnum, use ".mob search 12345", which will search the artisan vnum field on all
+buildings for that mob.
+#d
+"BEDIT FUNCTIONS" "REDIT FUNCTIONS" "VEDIT FUNCTIONS" "FUNCTION FLAGS"
 
 Usage:  .flags [add | remove] <flags>
 
 The function flags determine what chores, actions, and other tasks happen at
-that building or room template.
+that building or room template. For vehicles, it applies to people in the same
+room as the vehicle.
 
 Available functions:
  ALCHEMIST - can brew and mix here
@@ -1943,10 +1985,10 @@ Available functions:
  GLASSBLOWER - grants the Glassblowing tech to the empire
  GUARD-TOWER - hostile toward enemy players, at range
  HENGE - allows Chant of Druids
- LIBRARY - can write and store books here
+ &rLIBRARY*&0 - can write and store books here
  MAIL - players can send mail here
  MILL - can use the mill command here
- MINE - can be mined for ore resources
+ &rMINE*&0 - can be mined for ore resources
  MINT - functions as a mint
  PORTAL - functions as a portal building
  POTTER - pottery craft time is reduced here
@@ -1958,8 +2000,8 @@ Available functions:
  SUMMON-PLAYER - allows the summon player command
  TAILOR - counts as tailor; can use refashion here
  TANNERY - allows tanning here
- TAVERN - functions as a tavern (don't set this on the same building as DRINK)
- TOMB - players can re-spawn here after dying
+ &rTAVERN*&0 - functions as a tavern (don't set this on the same building as DRINK)
+ &rTOMB*&0 - players can re-spawn here after dying
  TRADING-POST - access to global trade, e.g. a trading post
  VAULT - stores coins, can use the warehouse command for privileged storage
  WAREHOUSE - can use the warehouse command and store unique items
@@ -1968,8 +2010,12 @@ Available functions:
  LARGER-NEARBY - extends the radius of 'nearby'
  FISHING - workforce can fish here (also need fish interaction)
  STORE-ALL - any regular storable item can be stored (but not retrieved)
+ &yIN-CITY-ONLY&0 - all function flags only work when in a city
+ 
+&r* Note:&0 Functions marked with &r*&0 cannot be used on moving vehicles, only
+buildings and stationary vehicles.
 
-See also: OLC BUILDINGS, OLC ROOM TEMPLATES
+See also: OLC BUILDINGS, OLC ROOM TEMPLATES, OLC VEHICLES
 #d
 "BEDIT HITPOINTS" "BEDIT HEALTH"
 
@@ -2022,14 +2068,14 @@ Examples:
 
 See also: COLOR, OLC BUILDINGS
 #d
-"BEDIT MILITARY"
+"BEDIT MILITARY" "VEDIT MILITARY"
 
 Usage:  .military <number>
 
 This property adds to the military total of the empire that owns it. However,
 the military value of an empire is not used for anything at the moment.
 
-See also:  OLC BUILDINGS
+See also: OLC BUILDINGS, OLC VEHICLES
 #d
 "BEDIT NAME"
 
@@ -2101,7 +2147,7 @@ NOTE: If players add bedrooms to a building, it will spawn additional citizens.
 
 See also: BEDIT DESIGNATE, OLC BUILDINGS
 #d
-"BEDIT SPAWNS" "CROPEDIT SPAWNS" "SECTEDIT SPAWNS"
+"BEDIT SPAWNS" "CROPEDIT SPAWNS" "SECTEDIT SPAWNS" "VEDIT SPAWNS"
 
 Usage:  .spawns add <mob vnum> <percent> [flags]
         .spawns copy <from type> <from vnum>
@@ -2111,7 +2157,8 @@ Usage:  .spawns add <mob vnum> <percent> [flags]
 
 This lets you control how mobs spawn in a given location. Mobs only spawn if
 there aren't too many other mobs present, and only if they meet the percent
-and flag requirements of their spawn info.
+and flag requirements of their spawn info. Vehicles spawn mobs in the room that
+contains the vehicle (not the interior of the vehicle).
 
 You can set any percent between .01 and 100. This is the chance the mob will
 be loaded each time the room is checked for spawns, which is usually every few
@@ -2191,6 +2238,8 @@ The following flags are available:
  &criverbank&0 - the land on the edge of rivers
  &cestuary&0 - where the river meets the sea
  &clake&0 - a lake tile
+ &cbase-terrain-allowed&0 - checks the base terrain for the other build-facings
+    rather than only the current terrain (e.g. a building built on a mountain)
 
 See also: OLC CRAFTS
 #d
@@ -2232,6 +2281,7 @@ The following flags are available:
  &criverbank&0 - the land on the edge of rivers
  &cestuary&0 - where the river meets the sea
  &clake&0 - a lake tile
+ &cbase-terrain-allowed&0 - *** do not use for buildon
 
 See also: CEDIT BUILDFACING, OLC CRAFTS
 #d
@@ -2443,7 +2493,7 @@ skills. Classes can have broadly overlapping requirements (but can't be
 identical to each other), allowing players with similar sets of skills to end
 up in different classes.
 
-All commands in the editor arg highlighted in yellow/green and placed inside
+All commands in the editor are highlighted in yellow/green and placed inside
 <angle braces>. You can get help on these commands by typing:
   &yHELP CLASSEDIT <COMMAND>&0
 
@@ -2606,6 +2656,30 @@ Available flags:
 
 See also: OLC CROPS
 #d
+"CROPEDIT FULLSEARCH"
+
+Usage:  .crop fullsearch -<field> <argument> <...>
+
+This command allows you to search for crops matching certain criteria. You can
+specify multiple fields if you want. Any arguments that don't start with a
+dash (-) are matched to the crop's name, title, and icons.
+
+Fields:
+  &c-climate&0 - see HELP CROPEDIT CLIMATE
+  &c-flagged&0, &cunflagged&0 - see HELP CROPEDIT FLAGS
+  &c-interaction&0 - has a specific type, see HELP CROPEDIT INTERACTION
+  &c-mapout&0 - color name, see HELP CROPEDIT MAPOUT
+  &c-x&0, &c-y&0 - is within a certain x or y coordinate range (only wild crops)
+
+Examples:
+ > .crop fullsearch -x 25 -y 25 potato
+ > .crop fullsearch -flagged NEWBIE-ONLY -flagged ORCHARD
+ > .crop fullsearch -interaction CHOP
+
+To search other fields, you can generally use the normal "search" option for
+other OLC types. For example, to find all crops that spawn a certain mob,
+use ".m search <mob's vnum>".
+#d
 "CROPEDIT MAPOUT COLOR" "SECTEDIT MAPOUT COLOR" "MAPOUT COLOR" "MAP OUT COLOR"
 
 Usage:  .mapout <color>
@@ -2671,6 +2745,134 @@ covered by the crops.
 
 See also: OLC CROPS
 #d
+EVEDIT EVENTEDIT "OLC EVENTS" "EVENT EDITOR"
+
+Usage:  .ev <command>
+        .command
+
+The .olc event editor allows you to configure the data for events, which
+are global competitions that players can participate in. The event data
+includes text and rewards, but the actual points come from quests or scripts.
+
+All commands in the editor are highlighted in yellow/green and placed inside
+<angle braces>. You can get help on these commands by typing:
+  &yHELP EVEDIT <COMMAND>&0
+
+You can close an open editor with .abort or .save.
+
+Example:
+> .ev edit 123
+> .name Save the Elves
+> .save
+
+For notes on the mud's building rules, see HELP BUILDING GUIDE.
+
+See also: OLC, OLC ABORT, OLC EDIT, OLC EDITOR, OLC SAVE
+#d
+"EVEDIT COMPLETEMESSAGE" "EVEDIT COMPLETE MESSAGE"
+
+Usage:  .completemessage
+
+The complete message is shown to players when the event ends.
+
+The message is set in the string editor. You should use /fi to format it
+with indent inside the string editor if it's longer than one line (80 chars).
+
+See also: OLC EVENTS, STRING EDITOR
+#d
+"EVEDIT DESCRIPTION"
+
+Usage:  .description
+
+The event's description is shown on the information display for the event. It
+should describe the event briefly, and should include how to earn points.
+
+The message is set in the string editor. You should use /fi to format it
+with indent inside the string editor if it's longer than one line (80 chars).
+
+See also: OLC EVENTS, STRING EDITOR
+#d
+"EVEDIT DURATION"
+
+Usage:  .duration <minutes>
+
+This is the length of time that an event runs once it starts.
+
+See also: OLC EVENTS
+#d
+"EVEDIT FLAGS" "EVENT FLAGS"
+
+Usage:  .flags [add | remove] <flags>
+
+The following faction flags are available:
+ IN-DEVELOPMENT - The event cannot run with this flag on.
+ CONTINUES - When this event runs, it re-uses the id and leaderboard from the
+    previous run (for events that are broken and must be paused and re-started)
+
+See also: OLC EVENTS, OLC REMOVEINDEV
+#d
+"EVEDIT NAME"
+
+Usage:  .name <name>
+
+This sets the name of the event. Events should have a simple, unique name.
+Avoid starting with "The" or "A".
+
+See also: OLC EVENTS
+#d
+"EVEDIT MINLEVEL" "EVEDIT MAXLEVEL" "EVEDIT MIN LEVEL" "EVEDIT MAX LEVEL" "EVEDIT MINIMUM LEVEL" "EVEDIT MAXIMUM LEVEL"
+
+Usage:  .minlevel <level>
+        .maxlevel <level>
+
+This allows you to set the level limits on an event. This is only used for
+display, and is not enforced. If you wish to enforce a level limit on an event,
+do it in the quests or scripts that reward event points.
+
+See also: OLC EVENTS
+#d
+"EVEDIT NOTES"
+
+Usage:  .notes
+
+Notes are for internal use only. THis message is set in the string editor, and
+you should record anything that's important for running the event.
+
+See also: OLC EVENTS, STRING EDITOR
+#d
+"EVEDIT REPEAT" "EVEDIT REPEAT TIME" "EVEDIT REPEATS AFTER"
+
+Usage:  .repeat <minutes>
+
+This setting causes an event to automatically repeat itself after it ends.
+
+See also: OLC EVENTS
+#d
+"EVEDIT REWARDS" "EVEDIT THRESHOLDREWARDS" "EVEDIT RANKREWARDS" "EVEDIT THRESHOLD REWARDS" "EVEDIT RANK REWARDS"
+
+Usage: .rankrewards add <min rank> <max rank> <type> <amount> <vnum/type>
+       .thresholdrewards add <min threshold> <type> <amount> <vnum/type>
+       .*rewards change <number> <min | max | vnum | amount> <value>
+       .*rewards copy <from type> <from vnum>
+       .*rewards remove <number | all>
+       .*rewards move <number> <up | down>
+
+These commands set the rewards for an event. Rewards are collected by players
+using the 'event collect' command. There are two types of rewards:
+
+Threshold rewards are granted when a player passes a certain number of event
+points. These rewards can be collected any time. You only need to set the
+minimum number of threshold points required to earn each reward.
+
+Rank rewards are granted at the end of the event, based on how well the player
+did compared to other participants. For each of these rewards, you set a
+minimum and maximum rank (inclusive) and all players who finish within those
+ranks will receive the reward.
+
+See HELP QEDIT REWARD for a list of reward types.
+
+See also: EVENTS, OLC EVENTS
+#d
 "FACTION SCRIPTING" "SCRIPTING FACTIONS"
 
 Writing scripts using faction gives you the ability to control access to
@@ -2703,7 +2905,7 @@ are groups that NPCs can belong to. Players gain and lose reputation with
 factions, and these reputation levels can be used to control access to quests
 and adventure content.
 
-All commands in the editor arg highlighted in yellow/green and placed inside
+All commands in the editor are highlighted in yellow/green and placed inside
 <angle braces>. You can get help on these commands by typing:
   &yHELP FEDIT <COMMAND>&0
 
@@ -3161,6 +3363,8 @@ things. Each type may have its own properties.
 
 Types:
  Mob Interactions - Used for global SHEAR, LOOT, and PICKPOCKET tables.
+ Mine Data - Used for MINE interactions, see HELP MINE DATA GLOBAL.
+ Newbie Gear - Given/equipped to all new players.
 
 See also: OLC GLOBALS
 #d
@@ -3638,8 +3842,8 @@ Available mob flags:
  ISNPC - Is an NPC (this is always set).
  MOUNTABLE - Can be ridden by players.
  MILKABLE - Can be milked in a stable.
- SCAVENGER - Eats corpses off the ground.
- UNDEAD - Leaves no corpse when it dies.
+ SCAVENGER - Eats corpses off the ground (not larger than the mob).
+ NO-CORPSE - Leaves no corpse when it dies (loot falls on the ground).
  TIED - Tied to a hitching post; will not wander unless untied; does not despawn.
  ANIMAL - Counts as an animal for herding, tying, etc.
  MOUNTAIN-WALK - Can cross mountain tiles.
@@ -3704,9 +3908,9 @@ To search other fields, you can generally use the normal "search" option for
 other OLC types. For example, to find all mobs with the "Dismissable"
 trigger, use ".t search 9901".
 #d
-"MEDIT INTERACTION" "BEDIT INTERACTION" "OEDIT INTERACTION" "REDIT INTERACTION" "SECTEDIT INTERACTION" "CROPEDIT INTERACTION" "GEDIT INTERACTION" INTERACTIONS
+"MEDIT INTERACTION" "BEDIT INTERACTION" "OEDIT INTERACTION" "REDIT INTERACTION" "SECTEDIT INTERACTION" "CROPEDIT INTERACTION" "GEDIT INTERACTION" "VEDIT INTERACTION" INTERACTIONS
 
-Usage:  .interaction add <type> <quantity> <vnum> <percent> [exclusion code]
+Usage:  .interaction add <type> <quantity> <vnum> <percent> [exclusion code | restrictions]
         .interaction change <number> <field> <value>
         .interaction copy <from type> <from vnum>
         .interaction remove <number | all>
@@ -3715,7 +3919,8 @@ Usage:  .interaction add <type> <quantity> <vnum> <percent> [exclusion code]
 This command adds or removes an interaction. These are objects or mobs that are
 generated by certain commands. Some are only used on mobs, while others are
 only used on rooms. You can copy interactions from other mobs, buildings,
-rooms, sectors, and crops -- this may save you time if many are the same.
+rooms, sectors, crops, and vehicles -- this may save you time if many are the
+same.
 
 Mob interaction types:
  BUTCHER - Items received when the Butcher ability is used.
@@ -3724,6 +3929,7 @@ Mob interaction types:
  BARDE - Mob loaded when the Barde ability is used in a stable.
  LOOT - Items dropped into the corpse when the mob is killed.
  PICKPOCKET - Items gained from the pickpocket skill.
+ TAME - Becomes another mob when it is 'tamed'.
  
 Object interaction types:
  LIGHT - Item something is converted into when lit on fire.
@@ -3736,11 +3942,12 @@ Object interaction types:
  SAW - Items you get when sawing this item (tree -> lumber).
  TAN - Items you get when tanning this item (skin -> leather).
  CHIP - What you get for chipping at the item.
+ SEED - Gives an item when seeded.
 
-Room interaction types:
+Room/vehicle interaction types:
  DIG - Items received when using the dig action.
  FORAGE - Items received when using the Forage ability.
- FIND-HERB - Items found when picking, if the user has Find Herbs.
+ PICK - Items found when picking.
  HARVEST - Items received when harvesting a crop, OR when picking in an ORCHARD crop.
  GATHER - Items received from the gather action.
  ENCOUNTER - Hostile mob loaded when a random encounter triggers.
@@ -3761,6 +3968,12 @@ but only one item from the same exclusion set will ever pass. The rest will
 fail. If you don't set an exclusion code, the interaction is not exclusive and
 always gets its own percent roll.
 
+You can also set restrictions (optional) that require a player/empire to have
+a specific ability/ptech/tech. To do this, use "-ability <name/vnum>",
+"-ptech <name>", or "-tech <name>". You can put more than one restriction on
+the same interaction. For a multi-word name, put it in quotation marks.
+Example: .interaction add FORAGE 1 12345 100 x -ability "Find Herbs"
+
 You can use '.interact move' to rearrange entries. Interactions are always
 processed from top to bottom.
 
@@ -3773,7 +3986,7 @@ Example of possible multiple results from shear:
  2. SHEAR: 1x some wool 50.00%
  3. SHEAR: 1x some wool 5.00%
 
-See also: OLC BUILDINGS, OLC CROPS, OLC MOBILES, OLC SECTORS
+See also: OLC BUILDINGS, OLC CROPS, OLC MOBILES, OLC SECTORS, OLC VEHICLES
 #d
 "MEDIT KEYWORDS"
 
@@ -3911,7 +4124,7 @@ Examples:
 
 See also: MEDIT LONG DESCRIPTION
 #d
-"MEDIT SIZE" "MORPHEDIT SIZE" "MOB SIZE"
+"MEDIT SIZE" "MORPHEDIT SIZE" "MOB SIZE" "OEDIT SIZE"
 
 Usage:  .size [size]
 
@@ -3919,6 +4132,7 @@ A mob's size determines several of its attributes:
 - corpse size (large/normal) and whether or not players can take the corpse
 - total amount of blood the mob has (also modified by animal/vampire flags)
 - whether or not you can see the mob on the world map
+- SCAVENGER mobs will not eat corpses larger than themselves
 
 Available sizes are:
  &cnegligible&0 - no size / immaterial
@@ -3931,6 +4145,8 @@ Available sizes are:
 
 Morphs also have a 'size' trait with the same meaning. However, morph size will
 not affect the blood pool of the morphed person/mob at all.
+
+Corpse objects also have a 'size' trait, based on the animal that died.
 #d
 MORPHEDIT "OLC MORPHS" "MORPH EDITOR"
 
@@ -3940,7 +4156,7 @@ Usage:  .morph <command>
 The .olc morph editor allows you to configure the data for morphs, which are
 used by players (and NPCs) to change shape.
 
-All commands in the editor arg highlighted in yellow/green and placed inside
+All commands in the editor are highlighted in yellow/green and placed inside
 <angle braces>. You can get help on these commands by typing:
   &yHELP MORPHEDIT <COMMAND>&0
 
@@ -4043,6 +4259,11 @@ The long description is the text you see when the morphed character is in the
 room. Its name should appear somewhere near the beginning, and the rest should
 be a complete sentence indicating that the person is present.
 
+You can use #n to indicate the morphed person's real name (e.g. Galstaf, Joe
+Jones, a painted horse). If you do this, be sure not to set the ANIMAL flag on
+the morph (if they can tell the real name, it shouldn't have the disguise
+effects of that flag).
+
 Examples:
 There is a cow munching on some grass.
 A fiery dragon circles overhead.
@@ -4117,6 +4338,11 @@ the long description is shown instead). This should be short, should generally
 begin with a/an/the unless it's a proper noun, and should not be capitalized
 (again unless it's a proper noun).
 
+You can use #n to indicate the morphed person's real name (e.g. Galstaf, Joe
+Jones, a painted horse). If you do this, be sure not to set the ANIMAL flag on
+the morph (if they can tell the real name, it shouldn't have the disguise
+effects of that flag).
+
 The short description is also shown in the available morphs list (with any
 leading a/an/the removed).
 
@@ -4140,6 +4366,11 @@ despawns.
 
 To create a mount whistle, attach script 10263 (Mount whistle use) to an
 object, and set the object's <value0> field to the vnum of the mount.
+#d
+NOBITS "NO BITS"
+
+When you see "NOBITS", this indicates no bits are set on a set of flags (called
+a bitvector because of how the data is stored).
 #d
 "OBJECT VALUES" "OBJ VALUES" "OBJECT VALS" "OBJ VALS" OBJVALS "ITEM VALUES"
 
@@ -4169,7 +4400,7 @@ Container:
 
 Corpse:
  0 - idnum/vnum of the corpse (players are negative; npc vnums are positive)
- 1 - unused
+ 1 - size
  2 - corpse flags (1 = eaten, 2 = skinned, 4 = human)
 
 Currency:
@@ -4592,7 +4823,7 @@ other than 0.
 
 See also: ITEM SCALING, OEDIT MISSILESPEED, OEDIT WEAPONTYPE, OLC OBJECTS
 #d
-"OEDIT EXTRA" "OEDIT EXTRA DESCRIPTIONS" "BEDIT EXTRA" "BEDIT EXTRA DESCRIPTIONS" "REDIT EXTRA" "REDIT EXTRA DESCRIPTIONS"
+"OEDIT EXTRA" "OEDIT EXTRA DESCRIPTIONS" "BEDIT EXTRA" "BEDIT EXTRA DESCRIPTIONS" "REDIT EXTRA" "REDIT EXTRA DESCRIPTIONS" "VEDIT EXTRA" "VEDIT EXTRA DESCRIPTIONS"
 
 Usage:  .extra add <keywords>
         .extra change <number> <description | keywords> [value]
@@ -4652,6 +4883,7 @@ Available flags:
  GROUP-DROP - was dropped by a GROUP mob (CAUTION: it will set this itself when dropped as loot)
  GENERIC-DROP - never receives the HARD-DROP/GROUP-DROP flags
  !STORE - cannot be stored (this is usually toggled on by scripts)
+ SEEDED - has already been seeded with the 'seed' command
 
 See also: BINDING, OLC OBJECTS
 #d
@@ -4695,6 +4927,7 @@ Fields:
      or adventures, see ADVEDIT CASCADE for help)
   &c-material&0 - see OEDIT MATERIAL
   &c-type&0 - see HELP OEDIT TYPE
+  &c-weapontype&0 - see HELP OEDIT WEAPONTYPE
   &c-wear&0 - see HELP OEDIT WEAR
 
 Examples:
@@ -5027,15 +5260,13 @@ Available types:
  FOOD - edible
  RECIPE - can be 'learned' to give a craft
  PORTAL - transports a player to another place (never set .wear TAKE)
- *BOARD - a message board
+ *BOARD - a message board (internal use only)
  CORPSE - a corpse
  COINS - a pile of coins
  CURRENCY - a pile of adventure currency
  PAINT - used for painting buildings
- *MAIL - a letter
+ *MAIL - a letter (internal use only)
  WEALTH - adds to empire wealth when stored
- *CART - use vehicles instead
- *SHIP - use vehicles instead
  LIGHTER - can light fires
  MINIPET - teaches a mini-pet to the player on 'use'
  MISSILE-WEAPON - a bow, or similar (requires .wear RANGED)
@@ -5202,7 +5433,7 @@ The .olc adventure zone editor allows you to configure the data for adventure
 zones. Each adventure zone contains a set of room templates. The .adv editor
 controls meta-data about the adventure zone, such as its name and level range.
 
-All commands in the editor arg highlighted in yellow/green and placed inside
+All commands in the editor are highlighted in yellow/green and placed inside
 <angle braces>. You can get help on these commands by typing:
   &yHELP ADVEDIT <COMMAND>&0
 
@@ -5282,7 +5513,7 @@ Available flags:
  - !FACITONS -- Cannot edit factions
  - !GENERICS - Cannot edit generics
  - !SHOPS - Cannot edit shops
- - ALLOW-PROGRESS - Is allowed to edit progressions
+ - !PROGRESS - Cannot edit progressions
 
 For notes on the mud's building rules, see HELP BUILDING GUIDE.
 #d
@@ -5411,12 +5642,20 @@ of the olc 'list' command.
 
 See also: OLC LIST, VNUM
 #d
-"OLC FULLSEARCH"
+"OLC FULLSEARCH" FULLSEARCH
 
 Usage:  .<type> fullsearch <arguments>
 
-See the individual help files such as OEDIT FULLSEARCH. This command is only
-implemented for types that have such a help file.
+See the individual help files such as OEDIT FULLSEARCH.
+
+Supported types:
+  ability
+  building (search designatable rooms with -flag ROOM)
+  mobile
+  object
+  progress
+  trigger
+  vehicle
 #d
 "OLC LIST" OLIST MLIST RLIST
 
@@ -5518,6 +5757,7 @@ The following types will have IN-DEVELOPMENT flags removed in the vnum range:
 - factions
 - globals
 - morphs
+- progress goals
 - quests
 - shops
 - skills
@@ -5562,7 +5802,7 @@ its start and end numbers.
 This is NOT the editor for designatable rooms -- use .build for that (see
 HELP OLC BUILDINGS).
 
-All commands in the editor arg highlighted in yellow/green and placed inside
+All commands in the editor are highlighted in yellow/green and placed inside
 <angle braces>. You can get help on these commands by typing:
   &yHELP REDIT <COMMAND>&0
 
@@ -5686,9 +5926,9 @@ The .olc progression editor allows you to configure goals, which empires can
 complete in exchange for rewards. Some goals are unlocked by completing tasks,
 and others can be purchased for a cost.
 
-All commands in the editor arg highlighted in yellow/green and placed inside
+All commands in the editor are highlighted in yellow/green and placed inside
 <angle braces>. You can get help on these commands by typing:
-  &yHELP SHOPEDIT <COMMAND>&0
+  &yHELP PROGEDIT <COMMAND>&0
 
 You can close an open editor with .abort or .save.
 
@@ -5733,6 +5973,31 @@ The following progress goal flags are available:
  HIDDEN - Will not show up in lists until completed.
 
 See also: OLC PROGRESS
+#d
+"PROGEDIT FULLSEARCH"
+
+Usage:  .prog fullsearch -<field> <argument> <...>
+
+This command allows you to search for progress goals matching certain criteria.
+You can specify multiple fields if you want. Any arguments that don't start
+with a dash (-) are matched to the goal's name and other text.
+
+Fields:
+  &c-cost&0 - match a specific cost
+  &c-flagged&0, &c-unflagged&0 - see HELP PROGEDIT FLAGS
+  &c-perks&0 - see HELP PROGEDIT PERKS
+  &c-tasks&0 - see HELP REQUIREMENTS / HELP PROGEDIT TASKS
+  &c-type&0 - see HELP PROGEDIT TYPE
+  &c-value&0 - match a specific value
+
+Examples:
+ > .prog fullsearch -type PLAYER-TECH -ptech Swimming
+ > .prog fullsearch -flagged RANGED -flagged RANGED-ONLY
+
+To search other fields, you can generally use the normal "search" option for
+other OLC types. For example, to find all goals that require you to kill a
+certain mob, use ".m search 12345", which will search the task field on all
+goals for that mob.
 #d
 "PROGEDIT NAME"
 
@@ -5816,7 +6081,13 @@ Usage:  .type <type>
 This sets the type (or tree) that this particular goal belongs to. The current
 types are:
 
-???
+&cCommunity&0 - Goals related to city-building (stock goals are in the 1000 vnums)
+&cIndustry&0 - Goals related to production (stock goals are in the 2000 vnums)
+&cDefense&0 - Goals related to war and foritication (3000 vnum range)
+&cPrestige&0 - Goals related to accomplishments (4000 vnum range)
+
+Vnum ranges are given for reference. Adventure goals still belong in the
+adventure's vnum block.
 
 See also: OLC PROGRESS
 #d
@@ -5878,6 +6149,10 @@ The following quest flags are available:
  EMPIRE-ONLY - Can only start/finish with mob/room of matching empire (or
     matching not-in-empire).
  NO-GUESTS - Checks actual ownership on the room when you start/finish a quest.
+ TUTORIAL - This quest will not appear if the player uses 'toggle tutorials'.
+    Use this flag for basic tutorials only, like ones on common items.
+ GROUP-COMPLETION - Will auto-finish the quest if a group member turns it in
+    while in the same room.
 
 See also: OLC QUESTS, DAILY QUEST
 #d
@@ -5933,7 +6208,7 @@ as few rewards as possible, and you can also use quest scripts to give more
 complicated rewards instead.
 
 Available reward types:
- BONUS-EXP - Give the player additional bonus exp (expires at end of day).
+ BONUS-EXP - Give the player additional bonus exp today.
  COINS - Give the player some coins (empire or misc).
  OBJECT - Give the player items.
  SET-SKILL - Set the player's skill to a specific level (usually 0, 50, 75,
@@ -5944,6 +6219,7 @@ Available reward types:
     are not already on it.
  REPUTATION - Gain/lose faction reputation.
  CURRENCY - Gives generic currency (e.g. tokens).
+ EVENT-POINTS - Points toward an event (only happens if the event is running).
 
 Note: If you set empire coins as the reward, but the mob is not part of an
 empire, the player will receive misc coins instead.
@@ -6132,6 +6408,10 @@ Available tasks:
  &cDIPLOMACY&0 - Empire must have a number of matching diplomatic relations.
  &cHAVE-CITY&0 - Empire must have a number of cities (of any size).
  &cEMPIRE-MILITARY&0 - Empire must have a certain amount of military.
+ &cEMPIRE-PRODUCED-OBJECT&0 - Empire has produced an amount of an item.
+ &cEMPIRE-PRODUCED-COMPONENT&0 - Empire has produced an amount of a component.
+ &cEVENT-RUNNING&0 - Only available while the event is running.
+ &cEVENT-NOT-RUNNING&0 - Not available while the event is running.
 
 &r*&0 Some types require a trackable quest, and cannot be used as prereqs.
 ^ If a type requires flags and you use more than one flag, you MUST put the
@@ -6170,6 +6450,7 @@ Available flags:
  &criverbank&0 - the land on the edge of rivers
  &cestuary&0 - where the river meets the sea
  &clake&0 - a lake tile
+ &cbase-terrain-allowed&0 - *** do not set this on a sector
 
 Note: When adding these flags to adventure linking rules, they all have to
 be added in one line, so you can't type multiple words. Try abbreviating them
@@ -6234,6 +6515,7 @@ Available types ([value] isn't used unless specified):
     vnum).
  SPRING, SUMMER, AUTUMN, WINTER - Triggers during this season.
  BURNS-TO - Sector this tile becomes when burned down by a player.
+ SPREADS-TO - The opposite of adjacent-one: spreads from this tile to that one.
 
 Examples:
  Jungle: .evolution add CHOPPED-DOWN 1 50% 28
@@ -6368,7 +6650,7 @@ mobs, objects, room templates, and buildings. Shops can sell items for coins
 or for various adventure currencies (generics). However, shops are not
 currently able to buy items.
 
-All commands in the editor arg highlighted in yellow/green and placed inside
+All commands in the editor are highlighted in yellow/green and placed inside
 <angle braces>. You can get help on these commands by typing:
   &yHELP SHOPEDIT <COMMAND>&0
 
@@ -6472,7 +6754,7 @@ this is to choose which abilities that skill unlocks, and at what level. This
 does not control what class a player becomes (see HELP CLASSEDIT), only which
 powers they have access to and in which order.
 
-All commands in the editor arg highlighted in yellow/green and placed inside
+All commands in the editor are highlighted in yellow/green and placed inside
 <angle braces>. You can get help on these commands by typing:
   &yHELP SKILLEDIT <COMMAND>&0
 
@@ -6934,7 +7216,7 @@ corpses.
 
 Object values:
  0 - idnum/vnum of the corpse (players are negative; npc vnums are positive)
- 1 - unused
+ 1 - corpse size
  2 - corpse flags (1 = eaten, 2 = skinned, 4 = human)
 #d
 "CURRENCY ITEM" "CURRENCY OBJECT"
@@ -7300,6 +7582,39 @@ than one of these flags can be moved on any valid terrain with any of those
 commands.
 
 See also: OLC VEHICLES
+#d
+"VEDIT FULLSEARCH"
+
+Usage:  .veh fullsearch -<field> <argument> <...>
+
+This command allows you to search for vehicles matching certain criteria. You
+can specify multiple fields if you want. Any arguments that don't start
+with a dash (-) are matched to the vehicle's name and other text.
+
+Fields:
+  &c-animalsrequired&0 - number required (or "any" for anything over zero)
+  &c-capacity -capacityover -capacityunder&0 - specific capacity
+  &c-designate&0 - see HELP DESIGNATE FLAGS
+  &c-fame -fameover -fameunder&0 - specific fame amount
+  &c-flagged -unflagged&0 - see HELP VEDIT FLAGS
+  &c-functions&0 - see HELP VEDIT FUNCTIONS
+  &c-icon&0 - match the text of the icon, if any
+  &c-interactions&0 - has a specific type, see HELP VEDIT INTERACTION
+  &c-hitpoints -hitpointsover -hitpointsunder&0 - specific hitpoint amount
+  &c-level&0 - matches anything where this level is within the range
+  &c-military -militaryover -militaryunder&0 - specific military value
+  &c-movetype&0 - see HELP VEDIT MOVETYPE
+  &c-rooms -roomsover -roomsunder&0 - specific extra rooms value
+  &c-speed&0 - see HELP VEDIT SPEED
+
+Examples:
+ > .veh fullsearch -level 125 -hitpointsover 50
+ > .veh fullsearch wood -flagged BURNABLE
+
+To search other fields, you can generally use the normal "search" option for
+other OLC types. For example, to find all vehicles that have a certain interior
+room vnum, use ".b search 12345", which will search the vnum field on all
+vehicles for that building/room.
 #d
 "VEDIT HITPOINTS" "VEDIT HEALTH"
 

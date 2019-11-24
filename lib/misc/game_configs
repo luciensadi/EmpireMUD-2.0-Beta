@@ -76,6 +76,7 @@ players_per_city_point 2
 * Empire configs
 building_population_timer 48
 empire_log_ttl 30
+frontier_timeout 30
 land_frontier_modifier 0.050000
 land_min_cap 15
 land_outside_city_modifier 0.350000
@@ -218,6 +219,7 @@ auto_approve 1
 build_approval 1
 chat_approval 1
 craft_approval 1
+event_approval 1
 gather_approval 1
 join_empire_approval 1
 manage_empire_approval 1

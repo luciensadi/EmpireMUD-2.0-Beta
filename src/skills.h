@@ -130,7 +130,6 @@ extern bool player_tech_skill_check(char_data *ch, int tech, int difficulty);
 // formerly: #define ABIL_LOCKS  41
 // formerly: #define ABIL_ROADS  49
 #define ABIL_STAMINA  66
-#define ABIL_FIND_HERBS  70
 #define ABIL_FISH  72
 #define ABIL_TRACK  73
 #define ABIL_RESIST_POISON  77
@@ -297,7 +296,7 @@ extern bool player_tech_skill_check(char_data *ch, int tech, int difficulty);
 #define TYPE_VAMPIRE_CLAWS  13
 #define TYPE_CRUSH  14	// animal-only
 #define TYPE_HIT  15	// default physical
-#define TYPE_MAGIC_FIRE  16
+#define TYPE_MAGIC_FIRE  16	// disarmable fire blast
 #define TYPE_LIGHTNING_STAFF  17
 #define TYPE_BURN_STAFF  18
 #define TYPE_AGONY_STAFF  19
@@ -314,8 +313,9 @@ extern bool player_tech_skill_check(char_data *ch, int tech, int difficulty);
 #define TYPE_CROSSBOW  30	// shoot / crossbow
 #define TYPE_PISTOL  31	// shoot / pistol
 #define TYPE_MUSKET  32	// shoot / musket
+#define TYPE_FIRE_BREATH  33	// non-disarmable fire blast
 
-#define NUM_ATTACK_TYPES  33	// total
+#define NUM_ATTACK_TYPES  34	// total
 
 // helpfulment
 #define IS_WEAPON_TYPE(type) (((type) >= TYPE_RESERVED) && ((type) < TYPE_SUFFERING))
@@ -336,8 +336,8 @@ extern bool player_tech_skill_check(char_data *ch, int tech, int difficulty);
 #define ATTACK_BASH				(TYPE_SUFFERING + 5)
 #define ATTACK_SUNBURN			(TYPE_SUFFERING + 6)
 #define ATTACK_POISON			(TYPE_SUFFERING + 7)
-#define ATTACK_CREO_IGNEM		(TYPE_SUFFERING + 8)
-	#define ATTACK_UNUSED			(TYPE_SUFFERING + 9)
+	#define ATTACK_CREO_IGNEM		(TYPE_SUFFERING + 8)
+#define ATTACK_VAMPIRE_BITE		(TYPE_SUFFERING + 9)
 #define ATTACK_LIGHTNINGBOLT	(TYPE_SUFFERING + 10)	// 60
 #define ATTACK_PHYSICAL_DOT		(TYPE_SUFFERING + 11)
 #define ATTACK_BACKSTAB			(TYPE_SUFFERING + 12)
@@ -388,6 +388,12 @@ extern bool player_tech_skill_check(char_data *ch, int tech, int difficulty);
 #define FMODE_MELEE  0	// Hand-to-hand combat
 #define FMODE_MISSILE  1	// Ranged combat
 #define FMODE_WAITING  2	// Fighting someone in ranged combat
+
+
+// Rescue message types
+#define RESCUE_NO_MSG  0
+#define RESCUE_RESCUE  1	// traditional rescue message
+#define RESCUE_FOCUS  2		// mob changes focus
 
 
 // speeds for attack_hit_info.speed

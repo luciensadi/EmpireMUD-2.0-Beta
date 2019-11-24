@@ -323,10 +323,16 @@ Examples:
 BUY LIST SHOP SHOPS
 
 Usage:  list [keywords]
+        list identify <keywords>
         buy <item>
 
 These commands let you list and buy items from shops. You can find shops in
 various places around the world.
+
+Using "list ID" will let you identify an item and view its description before
+you buy it. Some adventures have shops with specialized items. These adventures
+usually have a help file (such as HELP MAGITERRANEAN: PERMAFROST) which
+indicate what the items in the shop do.
 #
 CHANGEPASS CHANGEPASSWORD "CHANGE PASSWORD" PASSWORD
 
@@ -454,6 +460,16 @@ There are also several possible modifier tags:
  
 See also: DROP FLAGS, LEVELS
 #
+CONTENTS
+
+Usage:  contents
+
+This lists the objects and vehicles in the room with you, exactly like they
+appear when you type 'look', but without all the other information from the
+'look' command.
+
+See also: LOOK
+#
 COTTON
 
 Stored in:  Tailor
@@ -562,6 +578,19 @@ destination island must have docks to receive the ship.
 
 See also: SHIPPING
 #
+DISTANCE DIRECTIONS
+
+Usage:  distance <location>
+        directions <location>
+
+This computes the map distance between your current location and any target
+as well as the direction to go to get there (in a straight line).
+
+Immortals can target players, vehicles, coordinates, or anything else. Mortals
+can only get the distance to a pair of coordinates.
+
+See also: MARK
+#
 DOUSE BURNING "PUT OUT FIRE" FIRE-BRIGADE "FIRE BRIGADE"
 
 Usage:  douse [vehicle | light]
@@ -660,7 +689,11 @@ See also: SOCIALS
 #
 EQUIPMENT
 
-Usage:  equipment [-all]
+Usage:  equipment [-all]  -- see your current gear
+        equipment set <name>  -- save an equipment set
+        equipment delete <name>  -- delete an equipment set
+        equipment list  -- list your equipment sets
+        equipment <name>  -- change to an equipment set
 
 Gives you a list of all the equipment you're wearing, holding, and wielding.
 Items do not take up inventory space when equipped (except containers and their
@@ -668,7 +701,16 @@ contents).
 
 If you also want to see empty slots, use the -a flag.
 
-See also: INVENTORY, REMOVE, WEAR, WIELD, HOLD, SHEATH, DRAW, SWAP
+You can also use this command to save and restore equipment sets. Just equip
+all the items you want for one set, and use 'equipment set' with a set name.
+You can then change back to that set any time you're not in combat.
+Note: The saddle and 'shared' slots do not save as part of the equipment set.
+
+Saving an equipment set will automatically 'keep' all items in the set. When
+you change equipment sets, any items that are removed will be placed at the
+end of your inventory (instead of at the beginning like normal).
+
+See also: INVENTORY, REMOVE, WEAR, WIELD, HOLD, SHEATH, DRAW, SWAP, KEEP
 #
 ESTATS ESTATISTICS
 
@@ -679,6 +721,38 @@ of the longer info shown with the "empire" command, and it defaults to your
 empire if you give no argument.
 
 See also: EMPIRE
+#
+EVENT EVENTS
+
+Usage:  events [command]
+
+From time to time, there are global events that all players may participate in.
+Prizes are awarded based on total points earned (threshold rewards) and on your
+rank amongst all participants (ranked rewards).
+
+Typing 'events' by itself lists any events that are currently running, or you
+can type 'event <name>' to see info on an event.
+
+You can also use the following event commands:
+ &ccollect&0 - Collect all your pending event rewards. Note: Rewards will be
+   scaled to the highest level your character attained while gaining event
+   points, not your current level when collecting.
+ &clb <event>&0 - View the leaderboard for a current or past event.
+ &crecent&0 - Shows recently-ended events.
+ &crewards <event>&0 - View the list of rewards for an event.
+
+Immortals see also: IMMORTAL EVENTS COMMAND
+#
+"IMMORTAL EVENTS COMMAND" "IMM EVENTS COMMAND"
+
+Usage:  events [command]
+
+Immortal event commands:
+ &ccancel <id/event>&0 - Cancel a running event (with no rewards).
+ &cend <id/event>&0 - End a running event early (with rewards).
+ &cstart <event>&0 - Start an event.
+
+See also: EVENTS
 #
 EXCAVATE EXCAVATION TRENCH MOAT CANAL FILLIN
 
@@ -734,8 +808,10 @@ EXITS
 
 Usage:  exits
 
-Gives you a list of the obvious exits from your location. This command is
-only useful indoors, because on the world map all directions are exits.
+Gives you a list of the obvious exits from your location. This includes all
+directions you can walk, disembark, and any portals present.
+
+See also: DIRECTIONS, DISEMBARK, ENTER
 #
 FACTION FACTIONS REPUTATIONS REP "FACTION REP"
 
@@ -809,6 +885,10 @@ someone loose.
 
 If someone has beckoned you to follow, you can just type 'follow' without
 their name.
+
+Your followers can follow you into private buildings and portals, including
+ones owned by your allies, even if they are hostile players. Your guards and
+guard towers will also ignore people who are following you.
 
 Examples:
   > follow ras
@@ -884,7 +964,8 @@ Usage:  group  -- see status on the group
 
 Grouping allows multiple players to work on the same challenge, and gives them
 access to a private group channel. You can also type "group" by itself to see
-the status of all members.
+the status of all members. You will automatically assist members of your group,
+including NPCs, who are in combat.
 
 Unlike older CircleMUDs, EmpireMUD does not require that you be following a
 player to group with them, and members don't have to be present for you to
@@ -948,7 +1029,7 @@ INFORMATIVE "TOGGLE INFORMATIVE"
 
 Usage:  toggle informative [on/off]
 
-Informative map mode shows you details about your buildings.
+Informative map mode shows you details about map tiles:
 
   &C[--]&0  being dismantled
   &c(--)&0  not done building
@@ -956,12 +1037,13 @@ Informative map mode shows you details about your buildings.
   &r(GG)&0  high damage/extreme disrepair
   &g/[]\&0  mine with ore
   &r/[]\&0  depleted mine
-  &y^()^&0  chameleon building (immortal only)
   &B^^^^&0  no-work
+  
+  &y^()^&0  chameleon building (immortal only)
 
 See also: TOGGLES, MAINTAIN, WORKFORCE
 #
-IGNORE IGNORING
+IGNORE IGNORING IGNORED
 
 Usage:  ignore [player]
 
@@ -970,9 +1052,19 @@ This will block tells, says, whispers, emotes, socials, and public channels.
 If you want to stop ignoring someone, you can use the ignore command on them
 again.
 
+If you have ignored at 2 of a player's alts (other characters), none of their
+characters will be able to communicate with you (even though you don't see
+those other alts on your ignore list). Your ignore list is NOT automatically
+shared to your own alts, but you can use 'alt import' to copy the list from
+character to character.
+
 Typing "ignore" with no argument will list who you're ignoring. You can't
 choose to ignore an immortal player, and immortals cannot use the ignore
 feature at all.
+
+Ignoring also affects the diplomacy command.
+
+See also: ALTERNATE, ALT IMPORT, DIPLOMACY
 #
 INFO POLICY VERSION RULES CREDITS
 
@@ -1013,7 +1105,7 @@ contents).
 
 See also: EQUIPMENT, GRAB, HOLD, REMOVE, WEAR, STORE, RETRIEVE, WIELD, SWAP
 #
-JUNK
+JUNK "JUNK ITEM" "JUNK OBJECT"
 
 Usage:  junk <object>
         junk <number> [empire] coins
@@ -1029,6 +1121,9 @@ Examples:
 
   > junk cup
   > junk all.bronze
+
+Were you looking for the 'JUNK' item flag? This indicates an item that cannot
+be stored anywhere. It will disappear if left on the ground too long.
 
 See also: COINS, DROP
 #
@@ -1118,31 +1213,45 @@ Examples:
 Note that if you LOOK AT CORPSE you will not see its inventory.
 To see what's inside a container (i.e. a corpse) use LOOK IN <object>.
 
-See also: GET, READ, TAKE, SURVEY
+See also: GET, MAP, READ, TAKE, SURVEY
+#
+MAP "MAP COMMAND"
+
+Usage:  map [distance]
+
+This command displays the map around you, similar to "look", but without any
+contents or people. The distance defaults to your map size setting, but you can
+specify a distance if you choose.
+
+See also: LOOK, MAPSIZE, LEGEND (for a list of map symbols)
 #
 MAPSIZE "MAP SIZE"
 
-Usage:  mapsize <size | auto>
+Usage:  mapsize <distance> [radius | width]
+        mapsize auto
 
 This allows you to change the size of your map display to better fit the size
-of your screen. Be cautious with large mapsizes because some people are dis-
-connected when the game tries to send too much data to their telnet client.
+of your screen. Large map sizes may create lag when moving quickly.
 
-Mapsize is the total width of your map in map tiles (4 characters if you're
-using the ascii map; one room if you're using screen-reader mode). The number
-is always odd because you sit in the center of it. A mapsize of 3 shows 1 tile
-in each direction; a mapsize of 15 (standard) shows 7 in each direction.
+Map size is measured in either 'radius' or 'width'. Radius is the distance you
+see in each direction, while 'width' is the full display with of the ascii map,
+which is double the radius, plus 1. The default mode when setting your map size
+is radius for screenreader users, and width for visual players (because the map
+is displayed differently for each). Widths must be odd numbers with a minimum
+of 3, while the radius has a minimum of 1.
 
-If you set your mapsize to 'auto', the game will attempt to detect the size of
+The standard mapsize is radius 7 (width 15).
+
+If you set your map size to 'auto', the game will attempt to detect the size of
 your client window.
 
-When you move very fast on the map, your mapsize will start to shrink as it
+When you move very fast on the map, your map size will start to shrink as it
 becomes more difficult for your character to pay attention to all his/her
 surroundings (and saves the game time rendering large views repeatedly). You
-can restore your original mapsize if you stop and type 'look', or wait a few
+can restore your original map size if you stop and type 'look', or wait a few
 seconds.
 
-See also: TOGGLE
+See also: MAP, TOGGLE
 #
 MAIL CHECK RECEIVE SEND "PIGEON MAIL"
 
@@ -1194,7 +1303,7 @@ also type "clearmeters" to clear them at any time.
 
 See also: CLEARMETERS
 #
-MINIPET MINIPETS MINI-PET MINI-PETS "MINI PET" "MINI PETS"
+MINIPET MINIPETS MINI-PET MINI-PETS "MINI PET" "MINI PETS" PET PETS
 
 Usage:  minipets
         minipet <name>
@@ -1212,8 +1321,9 @@ MORTLOG
 
 Usage:  toggle mortlog [on/off]
 
-This will give you periodic updates, such as when a player logs in, leaves, or
-dies. It's useful in keeping up on current events. Mortlog is colored cyan.
+This will give you periodic updates, such as when a player creates, logs in, or
+leaves (depending on the game's settings). It's useful in keeping up on current
+events. Mortlog is colored cyan.
 #
 MOTD
 
@@ -1234,6 +1344,13 @@ When you start editing, begin lines with a , to add them to your description
 and use ,/h for help or ,/s to save and end.
 
 See also: TEXT EDITOR
+#
+NEWS
+
+Usage:  news
+
+Shows any recent news from the game staff. For example, updates or new
+adventures might appear here.
 #
 NOREPEAT NO-REPEAT "NO REPEAT"
 
@@ -1803,11 +1920,8 @@ impaired. Since EmpireMUD relies so heavily on the ascii map to show what's
 going on around you, we have created this mode especially for players who
 can't see the map.
 
-The "mapsize" command will determine how far away you can see things. Since
-this command is shared with the non-screen-reader view, it is actually the
-total diameter of your view and you'll see halfway in each direction. For
-example, if your mapsize is 15, you will see up to 7 tiles west and 7 tiles
-east.
+The "mapsize" command will determine how far away you can see things. It sets
+the number of tiles you see in each direction on commands like look and scan.
 
 Available options:
  * toggle informative - If on, tiles will indicate if they are being built
@@ -1816,7 +1930,7 @@ Available options:
  * toggle brief - This will hide the map display entirely and not show you
      what you can see in each direction.
 
-See also: DISPLAY, SCAN, TOGGLE, MAPSIZE
+See also: DISPLAY, SCAN, TOGGLE, MAPSIZE, FMESSAGES, MAPSCAN, CHART
 #
 SCROLLING
 
@@ -1827,6 +1941,16 @@ amount of information. The information is sent all at once, as preferred by
 some people for features like the WHO list.
 
 See also: TOGGLE
+#
+SEED SEEDS SEEDING DESEED DE-SEED "REMOVE SEEDS"
+
+Usage:  seed <fruit>
+
+This command allows you to remove the seeds from a fruit, usually to plant
+them. Most fruits can still be eaten afterwards. Some fruits can also be
+planted without removing the seeds first.
+
+See also: PLANT, CROPS
 #
 SELFDELETE "SELF DELETE" SELF-DELETE DELETE
 
@@ -1865,11 +1989,13 @@ See also: ENCHANT
 #
 SHEATH SHEATHE
 
-Usage:  sheathe
+Usage:  sheathe [item]
 
-You can stow up to two weapons from your wield slot, without sending them to
-your inventory. Any regular weapon can be sheathed. You do not gain attribute
-bonuses from a weapon while it is sheathed.
+You can stow up to two weapons directly from your wield/hold slot, without
+sending them to your inventory. Any regular weapon can be sheathed. You do not
+gain attribute bonuses from a weapon while it is sheathed.
+
+You can also put weapons from your inventory into your sheathes.
 
 See also: DRAW, SWAP
 #
@@ -1877,7 +2003,7 @@ See also: DRAW, SWAP
 
 Usage:  ship status
         ship cancel [number] <item>
-        ship <island> [number] <item>
+        ship <island> [number | all] <item>
 
 This command allows you to ship stored resources between islands using ships at
 your docks. You don't have to be at the docks to queue shipments -- only on
@@ -2016,7 +2142,7 @@ Usage:  survey
 
 This command gets you basic information about the room you're currently in.
 
-See also: ADVENTURE, CHART
+See also: ADVENTURE, CHART, MANAGE
 #
 SWAP
 
@@ -2103,7 +2229,7 @@ Do not abuse this command; if you do, it will be taken from you.
 
 See also: WHO
 #
-TOGGLE TOGGLES
+TOGGLE TOGGLES PREFERENCES PREFS SETTINGS
 
 Usage:  toggle [type] [on/off]
 
@@ -2127,7 +2253,7 @@ Toggles:
   extra-spacing - adds an extra blank line after you type a command
   informative - informative map coloring -- HELP INFORMATIVE
   map-color - shut off color for just the map
-  mortlog - see logs when people create characters and die
+  mortlog - see logs when people create characters
   no-empire - will not create a new empire when you try to claim or build
   no-paint - turns off custom paint colors on buildings
   no-repeat - Some commands will say "ok" instead of typing out your message

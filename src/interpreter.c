@@ -111,6 +111,7 @@ ACMD(do_confer);
 ACMD(do_config);
 ACMD(do_confirm);
 ACMD(do_consider);
+ACMD(do_contents);
 ACMD(do_cooldowns);
 ACMD(do_counterspell);
 ACMD(do_create);
@@ -169,6 +170,7 @@ ACMD(do_equipment);
 ACMD(do_esay);
 ACMD(do_escape);
 ACMD(do_estats);
+ACMD(do_events);
 ACMD(do_examine);
 ACMD(do_excavate);
 ACMD(do_exchange);
@@ -256,7 +258,9 @@ ACMD(do_look);
 
 ACMD(do_mail);
 ACMD(do_maintain);
+ACMD(do_manage);
 ACMD(do_manashield);
+ACMD(do_map);
 ACMD(do_mapout);
 ACMD(do_mapscan);
 ACMD(do_mapsize);
@@ -359,6 +363,7 @@ ACMD(do_score);
 ACMD(do_scrap);
 ACMD(do_scrape);
 ACMD(do_search);
+ACMD(do_seed);
 ACMD(do_send);
 ACMD(do_selfdelete);
 ACMD(do_separate);
@@ -404,6 +409,7 @@ ACMD(do_swim);
 ACMD(do_switch);
 ACMD(do_syslog);
 
+ACMD(do_tame);
 ACMD(do_tan);
 ACMD(do_tavern);
 ACMD(do_tedit);
@@ -473,6 +479,7 @@ ACMD(do_mechoneither);
 ACMD(do_msend);
 ACMD(do_mecho);
 ACMD(do_mload);
+ACMD(do_mmod);
 ACMD(do_mmorph);
 ACMD(do_mmove);
 ACMD(do_mpurge);
@@ -485,6 +492,7 @@ ACMD(do_mdamage);
 ACMD(do_mdot);
 ACMD(do_mrestore);
 ACMD(do_msiege);
+ACMD(do_mslay);
 ACMD(do_mteleport);
 ACMD(do_mterracrop);
 ACMD(do_mterraform);
@@ -590,7 +598,7 @@ cpp_extern const struct command_info cmd_info[] = {
 	ABILITY_CMD( "bash", POS_FIGHTING, do_bash, NO_MIN, CTYPE_COMBAT, ABIL_BASH ),
 	SIMPLE_CMD( "bathe", POS_STANDING, do_bathe, NO_MIN, CTYPE_MOVE ),
 	SIMPLE_CMD( "beckon", POS_RESTING, do_beckon, NO_MIN, CTYPE_UTIL ),
-	STANDARD_CMD( "bite", POS_FIGHTING, do_bite, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_COMBAT, CMD_NO_ANIMALS, ABIL_BITE ),
+	STANDARD_CMD( "bite", POS_SLEEPING, do_bite, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_COMBAT, CMD_NO_ANIMALS, NO_ABIL ),
 	ABILITY_CMD( "bloodsweat", POS_SLEEPING, do_bloodsweat, NO_MIN, CTYPE_SKILL, ABIL_BLOODSWEAT ),
 	SCMD_CMD( "board", POS_STANDING, do_board, NO_MIN, CTYPE_MOVE, SCMD_BOARD ),
 	ABILITY_CMD( "boost", POS_RESTING, do_boost, NO_MIN, CTYPE_UTIL, ABIL_BOOST ),
@@ -634,8 +642,9 @@ cpp_extern const struct command_info cmd_info[] = {
 	SCMD_CMD( "commands", POS_DEAD, do_commands, NO_MIN, CTYPE_UTIL, SCMD_COMMANDS ),
 	SIMPLE_CMD( "consider", POS_RESTING, do_consider, NO_MIN, CTYPE_UTIL ),
 	SIMPLE_CMD( "config", POS_DEAD, do_config, LVL_CIMPL, CTYPE_IMMORTAL ),
-	SIMPLE_CMD( "confirm", POS_SLEEPING, do_confirm, NO_MIN, CTYPE_UTIL ),
+	SIMPLE_CMD( "confirm", POS_DEAD, do_confirm, NO_MIN, CTYPE_UTIL ),
 	ABILITY_CMD( "confer", POS_RESTING, do_confer, NO_MIN, CTYPE_SKILL, ABIL_CONFER ),
+	SIMPLE_CMD( "contents", POS_RESTING, do_contents, NO_MIN, CTYPE_UTIL ),
 	STANDARD_CMD( "cook", POS_DEAD, do_gen_craft, NO_MIN, NO_GRANTS, CRAFT_TYPE_COOK, CTYPE_BUILD, CMD_NO_ANIMALS, NO_ABIL ),
 	SIMPLE_CMD( "cooldowns", POS_DEAD, do_cooldowns, NO_MIN, CTYPE_UTIL ),
 	ABILITY_CMD( "counterspell", POS_FIGHTING, do_counterspell, NO_MIN, CTYPE_SKILL, ABIL_COUNTERSPELL ),
@@ -659,6 +668,7 @@ cpp_extern const struct command_info cmd_info[] = {
 	SCMD_CMD( "designate", POS_STANDING, do_designate, NO_MIN, CTYPE_BUILD, SCMD_DESIGNATE ),
 	SIMPLE_CMD( "diagnose", POS_RESTING, do_diagnose, NO_MIN, CTYPE_UTIL ),
 	SIMPLE_CMD( "diplomacy", POS_DEAD, do_diplomacy, NO_MIN, CTYPE_EMPIRE ),
+	SIMPLE_CMD( "directions", POS_DEAD, do_distance, NO_MIN, CTYPE_IMMORTAL ),
 	ABILITY_CMD( "disarm", POS_FIGHTING, do_disarm, NO_MIN, CTYPE_COMBAT, ABIL_DISARM ),
 	ABILITY_CMD( "disenchant", POS_STANDING, do_disenchant, NO_MIN, CTYPE_SKILL, ABIL_DISENCHANT ),
 	ABILITY_CMD( "disguise", POS_STANDING, do_disguise, NO_MIN, CTYPE_SKILL, ABIL_DISGUISE ),
@@ -667,7 +677,7 @@ cpp_extern const struct command_info cmd_info[] = {
 	SIMPLE_CMD( "dismiss", POS_STANDING, do_dismiss, NO_MIN, CTYPE_UTIL ),
 	SIMPLE_CMD( "disembark", POS_STANDING, do_disembark, NO_MIN, CTYPE_MOVE ),
 	STANDARD_CMD( "dispirit", POS_FIGHTING, do_damage_spell, NO_MIN, NO_GRANTS, ABIL_DISPIRIT, CTYPE_COMBAT, NOBITS, ABIL_DISPIRIT ),
-	SIMPLE_CMD( "distance", POS_DEAD, do_distance, LVL_START_IMM, CTYPE_IMMORTAL ),
+	SIMPLE_CMD( "distance", POS_DEAD, do_distance, NO_MIN, CTYPE_IMMORTAL ),
 	STANDARD_CMD( "dig", POS_STANDING, do_dig, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_BUILD, CMD_NO_ANIMALS, NO_ABIL ),
 	SIMPLE_CMD( "display", POS_DEAD, do_display, NO_MIN, CTYPE_UTIL ),
 	SIMPLE_CMD( "dispatch", POS_RESTING, do_dispatch, NO_MIN, CTYPE_UTIL ),
@@ -707,6 +717,7 @@ cpp_extern const struct command_info cmd_info[] = {
 	SIMPLE_CMD( "etalk", POS_DEAD, do_esay, NO_MIN, CTYPE_EMPIRE ),
 	ABILITY_CMD( "escape", POS_STANDING, do_escape, NO_MIN, CTYPE_MOVE, ABIL_ESCAPE ),
 	SIMPLE_CMD( "estats", POS_DEAD, do_estats, NO_MIN, CTYPE_EMPIRE ),
+	SIMPLE_CMD( "events", POS_DEAD, do_events, NO_MIN, CTYPE_UTIL ),
 	SIMPLE_CMD( "examine", POS_SITTING, do_examine, NO_MIN, CTYPE_UTIL ),
 	STANDARD_CMD( "excavate", POS_STANDING, do_excavate, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_BUILD, CMD_NO_ANIMALS, NO_ABIL ),
 	SIMPLE_CMD( "exchange", POS_STANDING, do_exchange, NO_MIN, CTYPE_BUILD ),
@@ -815,8 +826,10 @@ cpp_extern const struct command_info cmd_info[] = {
 
 	SIMPLE_CMD( "mount", POS_STANDING, do_mount, NO_MIN, CTYPE_MOVE ),
 	STANDARD_CMD( "maintain", POS_STANDING, do_maintain, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_BUILD, CMD_NO_ANIMALS, NO_ABIL ),
+	SIMPLE_CMD( "manage", POS_DEAD, do_manage, NO_MIN, CTYPE_UTIL ),
 	ABILITY_CMD( "manashield", POS_RESTING, do_manashield, NO_MIN, CTYPE_COMBAT, ABIL_MANASHIELD ),
 	STANDARD_CMD( "manufacture", POS_DEAD, do_gen_craft, NO_MIN, NO_GRANTS, CRAFT_TYPE_MANUFACTURE, CTYPE_BUILD, CMD_NO_ANIMALS, NO_ABIL ),
+	SIMPLE_CMD( "map", POS_RESTING, do_map, NO_MIN, CTYPE_UTIL ),
 	SIMPLE_CMD( "mapscan", POS_RESTING, do_mapscan, NO_MIN, CTYPE_UTIL ),
 	SIMPLE_CMD( "mapsize", POS_DEAD, do_mapsize, NO_MIN, CTYPE_UTIL ),
 	SIMPLE_CMD( "mapout", POS_DEAD, do_mapout, LVL_CIMPL, CTYPE_IMMORTAL ),
@@ -844,6 +857,7 @@ cpp_extern const struct command_info cmd_info[] = {
 	SIMPLE_CMD( "mydescription", POS_STANDING, do_mydescription, NO_MIN, CTYPE_UTIL ),
 
 	SIMPLE_CMD( "nearby", POS_RESTING, do_nearby, NO_MIN, CTYPE_UTIL ),
+	SCMD_CMD( "news", POS_DEAD, do_gen_ps, NO_MIN, CTYPE_UTIL, SCMD_NEWS ),
 	SIMPLE_CMD( "nodismantle", POS_SLEEPING, do_nodismantle, NO_MIN, CTYPE_BUILD ),
 	SIMPLE_CMD( "noskill", POS_DEAD, do_noskill, NO_MIN, CTYPE_UTIL ),
 	SCMD_CMD( "notitle", POS_DEAD, do_wizutil, LVL_CIMPL, CTYPE_IMMORTAL, SCMD_NOTITLE ),
@@ -946,6 +960,7 @@ cpp_extern const struct command_info cmd_info[] = {
 	STANDARD_CMD( "scrap", POS_STANDING, do_scrap, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_BUILD, CMD_NO_ABBREV, NO_ABIL ),
 	STANDARD_CMD( "scrape", POS_STANDING, do_scrape, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_BUILD, CMD_NO_ANIMALS, NO_ABIL ),
 	ABILITY_CMD( "search", POS_STANDING, do_search, NO_MIN, CTYPE_COMBAT, ABIL_SEARCH ),
+	SIMPLE_CMD( "seed", POS_RESTING, do_seed, NO_MIN, CTYPE_EMPIRE ),
 	STANDARD_CMD( "selfdelete", POS_SLEEPING, do_selfdelete, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_UTIL, CMD_NO_ABBREV, NO_ABIL ),
 	GRANT_CMD( "send", POS_SLEEPING, do_send, LVL_CIMPL, CTYPE_IMMORTAL, GRANT_SEND ),
 	SIMPLE_CMD( "separate", POS_RESTING, do_separate, NO_MIN, CTYPE_UTIL ),
@@ -999,6 +1014,7 @@ cpp_extern const struct command_info cmd_info[] = {
 
 	SIMPLE_CMD( "tell", POS_DEAD, do_tell, NO_MIN, CTYPE_COMM ),
 	SIMPLE_CMD( "take", POS_RESTING, do_get, NO_MIN, CTYPE_MOVE ),
+	STANDARD_CMD( "tame", POS_STANDING, do_tame, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_SKILL, CMD_NO_ANIMALS, NO_ABIL ),
 	STANDARD_CMD( "tan", POS_STANDING, do_tan, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_EMPIRE, CMD_NO_ANIMALS, NO_ABIL ),
 	SCMD_CMD( "taste", POS_RESTING, do_eat, NO_MIN, CTYPE_UTIL, SCMD_TASTE ),
 	STANDARD_CMD( "tavern", POS_STANDING, do_tavern, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_EMPIRE, CMD_NO_ANIMALS, NO_ABIL ),
@@ -1096,6 +1112,7 @@ cpp_extern const struct command_info cmd_info[] = {
 	STANDARD_CMD( "mechoneither", POS_DEAD, do_mechoneither, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_IMMORTAL, CMD_IMM_OR_MOB_ONLY | CMD_STAY_HIDDEN, NO_ABIL ),
 	STANDARD_CMD( "msend", POS_DEAD, do_msend, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_IMMORTAL, CMD_IMM_OR_MOB_ONLY | CMD_STAY_HIDDEN, NO_ABIL ),
 	STANDARD_CMD( "mload", POS_DEAD, do_mload, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_IMMORTAL, CMD_IMM_OR_MOB_ONLY | CMD_STAY_HIDDEN, NO_ABIL ),
+	STANDARD_CMD( "mmod", POS_DEAD, do_mmod, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_MOVE, CMD_IMM_OR_MOB_ONLY | CMD_STAY_HIDDEN, NO_ABIL ),
 	STANDARD_CMD( "mmorph", POS_DEAD, do_mmorph, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_MOVE, CMD_IMM_OR_MOB_ONLY | CMD_STAY_HIDDEN, NO_ABIL ),
 	STANDARD_CMD( "mmove", POS_STANDING, do_mmove, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_MOVE, CMD_IMM_OR_MOB_ONLY | CMD_STAY_HIDDEN, NO_ABIL ),
 	STANDARD_CMD( "mpurge", POS_DEAD, do_mpurge, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_IMMORTAL, CMD_IMM_OR_MOB_ONLY | CMD_STAY_HIDDEN, NO_ABIL ),
@@ -1106,6 +1123,7 @@ cpp_extern const struct command_info cmd_info[] = {
 	STANDARD_CMD( "mrestore", POS_DEAD, do_mrestore, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_IMMORTAL, CMD_IMM_OR_MOB_ONLY | CMD_STAY_HIDDEN, NO_ABIL ),
 	STANDARD_CMD( "mscale", POS_DEAD, do_mscale, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_IMMORTAL, CMD_IMM_OR_MOB_ONLY | CMD_STAY_HIDDEN, NO_ABIL ),
 	STANDARD_CMD( "msiege", POS_DEAD, do_msiege, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_IMMORTAL, CMD_IMM_OR_MOB_ONLY | CMD_STAY_HIDDEN, NO_ABIL ),
+	STANDARD_CMD( "mslay", POS_DEAD, do_mslay, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_IMMORTAL, CMD_IMM_OR_MOB_ONLY | CMD_STAY_HIDDEN, NO_ABIL ),
 	STANDARD_CMD( "mteleport", POS_DEAD, do_mteleport, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_IMMORTAL, CMD_IMM_OR_MOB_ONLY | CMD_STAY_HIDDEN, NO_ABIL ),
 	STANDARD_CMD( "mterracrop", POS_DEAD, do_mterracrop, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_IMMORTAL, CMD_IMM_OR_MOB_ONLY | CMD_STAY_HIDDEN, NO_ABIL ),
 	STANDARD_CMD( "mterraform", POS_DEAD, do_mterraform, NO_MIN, NO_GRANTS, NO_SCMD, CTYPE_IMMORTAL, CMD_IMM_OR_MOB_ONLY | CMD_STAY_HIDDEN, NO_ABIL ),
@@ -1137,7 +1155,7 @@ void command_interpreter(char_data *ch, char *argument) {
 	extern bool check_ability(char_data *ch, char *string, bool exact);
 	extern bool check_social(char_data *ch, char *string, bool exact);
 	int cmd, length, iter;
-	char *line;
+	char arg[MAX_INPUT_LENGTH], *line;
 
 	/* just drop to next line for hitting CR */
 	skip_spaces(&argument);
@@ -1239,7 +1257,7 @@ void command_interpreter(char_data *ch, char *argument) {
 	}
 	
 	// Command trigger (3/3): exact match on abbreviated command
-	else if (check_command_trigger(ch, (char*)cmd_info[cmd].command, line, CMDTRG_EXACT)) {
+	else if (strlen(arg) < strlen(cmd_info[cmd].command) && check_command_trigger(ch, (char*)cmd_info[cmd].command, line, CMDTRG_EXACT)) {
 		return;
 	}
 	
@@ -2210,17 +2228,17 @@ int perform_dupe_check(descriptor_data *d) {
 		case RECON:
 			SEND_TO_Q("Reconnecting.\r\n", d);
 			act("$n has reconnected.", TRUE, d->character, 0, 0, TO_ROOM);
-			syslog(SYS_LOGIN, GET_INVIS_LEV(d->character), TRUE, "%s [%s] has reconnected.", GET_NAME(d->character), d->host);
+			syslog(SYS_LOGIN, GET_INVIS_LEV(d->character), TRUE, "%s [%s] has reconnected at %s", GET_NAME(d->character), d->host, IN_ROOM(d->character) ? room_log_identifier(IN_ROOM(d->character)) : "an unknown location");
 			break;
 		case USURP:
 			SEND_TO_Q("You take over your own body, already in use!\r\n", d);
 			act("$n suddenly keels over in pain, surrounded by a white aura...\r\n"
 				"$n's body has been taken over by a new spirit!", TRUE, d->character, 0, 0, TO_ROOM);
-			syslog(SYS_LOGIN, GET_INVIS_LEV(d->character), TRUE, "%s has re-logged in ... disconnecting old socket.", GET_NAME(d->character));
+			syslog(SYS_LOGIN, GET_INVIS_LEV(d->character), TRUE, "%s has re-logged in at %s ... disconnecting old socket", GET_NAME(d->character), IN_ROOM(d->character) ? room_log_identifier(IN_ROOM(d->character)) : "an unknown location");
 			break;
 		case UNSWITCH:
 			SEND_TO_Q("Reconnecting to unswitched char.", d);
-			syslog(SYS_LOGIN, GET_INVIS_LEV(d->character), TRUE, "%s [%s] has reconnected.", GET_NAME(d->character), d->host);
+			syslog(SYS_LOGIN, GET_INVIS_LEV(d->character), TRUE, "%s [%s] has reconnected at %s", GET_NAME(d->character), d->host, IN_ROOM(d->character) ? room_log_identifier(IN_ROOM(d->character)) : "an unknown location");
 			break;
 	}
 	
@@ -2469,7 +2487,7 @@ void nanny(descriptor_data *d, char *arg) {
 					return;
 				
 				if (!PLR_FLAGGED(d->character, PLR_INVSTART)) {
-					syslog(SYS_LOGIN, GET_INVIS_LEV(d->character), TRUE, "%s [%s] has connected.", GET_NAME(d->character), PLR_FLAGGED(d->character, PLR_IPMASK) ? "masked" : d->host);
+					syslog(SYS_LOGIN, GET_INVIS_LEV(d->character), TRUE, "%s [%s] has connected", GET_NAME(d->character), PLR_FLAGGED(d->character, PLR_IPMASK) ? "masked" : d->host);
 				}
 
 				// check here if they need more traits than they have (IF they are an existing char?)

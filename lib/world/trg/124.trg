@@ -884,7 +884,7 @@ eval vnum 12407 + %random.4%
 set summon %self.room.people%
 if %summon.vnum% == %vnum%
   %echo% %self.name% sends up a jet of sparkling blue mana and %summon.name% appears!
-  nop %summon.add_mob_flag(UNDEAD)%
+  nop %summon.add_mob_flag(NO-CORPSE)%
   nop %summon.add_mob_flag(!LOOT)%
   nop %summon.add_mob_flag(SPAWNED)%
   nop %summon.add_mob_flag(BRING-A-FRIEND)%
@@ -934,6 +934,9 @@ wait 20 sec
 Golden Goblin reputation gate~
 0 s 100
 ~
+if %direction% == portal || %direction% == none
+  halt
+end
 if %self.vnum% == 12406
   if %actor.has_reputation(12401, Liked)%
     %send% %actor% As you leave, %self.name% mutters some magic words.
@@ -946,7 +949,7 @@ if %self.vnum% == 12406
     halt
   end
 end
-if (%actor.nohassle% || %actor.has_reputation(12401, Liked)% || (%direction% == fore && %actor.has_reputation(12401, Neutral)%))
+if (%actor.is_npc% || %actor.nohassle% || %actor.has_reputation(12401, Liked)% || (%direction% == fore && %actor.has_reputation(12401, Neutral)%))
   halt
 end
 %send% %actor% %self.name% won't let you pass!

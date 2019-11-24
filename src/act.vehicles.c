@@ -41,6 +41,8 @@ extern const char *mob_move_types[];
 extern const int rev_dir[];
 
 // external funcs
+ACMD(do_dismount);
+void adjust_vehicle_tech(vehicle_data *veh, bool add);
 extern int count_harnessed_animals(vehicle_data *veh);
 extern room_data *dir_to_room(room_data *room, int dir, bool ignore_entrance);
 extern struct vehicle_attached_mob *find_harnessed_mob_by_name(vehicle_data *veh, char *name);
@@ -294,10 +296,14 @@ bool move_vehicle(char_data *ch, vehicle_data *veh, int dir, int subcmd) {
 	}
 	
 	was_in = IN_ROOM(veh);
+	adjust_vehicle_tech(veh, FALSE);
 	vehicle_to_room(veh, to_room);
+	adjust_vehicle_tech(veh, TRUE);
 	
 	if (!entry_vtrigger(veh)) {
+		adjust_vehicle_tech(veh, FALSE);
 		vehicle_to_room(veh, was_in);
+		adjust_vehicle_tech(veh, TRUE);
 		return FALSE;
 	}
 	
@@ -537,6 +543,7 @@ void perform_load_vehicle(char_data *ch, vehicle_data *veh, vehicle_data *cont, 
 	snprintf(buf, sizeof(buf), "$n loads $V %sto $v.", IN_OR_ON(cont));
 	act(buf, FALSE, ch, cont, veh, TO_ROOM | ACT_VEHICLE_OBJ);
 	
+	// probably do not need to adjust-tech -- this can't change islands, can it?
 	vehicle_to_room(veh, to_room);
 	
 	snprintf(buf, sizeof(buf), "$V is loaded %sto $v.", IN_OR_ON(cont));
@@ -585,6 +592,7 @@ void perform_unload_vehicle(char_data *ch, vehicle_data *veh, vehicle_data *cont
 	act("You unload $V from $v.", FALSE, ch, cont, veh, TO_CHAR | ACT_VEHICLE_OBJ);
 	act("$n unloads $V from $v.", FALSE, ch, cont, veh, TO_ROOM | ACT_VEHICLE_OBJ);
 	
+	// probably do not need to adjust-tech -- this can't change islands, can it?
 	vehicle_to_room(veh, IN_ROOM(cont));
 	
 	if (ROOM_PEOPLE(IN_ROOM(cont))) {
@@ -1087,7 +1095,7 @@ void do_sit_on_vehicle(char_data *ch, char *argument) {
 	else if (GET_POS(ch) < POS_STANDING || GET_SITTING_ON(ch)) {
 		msg_to_char(ch, "You need to stand up before you can do that.\r\n");
 	}
-	else if (IS_RIDING(ch)) {
+	else if (IS_RIDING(ch) && !PRF_FLAGGED(ch, PRF_AUTODISMOUNT)) {
 		msg_to_char(ch, "You can't do that while mounted.\r\n");
 	}
 	else if (!(veh = get_vehicle_in_room_vis(ch, argument))) {
@@ -1097,6 +1105,11 @@ void do_sit_on_vehicle(char_data *ch, char *argument) {
 		// sends own message
 	}
 	else {
+		// auto-dismount
+		if (IS_RIDING(ch)) {
+			do_dismount(ch, "", 0, 0);
+		}
+		
 		snprintf(buf, sizeof(buf), "You sit %s $V.", IN_OR_ON(veh));
 		act(buf, FALSE, ch, NULL, veh, TO_CHAR);
 		
@@ -1250,7 +1263,7 @@ ACMD(do_board) {
 	else if (!can_use_vehicle(ch, veh, MEMBERS_AND_ALLIES)) {
 		msg_to_char(ch, "You don't have permission to %s it.\r\n", command);
 	}
-	else if (IS_RIDING(ch) && !ROOM_BLD_FLAGGED(to_room, BLD_ALLOW_MOUNTS)) {
+	else if (IS_RIDING(ch) && !ROOM_BLD_FLAGGED(to_room, BLD_ALLOW_MOUNTS) && !PRF_FLAGGED(ch, PRF_AUTODISMOUNT)) {
 		msg_to_char(ch, "You can't %s that while riding.\r\n", command);
 	}
 	else if (GET_LEADING_MOB(ch) && IN_ROOM(GET_LEADING_MOB(ch)) == IN_ROOM(ch) && !VEH_FLAGGED(veh, VEH_CARRY_MOBS)) {
@@ -1263,6 +1276,11 @@ ACMD(do_board) {
 		act("You can't lead $V in there.", FALSE, ch, NULL, GET_LEADING_VEHICLE(ch), TO_CHAR);
 	}
 	else {
+		// auto-dismount
+		if (IS_RIDING(ch) && !ROOM_BLD_FLAGGED(to_room, BLD_ALLOW_MOUNTS)) {
+			do_dismount(ch, "", 0, 0);
+		}
+		
 		// move ch: out-message
 		snprintf(buf, sizeof(buf), "You %s $V.", command);
 		act(buf, FALSE, ch, NULL, veh, TO_CHAR);
@@ -1323,7 +1341,10 @@ ACMD(do_board) {
 				act("$v is led behind $M.", TRUE, ROOM_PEOPLE(was_in), GET_LEADING_VEHICLE(ch), ch, TO_CHAR | TO_NOTVICT | ACT_VEHICLE_OBJ);
 			}
 			
+			adjust_vehicle_tech(GET_LEADING_VEHICLE(ch), FALSE);
 			vehicle_to_room(GET_LEADING_VEHICLE(ch), to_room);
+			adjust_vehicle_tech(GET_LEADING_VEHICLE(ch), TRUE);
+			
 			act("$V is led in.", TRUE, ch, NULL, GET_LEADING_VEHICLE(ch), TO_CHAR | TO_ROOM | ACT_VEHICLE_OBJ);
 		}
 		
@@ -1380,10 +1401,15 @@ ACMD(do_disembark) {
 	else if (!IS_IMMORTAL(ch) && !IS_NPC(ch) && IS_CARRYING_N(ch) > CAN_CARRY_N(ch)) {
 		msg_to_char(ch, "You are overburdened and cannot move.\r\n");
 	}
-	else if (IS_RIDING(ch) && !ROOM_BLD_FLAGGED(to_room, BLD_ALLOW_MOUNTS)) {
+	else if (IS_RIDING(ch) && !ROOM_BLD_FLAGGED(to_room, BLD_ALLOW_MOUNTS) && !PRF_FLAGGED(ch, PRF_AUTODISMOUNT)) {
 		msg_to_char(ch, "You can't disembark here while riding.\r\n");
 	}
 	else {
+		// auto-dismount
+		if (IS_RIDING(ch) && !ROOM_BLD_FLAGGED(to_room, BLD_ALLOW_MOUNTS)) {
+			do_dismount(ch, "", 0, 0);
+		}
+		
 		if (!AFF_FLAGGED(ch, AFF_SNEAK)) {
 			act("$n disembarks from $V.", TRUE, ch, NULL, veh, TO_ROOM);
 		}
@@ -1430,7 +1456,11 @@ ACMD(do_disembark) {
 			if (ROOM_PEOPLE(was_in)) {
 				act("$v is led behind $M.", TRUE, ROOM_PEOPLE(was_in), GET_LEADING_VEHICLE(ch), ch, TO_CHAR | TO_NOTVICT | ACT_VEHICLE_OBJ);
 			}
+			
+			adjust_vehicle_tech(GET_LEADING_VEHICLE(ch), FALSE);
 			vehicle_to_room(GET_LEADING_VEHICLE(ch), to_room);
+			adjust_vehicle_tech(GET_LEADING_VEHICLE(ch), TRUE);
+			
 			act("$V is led off.", TRUE, ch, NULL, GET_LEADING_VEHICLE(ch), TO_CHAR | TO_ROOM | ACT_VEHICLE_OBJ);
 		}
 
@@ -1574,6 +1604,8 @@ ACMD(do_dispatch) {
 		
 		LL_APPEND(EMPIRE_SHIPPING_LIST(GET_LOYALTY(ch)), shipd);
 		sail_shipment(GET_LOYALTY(ch), veh);
+		EMPIRE_NEEDS_STORAGE_SAVE(GET_LOYALTY(ch)) = TRUE;
+		
 		send_config_msg(ch, "ok_string");
 	}
 }
@@ -1631,7 +1663,10 @@ void do_drag_portal(char_data *ch, vehicle_data *veh, char *arg) {
 			act("$V is dragged into $p.", FALSE, ROOM_PEOPLE(IN_ROOM(veh)), portal, veh, TO_CHAR | TO_ROOM);
 		}
 		
+		adjust_vehicle_tech(veh, FALSE);
 		vehicle_to_room(veh, IN_ROOM(ch));
+		adjust_vehicle_tech(veh, TRUE);
+		
 		act("$V is dragged in with you.", FALSE, ch, NULL, veh, TO_CHAR);
 		act("$V is dragged in with $m.", FALSE, ch, NULL, veh, TO_ROOM);
 	}
@@ -1671,6 +1706,9 @@ ACMD(do_drag) {
 	}
 	else if (!can_use_vehicle(ch, veh, MEMBERS_ONLY)) {
 		msg_to_char(ch, "You don't have permission to drag that.\r\n");
+	}
+	else if (VEH_FLAGGED(veh, VEH_ON_FIRE)) {
+		msg_to_char(ch, "You can't drag that around -- it's on fire!\r\n");
 	}
 	else if (!VEH_IS_COMPLETE(veh)) {
 		msg_to_char(ch, "You can't drag that around until it's finished.\r\n");
@@ -1712,7 +1750,10 @@ ACMD(do_drag) {
 			act("$V is dragged along.", FALSE, ROOM_PEOPLE(IN_ROOM(veh)), NULL, veh, TO_CHAR | TO_ROOM);
 		}
 		
+		adjust_vehicle_tech(veh, FALSE);
 		vehicle_to_room(veh, IN_ROOM(ch));
+		adjust_vehicle_tech(veh, TRUE);
+		
 		act("$V is dragged along with you.", FALSE, ch, NULL, veh, TO_CHAR);
 		act("$V is dragged along with $m.", FALSE, ch, NULL, veh, TO_ROOM);
 	}
@@ -1762,7 +1803,9 @@ void do_drive_through_portal(char_data *ch, vehicle_data *veh, obj_data *portal,
 			act(buf, FALSE, ROOM_PEOPLE(IN_ROOM(veh)), portal, veh, TO_CHAR | TO_ROOM);
 		}
 		
+		adjust_vehicle_tech(veh, FALSE);
 		vehicle_to_room(veh, to_room);
+		adjust_vehicle_tech(veh, TRUE);
 		
 		if (ROOM_PEOPLE(IN_ROOM(veh))) {
 			snprintf(buf, sizeof(buf), "$V %s out of $p.", mob_move_types[VEH_MOVE_TYPE(veh)]);
@@ -1808,7 +1851,7 @@ ACMD(do_drive) {
 	int dir, dist = -1;
 	
 	skip_run_filler(&argument);
-	dir_only = !strchr(argument, ' ') && (parse_direction(ch, argument) != NO_DIR);	// only 1 word
+	dir_only = !strchr(argument, ' ') && (parse_direction(ch, argument) != NO_DIR);	// only 1 word, and is a direction
 	
 	// basics
 	if (IS_NPC(ch)) {
@@ -1867,7 +1910,7 @@ ACMD(do_drive) {
 	else if (!*argument) {
 		msg_to_char(ch, "You must specify a path to %s using a combination of directions and distances.\r\n", drive_data[subcmd].command);
 	}
-	else if (dir_only && (dir = parse_direction(ch, argument)) == NO_DIR) {
+	else if (!strchr(argument, ' ') && (dir = parse_direction(ch, argument)) == NO_DIR) {
 		if ((portal = get_obj_in_list_vis(ch, argument, ROOM_CONTENTS(IN_ROOM(veh)))) && IS_PORTAL(portal)) {
 			do_drive_through_portal(ch, veh, portal, subcmd);
 		}
@@ -1927,8 +1970,8 @@ ACMD(do_drive) {
 
 
 ACMD(do_fire) {
-	void besiege_room(char_data *attacker, room_data *to_room, int damage);
-	bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int siege_type);
+	void besiege_room(char_data *attacker, room_data *to_room, int damage, vehicle_data *by_vehicle);
+	bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int siege_type, vehicle_data *by_vehicle);
 	
 	char veh_arg[MAX_INPUT_LENGTH], tar_arg[MAX_INPUT_LENGTH];
 	vehicle_data *veh, *veh_targ;
@@ -2014,7 +2057,7 @@ ACMD(do_fire) {
 			}
 			
 			secttype = SECT(room_targ);
-			besiege_room(ch, room_targ, dam);
+			besiege_room(ch, room_targ, dam, veh);
 			
 			if (SECT(room_targ) != secttype) {
 				msg_to_char(ch, "It is destroyed!\r\n");
@@ -2033,7 +2076,7 @@ ACMD(do_fire) {
 				trigger_distrust_from_hostile(ch, VEH_OWNER(veh_targ));
 			}
 			
-			besiege_vehicle(ch, veh_targ, dam, SIEGE_PHYSICAL);
+			besiege_vehicle(ch, veh_targ, dam, SIEGE_PHYSICAL, veh);
 		}
 		
 		// delays

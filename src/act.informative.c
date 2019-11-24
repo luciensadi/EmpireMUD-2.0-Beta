@@ -49,6 +49,7 @@ extern const char *wear_bits[];
 extern const struct wear_data_type wear_data[NUM_WEARS];
 
 // external functions
+void clear_recent_moves(char_data *ch);
 extern struct instance_data *find_instance_by_room(room_data *room, bool check_homeroom, bool allow_fake_loc);
 extern char *get_room_name(room_data *room, bool color);
 extern char *list_harnessed_mobs(vehicle_data *veh);
@@ -327,7 +328,7 @@ void look_at_target(char_data *ch, char *arg) {
 	int bits, found = FALSE, j, fnum, i = 0;
 	char_data *found_char = NULL;
 	obj_data *obj, *found_obj = NULL;
-	vehicle_data *found_veh = NULL;
+	vehicle_data *veh, *found_veh = NULL;
 	char *desc;
 
 	if (!ch->desc)
@@ -392,6 +393,18 @@ void look_at_target(char_data *ch, char *arg) {
 				act("$n looks at $p.", TRUE, ch, obj, NULL, TO_ROOM);
 				found = TRUE;
 			}
+
+	// does it match an extra desc of a vehicle here?
+	if (!found && ROOM_VEHICLES(IN_ROOM(ch))) {
+		LL_FOREACH2(ROOM_VEHICLES(IN_ROOM(ch)), veh, next_in_room) {
+			if (CAN_SEE_VEHICLE(ch, veh) && (desc = find_exdesc(arg, VEH_EX_DESCS(veh))) != NULL && ++i == fnum) {
+				send_to_char(desc, ch);
+				act("$n looks at $V.", TRUE, ch, NULL, veh, TO_ROOM);
+				found = TRUE;
+				break;	// only 1
+			}
+		}
+	}
 
 	// does it match an extra desc of the room template?
 	if (!found && GET_ROOM_TEMPLATE(IN_ROOM(ch))) {
@@ -892,14 +905,14 @@ void list_one_char(char_data *i, char_data *ch, int num) {
 	}
 	
 	if (PRF_FLAGGED(ch, PRF_ROOMFLAGS) && IS_NPC(i)) {
-		msg_to_char(ch, "[%d] %s", GET_MOB_VNUM(i), SCRIPT(i) ? "[TRIG] " : "");
+		msg_to_char(ch, "[%d] %s", GET_MOB_VNUM(i), HAS_TRIGGERS(i) ? "[TRIG] " : "");
 	}
 	
 	if (IS_MORPHED(i) && GET_POS(i) == POS_STANDING) {
 		if (AFF_FLAGGED(i, AFF_INVISIBLE)) {
 			msg_to_char(ch, "*");
 		}
-		msg_to_char(ch, "%s\r\n", MORPH_LONG_DESC(GET_MORPH(i)));
+		msg_to_char(ch, "%s\r\n", get_morph_desc(i, TRUE));
 	}
 	else if (IS_NPC(i) && GET_LONG_DESC(i) && GET_POS(i) == POS_STANDING) {
 		if (AFF_FLAGGED(i, AFF_INVISIBLE)) {
@@ -1032,21 +1045,31 @@ void list_one_vehicle_to_char(vehicle_data *veh, char_data *ch) {
 	char buf[MAX_STRING_LENGTH];
 	size_t size = 0;
 	
+	// pre-description
 	if (VEH_OWNER(veh)) {
 		size += snprintf(buf + size, sizeof(buf) - size, "<%s> ", EMPIRE_ADJECTIVE(VEH_OWNER(veh)));
 	}
 	if (PRF_FLAGGED(ch, PRF_ROOMFLAGS)) {
-		size += snprintf(buf + size, sizeof(buf) - size, "[%d] %s", VEH_VNUM(veh), SCRIPT(veh) ? "[TRIG] " : "");
+		size += snprintf(buf + size, sizeof(buf) - size, "[%d] %s", VEH_VNUM(veh), HAS_TRIGGERS(veh) ? "[TRIG] " : "");
 	}
-	size += snprintf(buf + size, sizeof(buf) - size, "%s\r\n", VEH_LONG_DESC(veh));
+	
+	// main desc
+	if (VEH_IS_COMPLETE(veh)) {
+		size += snprintf(buf + size, sizeof(buf) - size, "%s\r\n", VEH_LONG_DESC(veh));
+	}
+	else {
+		size += snprintf(buf + size, sizeof(buf) - size, "%s is under construction.\r\n", VEH_SHORT_DESC(veh));
+	}
 	
 	// additional descriptions like what's attached:
 	if (VEH_FLAGGED(veh, VEH_ON_FIRE)) {
 		size += snprintf(buf + size, sizeof(buf) - size, "...it is ON FIRE!\r\n");
 	}
+	/* this is now indicated instead of the long desc
 	if (!VEH_IS_COMPLETE(veh)) {
 		size += snprintf(buf + size, sizeof(buf) - size, "...it is unfinished.\r\n");
 	}
+	*/
 	else if (VEH_NEEDS_RESOURCES(veh) || VEH_HEALTH(veh) < VEH_MAX_HEALTH(veh)) {
 		size += snprintf(buf + size, sizeof(buf) - size, "...it is in need of repair.\r\n");
 	}
@@ -1276,7 +1299,7 @@ void show_character_affects(char_data *ch, char_data *to) {
 		}
 		
 		// main body
-		msg_to_char(to, "  &r%s&0 (%s) %d %s damage (%d/%d)\r\n", get_generic_name_by_vnum(dot->type), lbuf, dot->damage * dot->stack, damage_types[dot->damage_type], dot->stack, dot->max_stack);
+		msg_to_char(to, "   &r%s&0 (%s) %d %s damage (%d/%d)\r\n", get_generic_name_by_vnum(dot->type), lbuf, dot->damage * dot->stack, damage_types[dot->damage_type], dot->stack, dot->max_stack);
 	}
 }
 
@@ -1357,6 +1380,7 @@ char *get_obj_desc(obj_data *obj, char_data *ch, int mode) {
 * @return bool TRUE if any items were shown at all, otherwise FALSE
 */
 bool inventory_store_building(char_data *ch, room_data *room, empire_data *emp) {
+	char buf[MAX_STRING_LENGTH];
 	bool found = FALSE;
 	struct empire_storage_data *store, *next_store;
 	struct empire_island *eisle;
@@ -1377,7 +1401,9 @@ bool inventory_store_building(char_data *ch, room_data *room, empire_data *emp) 
 		if ((proto = store->proto)) {
 			if (obj_can_be_retrieved(proto, room)) {
 				if (!found) {
-					msg_to_char(ch, "\r\n%s inventory available here:\r\n", EMPIRE_ADJECTIVE(emp));
+					snprintf(buf, sizeof(buf), "\r\n%s inventory available here:\r\n", EMPIRE_ADJECTIVE(emp));
+					CAP(buf + 2);
+					msg_to_char(ch, "%s", buf);
 				}
 				
 				show_one_stored_item_to_char(ch, emp, store, FALSE);
@@ -1407,14 +1433,13 @@ void list_obj_to_char(obj_data *list, char_data *ch, int mode, int show) {
 		if (OBJ_CAN_STACK(i)) {
 			// look for a previous matching item
 			
-			strcpy(buf, GET_OBJ_DESC(i, ch, OBJ_DESC_SHORT));
 			for (j = list; j != i; j = j->next_content) {
 				if (OBJ_CAN_STACK(j) && OBJS_ARE_SAME(i, j)) {
-					if (!strcmp(buf, GET_OBJ_DESC(j, ch, OBJ_DESC_SHORT))) {
-						if (GET_OBJ_VNUM(j) == NOTHING)
-							break;
-						else if (GET_OBJ_VNUM(j) == GET_OBJ_VNUM(i))
-							break;
+					if (GET_OBJ_VNUM(j) == NOTHING) {
+						break;
+					}
+					else if (GET_OBJ_VNUM(j) == GET_OBJ_VNUM(i)) {
+						break;
 					}
 				}
 			}
@@ -1426,12 +1451,11 @@ void list_obj_to_char(obj_data *list, char_data *ch, int mode, int show) {
 			// determine number
 			for (j = i; j; j = j->next_content) {
 				if (OBJ_CAN_STACK(j) && OBJS_ARE_SAME(i, j)) {
-					strcpy(buf, GET_OBJ_DESC(j, ch, OBJ_DESC_SHORT));
-					if (!strcmp(buf, GET_OBJ_DESC(i, ch, OBJ_DESC_SHORT))) {
-						if (GET_OBJ_VNUM(j) == NOTHING)
-							num++;
-						else if (GET_OBJ_VNUM(j) == GET_OBJ_VNUM(i))
-							num++;
+					if (GET_OBJ_VNUM(j) == NOTHING) {
+						num++;
+					}
+					else if (GET_OBJ_VNUM(j) == GET_OBJ_VNUM(i)) {
+						num++;
 					}
 				}
 			}
@@ -1472,7 +1496,7 @@ void show_obj_to_char(obj_data *obj, char_data *ch, int mode) {
 
 	// initialize buf as the obj desc
 	if (PRF_FLAGGED(ch, PRF_ROOMFLAGS)) {
-		sprintf(buf, "[%d] %s%s", GET_OBJ_VNUM(obj), (SCRIPT(obj) ? "[TRIG] " : ""), GET_OBJ_DESC(obj, ch, mode));
+		sprintf(buf, "[%d] %s%s", GET_OBJ_VNUM(obj), (HAS_TRIGGERS(obj) ? "[TRIG] " : ""), GET_OBJ_DESC(obj, ch, mode));
 	}
 	else {
 		strcpy(buf, GET_OBJ_DESC(obj, ch, mode));
@@ -2021,7 +2045,7 @@ ACMD(do_affects) {
 
 	/* Morph */
 	if (IS_MORPHED(ch)) {
-		msg_to_char(ch, "   You are in the form of %s!\r\n", MORPH_SHORT_DESC(GET_MORPH(ch)));
+		msg_to_char(ch, "   You are in the form of %s!\r\n", get_morph_desc(ch, FALSE));
 	}
 	else if (IS_DISGUISED(ch)) {
 		msg_to_char(ch, "   You are disguised as %s!\r\n", PERS(ch, ch, 0));
@@ -2130,20 +2154,31 @@ ACMD(do_chart) {
 ACMD(do_coins) {
 	char buf[MAX_STRING_LENGTH], line[MAX_STRING_LENGTH], vstr[64];
 	struct player_currency *cur, *next_cur;
-	size_t size;
+	bool any = FALSE;
+	size_t size = 0;
 	
 	if (IS_NPC(ch)) {
 		msg_to_char(ch, "NPCs don't carry coins.\r\n");
 		return;
 	}
 	
-	coin_string(GET_PLAYER_COINS(ch), line);
-	size = snprintf(buf, sizeof(buf), "You have %s.\r\n", line);
+	skip_spaces(&argument);
+	*buf = '\0';
+	
+	// basic coins -- only show if no-arg
+	if (!*argument) {
+		coin_string(GET_PLAYER_COINS(ch), line);
+		size = snprintf(buf, sizeof(buf), "You have %s.\r\n", line);
+	}
 	
 	if (GET_CURRENCIES(ch) && subcmd) {
-		size += snprintf(buf + size, sizeof(buf) - size, "You also have:\r\n");
+		size += snprintf(buf + size, sizeof(buf) - size, "You%s have:\r\n", *argument ? "" : " also");
 		
 		HASH_ITER(hh, GET_CURRENCIES(ch), cur, next_cur) {
+			if (*argument && !multi_isname(argument, get_generic_string_by_vnum(cur->vnum, GENERIC_CURRENCY, WHICH_CURRENCY(cur->amount)))) {
+				continue; // no keyword match
+			}
+			
 			if (PRF_FLAGGED(ch, PRF_ROOMFLAGS)) {
 				sprintf(vstr, "[%5d] ", cur->vnum);
 			}
@@ -2152,6 +2187,7 @@ ACMD(do_coins) {
 			}
 			
 			snprintf(line, sizeof(line), "%s%3d %s\r\n", vstr, cur->amount, get_generic_string_by_vnum(cur->vnum, GENERIC_CURRENCY, WHICH_CURRENCY(cur->amount)));
+			any = TRUE;
 			
 			if (size + strlen(line) < sizeof(buf)) {
 				strcat(buf, line);
@@ -2163,8 +2199,55 @@ ACMD(do_coins) {
 		}
 	}
 	
-	if (ch->desc) {
+	if (*argument && !any) {
+		msg_to_char(ch, "You have no special currency called '%s'.\r\n", argument);
+	}
+	else if (ch->desc) {	// show currency
 		page_string(ch->desc, buf, TRUE);
+	}
+}
+
+
+ACMD(do_contents) {
+	bool can_see_anything = FALSE;
+	vehicle_data *veh;
+	obj_data *obj;
+	
+	skip_spaces(&argument);
+	if (*argument) {
+		msg_to_char(ch, "This command only gets the contents of the room. To see the contents of an object, try 'look in <object>'.\r\n");
+		return;
+	}
+	
+	// verify we can see even 1 obj
+	if (!can_see_anything) {
+		LL_FOREACH2(ROOM_CONTENTS(IN_ROOM(ch)), obj, next_content) {
+			if (CAN_SEE_OBJ(ch, obj)) {
+				can_see_anything = TRUE;
+				break;	// only need 1
+			}
+		}
+	}
+	// verify we can see even 1 vehicle
+	if (!can_see_anything) {
+		LL_FOREACH2(ROOM_VEHICLES(IN_ROOM(ch)), veh, next_in_room) {
+			if (CAN_SEE_VEHICLE(ch, veh)) {
+				can_see_anything = TRUE;
+				break;	// only need 1
+			}
+		}
+	}
+	
+	// ok: show it
+	if (can_see_anything) {
+		send_to_char("&g", ch);
+		list_obj_to_char(ROOM_CONTENTS(IN_ROOM(ch)), ch, OBJ_DESC_LONG, FALSE);
+		send_to_char("&w", ch);
+		list_vehicles_to_char(ROOM_VEHICLES(IN_ROOM(ch)), ch);
+		send_to_char("&0", ch);
+	}
+	else {	// can see nothing
+		msg_to_char(ch, "There are no contents here.\r\n");
 	}
 }
 
@@ -2223,47 +2306,6 @@ ACMD(do_display) {
 	else {
 		delete_doubledollar(argument);
 		msg_to_char(ch, "%s\r\n", replace_prompt_codes(ch, argument));
-	}
-}
-
-
-ACMD(do_equipment) {
-	int i;
-	bool all = FALSE, found = FALSE;
-	
-	one_argument(argument, arg);
-	
-	if (*arg && (!str_cmp(arg, "all") || !str_cmp(arg, "-all") || !str_cmp(arg, "-a"))) {
-		all = TRUE;
-	}
-	
-	if (!IS_NPC(ch)) {
-		msg_to_char(ch, "You are using (gear level %d):\r\n", GET_GEAR_LEVEL(ch));
-	}
-	else {
-		send_to_char("You are using:\r\n", ch);
-	}
-	
-	for (i = 0; i < NUM_WEARS; i++) {
-		if (GET_EQ(ch, i)) {
-			if (CAN_SEE_OBJ(ch, GET_EQ(ch, i))) {
-				send_to_char(wear_data[i].eq_prompt, ch);
-				show_obj_to_char(GET_EQ(ch, i), ch, OBJ_DESC_EQUIPMENT);
-				found = TRUE;
-			}
-			else {
-				send_to_char(wear_data[i].eq_prompt, ch);
-				send_to_char("Something.\r\n", ch);
-				found = TRUE;
-			}
-		}
-		else if (all) {
-			msg_to_char(ch, "%s\r\n", wear_data[i].eq_prompt);
-			found = TRUE;
-		}
-	}
-	if (!found) {
-		send_to_char(" Nothing.\r\n", ch);
 	}
 }
 
@@ -2413,6 +2455,11 @@ ACMD(do_gen_ps) {
 		case SCMD_IMOTD: {
 			extern char *imotd;
 			page_string(ch->desc, imotd, 0);
+			break;
+		}
+		case SCMD_NEWS: {
+			extern char *news;
+			page_string(ch->desc, news, 0);
 			break;
 		}
 		case SCMD_CLEAR: {
@@ -2719,7 +2766,6 @@ ACMD(do_inventory) {
 
 
 ACMD(do_look) {
-	void clear_recent_moves(char_data *ch);
 	void look_in_direction(char_data *ch, int dir);
 	
 	char arg2[MAX_INPUT_LENGTH];
@@ -2777,36 +2823,131 @@ ACMD(do_look) {
 }
 
 
-ACMD(do_mapsize) {
-	int size;
+ACMD(do_map) {
+	int dist, mapsize;
 	
-	// NOTE: player picks the total size, but we store it as distance
+	if (IS_NPC(ch)) {
+		msg_to_char(ch, "NPCs can't use this command.\r\n");
+		return;
+	}
+	if (ROOM_IS_CLOSED(IN_ROOM(ch))) {
+		msg_to_char(ch, "You can only look at the map outdoors. (Try 'look out' instead.)\r\n");
+		return;
+	}
 	
+	dist = GET_MAPSIZE(ch);
+	
+	// check args
 	skip_spaces(&argument);
+	if (*argument) {
+		if (isdigit(*argument)) {
+			dist = atoi(argument);
+		}
+		else {
+			msg_to_char(ch, "Usage: map [view distance]\r\n");
+			return;
+		}
+	}
+	
+	// validate size
+	if (*argument && dist > config_get_int("max_map_size")) {
+		msg_to_char(ch, "The maximum view distance is %d.\r\n", config_get_int("max_map_size"));
+		return;
+	}
+	else if (*argument && dist < 1) {
+		msg_to_char(ch, "You must specify a distance of at least 1.\r\n");
+		return;
+	}
+	
+	mapsize = GET_MAPSIZE(ch);	// store for later
+	GET_MAPSIZE(ch) = dist;	// requested distance
+	
+	clear_recent_moves(ch);	// prevents shrinkage
+	look_at_room_by_loc(ch, IN_ROOM(ch), LRR_LOOK_OUT);
+	
+	GET_MAPSIZE(ch) = mapsize;
+}
+
+
+ACMD(do_mapsize) {
+	#define MAPSIZE_RADIUS  1
+	#define MAPSIZE_WIDTH  2
+	
+	char num_arg[MAX_INPUT_LENGTH], type_arg[MAX_INPUT_LENGTH];
+	int max_size, size, pos, mode;
 	
 	if (IS_NPC(ch)) {
 		return;
 	}
 	
+	// check no-arg first
+	skip_spaces(&argument);
 	if (!*argument) {
 		if (GET_MAPSIZE(ch) > 0) {
-			msg_to_char(ch, "Current map size: %d\r\n", GET_MAPSIZE(ch) * 2 + 1);
+			msg_to_char(ch, "Current map size: radius %d (width %d)\r\n", GET_MAPSIZE(ch), GET_MAPSIZE(ch) * 2 + 1);
 		}
 		else {
 			msg_to_char(ch, "Your map size is set to automatic.\r\n");
 		}
+		return;
 	}
-	else if (!str_cmp(argument, "auto")) {
+	
+	// usage: mapsize <distance> [radius|width]
+	// screenreader players default to radius but sighted players default to width
+	
+	half_chop(argument, num_arg, type_arg);
+	if (*num_arg && !*type_arg && str_cmp(num_arg, "auto")) {	// look for type_arg attached to num_arg
+		for (pos = 0; pos < strlen(num_arg); ++pos) {
+			if (isdigit(num_arg[pos])) {
+				continue;	// still in the number portion
+			}
+			else if (isspace(num_arg[pos])) {
+				num_arg[pos] = '\0';	// terminate at the first space
+				continue;
+			}
+			else if (!isdigit(num_arg[pos])) {
+				// found the start of the real second arg (first non-digit char)
+				strcpy(type_arg, num_arg + pos);
+				num_arg[pos] = '\0';
+				break;	// done parsing
+			}
+		}
+	}
+	
+	// verify type argument, if any
+	if (*type_arg && is_abbrev(type_arg, "width")) {
+		mode = MAPSIZE_WIDTH;
+	}
+	else if (*type_arg && is_abbrev(type_arg, "radius")) {
+		mode = MAPSIZE_RADIUS;
+	}
+	else if (*type_arg) {
+		msg_to_char(ch, "Invalid type. Usage: mapsize <distance> [radius | width]\r\n");
+		return;
+	}
+	else {
+		// default mode is based on screenreader status
+		mode = PRF_FLAGGED(ch, PRF_SCREEN_READER) ? MAPSIZE_RADIUS : MAPSIZE_WIDTH;
+	}
+	
+	// determine max size
+	max_size = (mode == MAPSIZE_RADIUS ? config_get_int("max_map_size") : (config_get_int("max_map_size") * 2 + 1));
+	
+	// and process
+	if (!str_cmp(num_arg, "auto")) {
 		GET_MAPSIZE(ch) = 0;
 		msg_to_char(ch, "Your map size is now automatic.\r\n");
 	
 	}
-	else if ((size = atoi(argument)) < 3 || size > (config_get_int("max_map_size") * 2 + 1)) {
-		msg_to_char(ch, "You must choose a size between 3 and %d.\r\n", config_get_int("max_map_size") * 2 + 1);
+	else if ((size = atoi(num_arg)) < 1) {
+		msg_to_char(ch, "Invalid map size. Usage: mapsize <distance> [radius | width]\r\n");
+	}
+	else if (size > max_size) {
+		msg_to_char(ch, "You must choose a size between %d and %d.\r\n", (mode == MAPSIZE_RADIUS ? 1 : 3), max_size);
 	}
 	else {
-		GET_MAPSIZE(ch) = size/2;
-		msg_to_char(ch, "Your map size is now %d.\r\n", GET_MAPSIZE(ch) * 2 + 1);
+		GET_MAPSIZE(ch) = (mode == MAPSIZE_RADIUS ? size : MAX(1, size/2));
+		msg_to_char(ch, "Your map size is now: radius %d (width %d)\r\n", GET_MAPSIZE(ch), GET_MAPSIZE(ch) * 2 + 1);
 	}
 }
 
@@ -3398,6 +3539,7 @@ ACMD(do_whoami) {
 
 ACMD(do_whois) {
 	void check_delayed_load(char_data *ch);
+	extern const char *genders[];
 	extern const char *level_names[][2];
 	
 	char part[MAX_STRING_LENGTH];
@@ -3421,7 +3563,8 @@ ACMD(do_whois) {
 	
 	// basic info
 	msg_to_char(ch, "%s%s&0\r\n", PERS(victim, victim, TRUE), NULLSAFE(GET_TITLE(victim)));
-	msg_to_char(ch, "Status: %s\r\n", level_names[(int) GET_ACCESS_LEVEL(victim)][1]);
+	sprinttype(GET_REAL_SEX(victim), genders, part);
+	msg_to_char(ch, "Status: %s %s\r\n", CAP(part), level_names[(int) GET_ACCESS_LEVEL(victim)][1]);
 
 	// show class (but don't bother for immortals, as they generally have all skills
 	if (!IS_GOD(victim) && !IS_IMMORTAL(victim)) {

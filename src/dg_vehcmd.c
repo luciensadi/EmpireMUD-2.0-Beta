@@ -38,6 +38,7 @@ extern const char *dirs[];
 extern struct instance_data *quest_instance_global;
 
 // external functions
+void adjust_vehicle_tech(vehicle_data *veh, bool add);
 void die(char_data *ch, char_data *killer);
 extern struct instance_data *find_instance_by_room(room_data *room, bool check_homeroom, bool allow_fake_loc);
 extern char_data *get_char_by_vehicle(vehicle_data *veh, char *name);
@@ -408,6 +409,12 @@ VCMD(do_vsend) {
 }
 
 
+VCMD(do_vmod) {
+	void script_modify(char *argument);
+	script_modify(argument);
+}
+
+
 VCMD(do_vmorph) {
 	char tar_arg[MAX_INPUT_LENGTH], num_arg[MAX_INPUT_LENGTH];
 	morph_data *morph = NULL;
@@ -668,8 +675,8 @@ VCMD(do_vquest) {
 
 
 VCMD(do_vsiege) {
-	void besiege_room(char_data *attacker, room_data *to_room, int damage);
-	extern bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int siege_type);
+	void besiege_room(char_data *attacker, room_data *to_room, int damage, vehicle_data *by_vehicle);
+	extern bool besiege_vehicle(char_data *attacker, vehicle_data *veh, int damage, int siege_type, vehicle_data *by_vehicle);
 	extern room_data *dir_to_room(room_data *room, int dir, bool ignore_entrance);
 	extern bool find_siege_target_for_vehicle(char_data *ch, vehicle_data *veh, char *arg, room_data **room_targ, int *dir, vehicle_data **veh_targ);
 	extern bool validate_siege_target_room(char_data *ch, vehicle_data *veh, room_data *to_room);
@@ -718,12 +725,12 @@ VCMD(do_vsiege) {
 	
 	if (room_targ) {
 		if (validate_siege_target_room(NULL, NULL, room_targ)) {
-			besiege_room(NULL, room_targ, dam);
+			besiege_room(NULL, room_targ, dam, veh);
 		}
 	}
 	else if (veh_targ) {
 		self = (veh_targ == veh);
-		res = besiege_vehicle(NULL, veh_targ, dam, SIEGE_PHYSICAL);
+		res = besiege_vehicle(NULL, veh_targ, dam, SIEGE_PHYSICAL, veh);
 		if (self && !res) {
 			dg_owner_purged = TRUE;
 		}
@@ -734,12 +741,45 @@ VCMD(do_vsiege) {
 }
 
 
+// kills the target
+VCMD(do_vslay) {
+	char name[MAX_INPUT_LENGTH];
+	char_data *vict;
+	
+	argument = one_argument(argument, name);
+
+	if (!*name) {
+		veh_log(veh, "vslay: no target");
+		return;
+	}
+	
+	if (*name == UID_CHAR) {
+		if (!(vict = get_char(name))) {
+			veh_log(veh, "vslay: victim (%s) does not exist", name);
+			return;
+		}
+	}
+	else if (!(vict = get_char_by_vehicle(veh, name))) {
+		veh_log(veh, "vslay: victim (%s) does not exist", name);
+		return;
+	}
+	
+	if (IS_IMMORTAL(vict)) {
+		msg_to_char(vict, "Being the cool immortal you are, you sidestep a trap, obviously placed to kill you.\r\n");
+	}
+	else {
+		die(vict, vict);
+	}
+}
+
+
 VCMD(do_vteleport) {	
 	char arg1[MAX_INPUT_LENGTH], arg2[MAX_INPUT_LENGTH];
 	room_data *target, *orm = IN_ROOM(veh);
 	struct instance_data *inst;
 	char_data *ch, *next_ch;
 	vehicle_data *v;
+	obj_data *obj;
 	int iter;
 
 	two_arguments(argument, arg1, arg2);
@@ -822,9 +862,14 @@ VCMD(do_vteleport) {
 			}
 		}
 		else if ((v = get_vehicle_near_vehicle(veh, arg1))) {
+			adjust_vehicle_tech(v, FALSE);
 			vehicle_from_room(v);
 			vehicle_to_room(v, target);
+			adjust_vehicle_tech(v, FALSE);
 			entry_vtrigger(v);
+		}
+		else if ((obj = get_obj_by_vehicle(veh, arg1))) {
+			obj_to_room(obj, target);
 		}
 		else {
 			veh_log(veh, "vteleport: no target found");
@@ -1042,6 +1087,11 @@ VCMD(do_dgvload) {
 		
 		tch = get_char_near_vehicle(veh, arg1);
 		if (tch) {
+			// mark as "gathered" like a resource
+			if (!IS_NPC(tch) && GET_LOYALTY(tch)) {
+				add_production_total(GET_LOYALTY(tch), GET_OBJ_VNUM(object), 1);
+			}
+			
 			if (*arg2 && (pos = find_eq_pos_script(arg2)) >= 0 && !GET_EQ(tch, pos) && can_wear_on_pos(object, pos)) {
 				equip_char(tch, object, pos);
 				load_otrigger(object);
@@ -1604,6 +1654,7 @@ const struct vehicle_command_info veh_cmd_info[] = {
 	{ "vforce", do_vforce, NO_SCMD },
 	{ "vheal", do_vheal, NO_SCMD },
 	{ "vload", do_dgvload, NO_SCMD },
+	{ "vmod", do_vmod, NO_SCMD },
 	{ "vmorph", do_vmorph, NO_SCMD },
 	{ "vpurge", do_vpurge, NO_SCMD },
 	{ "vquest", do_vquest, NO_SCMD },
@@ -1611,6 +1662,7 @@ const struct vehicle_command_info veh_cmd_info[] = {
 	{ "vscale", do_vscale, NO_SCMD },
 	{ "vsend", do_vsend, SCMD_VSEND },
 	{ "vsiege", do_vsiege, NO_SCMD },
+	{ "vslay", do_vslay, NO_SCMD },
 	{ "vteleport", do_vteleport, NO_SCMD },
 	{ "vterracrop", do_vterracrop, NO_SCMD },
 	{ "vterraform", do_vterraform, NO_SCMD },

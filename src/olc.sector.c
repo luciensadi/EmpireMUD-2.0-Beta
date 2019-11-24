@@ -120,6 +120,11 @@ bool audit_sector(sector_data *sect, char_data *ch) {
 		problem = TRUE;
 	}
 	
+	if (IS_SET(GET_SECT_BUILD_FLAGS(sect), BLD_ON_BASE_TERRAIN_ALLOWED)) {
+		olc_audit_msg(ch, GET_SECT_VNUM(sect), "Has the base-terrain-allowed build flag -- this is not allowed on sectors");
+		problem = TRUE;
+	}
+	
 	if (has_evolution_type(sect, EVO_CHOPPED_DOWN) && !has_interaction(GET_SECT_INTERACTIONS(sect), INTERACT_CHOP)) {
 		olc_audit_msg(ch, GET_SECT_VNUM(sect), "Choppable sect with no chop interaction");
 		problem = TRUE;
@@ -527,7 +532,6 @@ void olc_search_sector(char_data *ch, sector_vnum vnum) {
 void save_olc_sector(descriptor_data *desc) {	
 	sector_data *proto, *st = GET_OLC_SECTOR(desc);
 	sector_vnum vnum = GET_OLC_VNUM(desc);
-	struct interaction_item *interact;
 	struct spawn_info *spawn;
 	UT_hash_handle hh;
 	
@@ -551,10 +555,7 @@ void save_olc_sector(descriptor_data *desc) {
 		GET_SECT_SPAWNS(proto) = spawn->next;
 		free(spawn);
 	}
-	while ((interact = GET_SECT_INTERACTIONS(proto))) {
-		GET_SECT_INTERACTIONS(proto) = interact->next;
-		free(interact);
-	}
+	free_interactions(&GET_SECT_INTERACTIONS(proto));
 	
 	// sanity
 	if (!GET_SECT_NAME(st) || !*GET_SECT_NAME(st)) {

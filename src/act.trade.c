@@ -72,10 +72,10 @@ bool check_can_craft(char_data *ch, craft_data *type) {
 	bool wait, room_wait;
 	
 	// type checks
-	if (GET_CRAFT_TYPE(type) == CRAFT_TYPE_MILL && !HAS_FUNCTION(IN_ROOM(ch), FNC_MILL)) {
+	if (GET_CRAFT_TYPE(type) == CRAFT_TYPE_MILL && !room_has_function_and_city_ok(IN_ROOM(ch), FNC_MILL)) {
 		msg_to_char(ch, "You need to be in a mill to do that.\r\n");
 	}
-	else if (GET_CRAFT_TYPE(type) == CRAFT_TYPE_PRESS && !HAS_FUNCTION(IN_ROOM(ch), FNC_PRESS)) {
+	else if (GET_CRAFT_TYPE(type) == CRAFT_TYPE_PRESS && !room_has_function_and_city_ok(IN_ROOM(ch), FNC_PRESS)) {
 		msg_to_char(ch, "You need a press to do that.\r\n");
 	}
 	else if (CRAFT_FLAGGED(type, CRAFT_BY_RIVER) && (!IS_OUTDOORS(ch) || !find_flagged_sect_within_distance_from_char(ch, SECTF_FRESH_WATER, NOBITS, 1))) {
@@ -84,7 +84,7 @@ bool check_can_craft(char_data *ch, craft_data *type) {
 	else if (GET_CRAFT_TYPE(type) == CRAFT_TYPE_FORGE && !can_forge(ch)) {
 		// sends its own message
 	}
-	else if (GET_CRAFT_TYPE(type) == CRAFT_TYPE_SMELT && !HAS_FUNCTION(IN_ROOM(ch), FNC_SMELT)) {
+	else if (GET_CRAFT_TYPE(type) == CRAFT_TYPE_SMELT && !room_has_function_and_city_ok(IN_ROOM(ch), FNC_SMELT)) {
 		msg_to_char(ch, "You can't %s here.\r\n", gen_craft_data[GET_CRAFT_TYPE(type)].command);
 	}
 	
@@ -110,16 +110,16 @@ bool check_can_craft(char_data *ch, craft_data *type) {
 	else if (IS_SET(GET_CRAFT_FLAGS(type), CRAFT_FIRE | CRAFT_ALCHEMY) && !has_cooking_fire(ch)) {
 		msg_to_char(ch, "You need a good fire to do that.\r\n");
 	}
-	else if (IS_SET(GET_CRAFT_FLAGS(type), CRAFT_CARPENTER) && !HAS_FUNCTION(IN_ROOM(ch), FNC_CARPENTER)) {
+	else if (IS_SET(GET_CRAFT_FLAGS(type), CRAFT_CARPENTER) && !room_has_function_and_city_ok(IN_ROOM(ch), FNC_CARPENTER)) {
 		msg_to_char(ch, "You need to %s that at the carpenter!\r\n", gen_craft_data[GET_CRAFT_TYPE(type)].command);
 	}
-	else if (IS_SET(GET_CRAFT_FLAGS(type), CRAFT_SHIPYARD) && !HAS_FUNCTION(IN_ROOM(ch), FNC_SHIPYARD)) {
+	else if (IS_SET(GET_CRAFT_FLAGS(type), CRAFT_SHIPYARD) && !room_has_function_and_city_ok(IN_ROOM(ch), FNC_SHIPYARD)) {
 		msg_to_char(ch, "You need to %s that at the shipyard!\r\n", gen_craft_data[GET_CRAFT_TYPE(type)].command);
 	}
 	else if (IS_SET(GET_CRAFT_FLAGS(type), CRAFT_BLD_UPGRADED) && !ROOM_BLD_FLAGGED(IN_ROOM(ch), BLD_UPGRADED)) {
 		msg_to_char(ch, "The building needs to be upgraded to %s that!\r\n", gen_craft_data[GET_CRAFT_TYPE(type)].command);
 	}
-	else if (IS_SET(GET_CRAFT_FLAGS(type), CRAFT_GLASSBLOWER) && !HAS_FUNCTION(IN_ROOM(ch), FNC_GLASSBLOWER)) {
+	else if (IS_SET(GET_CRAFT_FLAGS(type), CRAFT_GLASSBLOWER) && !room_has_function_and_city_ok(IN_ROOM(ch), FNC_GLASSBLOWER)) {
 		msg_to_char(ch, "You need to %s that at the glassblower!\r\n", gen_craft_data[GET_CRAFT_TYPE(type)].command);
 	}
 	else if (IS_SET(GET_CRAFT_FLAGS(type), CRAFT_SOUP) && !find_water_container(ch, ch->carrying) && !find_water_container(ch, ROOM_CONTENTS(IN_ROOM(ch)))) {
@@ -157,7 +157,7 @@ bool check_can_craft(char_data *ch, craft_data *type) {
 bool can_forge(char_data *ch) {
 	bool ok = FALSE;
 	
-	if (!IS_IMMORTAL(ch) && !HAS_FUNCTION(IN_ROOM(ch), FNC_FORGE)) {
+	if (!IS_IMMORTAL(ch) && !room_has_function_and_city_ok(IN_ROOM(ch), FNC_FORGE)) {
 		msg_to_char(ch, "You need to be in a forge to do that.\r\n");
 	}
 	else if (!IS_IMMORTAL(ch) && !room_has_function_and_city_ok(IN_ROOM(ch), FNC_FORGE)) {
@@ -420,7 +420,7 @@ int get_crafting_level(char_data *ch) {
 * @return int The best scale level.
 */
 int get_craft_scale_level(char_data *ch, craft_data *craft) {
-	int level = 1, psr;
+	int level = 1, psr, craft_lev;
 	ability_data *abil;
 	obj_data *req;
 	
@@ -428,22 +428,17 @@ int get_craft_scale_level(char_data *ch, craft_data *craft) {
 		return 0;
 	}
 	
+	craft_lev = get_crafting_level(ch);
+	
 	// determine ideal scale level
 	if (craft) {
 		if (GET_CRAFT_REQUIRES_OBJ(craft) != NOTHING && (req = obj_proto(GET_CRAFT_REQUIRES_OBJ(craft)))) {
-			level = get_crafting_level(ch);
-			
-			// check bounds on the required object
-			if (GET_OBJ_MAX_SCALE_LEVEL(req) > 0) {
-				level = MIN(level, GET_OBJ_MAX_SCALE_LEVEL(req));
-			}
-			if (GET_OBJ_MIN_SCALE_LEVEL(req) > 0) {
-				level = MAX(level, GET_OBJ_MIN_SCALE_LEVEL(req));
-			}
+			// anything that requires an object handles its own level range (on the crafted item itself)
+			level = craft_lev;
 		}
 		else if (CRAFT_FLAGGED(craft, CRAFT_LEARNED)) {
 			// learned recipes would be constrained by the created obj, if anything
-			level = get_crafting_level(ch);
+			level = craft_lev;
 		}
 		else {
 			if (!(abil = find_ability_by_vnum(GET_CRAFT_ABILITY(craft)))) {
@@ -451,34 +446,36 @@ int get_craft_scale_level(char_data *ch, craft_data *craft) {
 			}
 			else if (!ABIL_ASSIGNED_SKILL(abil)) {
 				// probably a class skill
-				level = get_crafting_level(ch);
+				level = craft_lev;
 			}
 			else if ((psr = ABIL_SKILL_LEVEL(abil)) != NOTHING) {
+				// craft comes from a skill-ability (and is not learned/requires-obj):
+				// limit to the the top of that skill range
 				if (psr < BASIC_SKILL_CAP) {
-					level = MIN(BASIC_SKILL_CAP, get_skill_level(ch, SKILL_VNUM(ABIL_ASSIGNED_SKILL(abil))));
+					level = MIN(BASIC_SKILL_CAP, craft_lev);
 				}
 				else if (psr < SPECIALTY_SKILL_CAP) {
-					level = MIN(SPECIALTY_SKILL_CAP, get_skill_level(ch, SKILL_VNUM(ABIL_ASSIGNED_SKILL(abil))));
+					level = MIN(SPECIALTY_SKILL_CAP, craft_lev);
 				}
 				else if (psr < CLASS_SKILL_CAP) {
-					level = MIN(CLASS_SKILL_CAP, get_skill_level(ch, SKILL_VNUM(ABIL_ASSIGNED_SKILL(abil))));
+					level = MIN(CLASS_SKILL_CAP, craft_lev);
 				}
 				else {	// is a skill ability but >= class skill level (100) -- don't restrict
-					level = get_crafting_level(ch);
+					level = craft_lev;
 				}
 			}
 			else {
 				// this is probably unreachable
-				level = get_crafting_level(ch);
+				level = craft_lev;
 			}
 			
 			// always bound by the crafting level
-			level = MIN(level, get_crafting_level(ch));
+			level = MIN(level, craft_lev);
 		}
 	}
 	else {
 		// no craft given
-		level = get_crafting_level(ch);
+		level = craft_lev;
 	}
 	
 	return level;
@@ -643,6 +640,7 @@ void show_craft_info(char_data *ch, char *argument, int craft_type) {
 	extern const char *bld_on_flags[];
 	extern const char *craft_flag_for_info[];
 	extern const char *item_types[];
+	extern const char *wear_bits[];
 	
 	char buf[MAX_STRING_LENGTH], part[MAX_STRING_LENGTH], range[MAX_STRING_LENGTH];
 	struct obj_apply *apply;
@@ -675,8 +673,15 @@ void show_craft_info(char_data *ch, char *argument, int craft_type) {
 	else if ((proto = obj_proto(GET_CRAFT_OBJECT(craft)))) {
 		// build info string
 		sprintf(buf, " (%s", item_types[(int) GET_OBJ_TYPE(proto)]);
+		if (GET_OBJ_WEAR(proto) & ~ITEM_WEAR_TAKE) {
+			prettier_sprintbit(GET_OBJ_WEAR(proto) & ~ITEM_WEAR_TAKE, wear_bits, part);
+			sprintf(buf + strlen(buf), ", %s", part);
+		}
 		LL_FOREACH(GET_OBJ_APPLIES(proto), apply) {
-			sprintf(buf + strlen(buf), ", %s%s", (apply->modifier<0 ? "-" : "+"), apply_types[(int) apply->location]);
+			// don't show applies that can't come from crafting
+			if (apply->apply_type != APPLY_TYPE_HARD_DROP && apply->apply_type != APPLY_TYPE_GROUP_DROP && apply->apply_type != APPLY_TYPE_BOSS_DROP) {
+				sprintf(buf + strlen(buf), ", %s%s", (apply->modifier<0 ? "-" : "+"), apply_types[(int) apply->location]);
+			}
 		}
 		if (GET_OBJ_AFF_FLAGS(proto)) {
 			prettier_sprintbit(GET_OBJ_AFF_FLAGS(proto), affected_bits, part);
@@ -708,6 +713,9 @@ void show_craft_info(char_data *ch, char *argument, int craft_type) {
 		if ((abil = find_ability_by_vnum(GET_CRAFT_ABILITY(craft))) && ABIL_ASSIGNED_SKILL(abil) != NULL) {
 			sprintf(buf + strlen(buf), " (%s %d)", SKILL_NAME(ABIL_ASSIGNED_SKILL(abil)), ABIL_SKILL_LEVEL(abil));
 		}
+		if (abil && ABIL_MASTERY_ABIL(abil) != NOTHING) {
+			sprintf(buf + strlen(buf), ", Mastery: %s", get_ability_name_by_vnum(ABIL_MASTERY_ABIL(abil)));
+		}
 		msg_to_char(ch, "Requires: %s\r\n", buf);
 	}
 	
@@ -733,6 +741,52 @@ void show_craft_info(char_data *ch, char *argument, int craft_type) {
 	if (IS_SET(GET_CRAFT_FLAGS(craft), CRAFT_LEARNED) && !has_learned_craft(ch, GET_CRAFT_VNUM(craft))) {
 		msg_to_char(ch, "&rYou haven't learned this recipe.&0\r\n");
 	}
+}
+
+
+// for do_tame
+INTERACTION_FUNC(tame_interact) {
+	void setup_generic_npc(char_data *mob, empire_data *emp, int name, int sex);
+	
+	char buf[MAX_STRING_LENGTH];
+	char_data *newmob;
+	bool any = FALSE;
+	double prc;
+	int iter;
+	
+	for (iter = 0; iter < interaction->quantity; ++iter) {
+		newmob = read_mobile(interaction->vnum, TRUE);
+		if (!newmob) {
+			continue;
+		}
+		
+		setup_generic_npc(newmob, GET_LOYALTY(inter_mob), MOB_DYNAMIC_NAME(inter_mob), MOB_DYNAMIC_SEX(inter_mob));
+		char_to_room(newmob, IN_ROOM(ch));
+		MOB_INSTANCE_ID(newmob) = MOB_INSTANCE_ID(inter_mob);
+		if (MOB_INSTANCE_ID(newmob) != NOTHING) {
+			add_instance_mob(real_instance(MOB_INSTANCE_ID(newmob)), GET_MOB_VNUM(newmob));
+		}
+
+		prc = (double)GET_HEALTH(inter_mob) / MAX(1, GET_MAX_HEALTH(inter_mob));
+		GET_HEALTH(newmob) = (int)(prc * GET_MAX_HEALTH(newmob));
+		
+		// message before triggering
+		if (!any) {
+			if (interaction->quantity > 1) {
+				sprintf(buf, "$e is now $N (x%d)!", interaction->quantity);
+				act(buf, FALSE, inter_mob, NULL, newmob, TO_ROOM);
+			}
+			else {
+				act("$e is now $N!", FALSE, inter_mob, NULL, newmob, TO_ROOM);
+			}
+			
+			any = TRUE;
+		}
+		
+		load_mtrigger(newmob);
+	}
+	
+	return any;
 }
 
 
@@ -892,6 +946,11 @@ void finish_gen_craft(char_data *ch) {
 				
 				load_otrigger(obj);
 			}
+			
+			// mark for the empire
+			if (GET_LOYALTY(ch)) {
+				add_production_total(GET_LOYALTY(ch), GET_CRAFT_OBJECT(type), amt);
+			}
 		}
 	}
 
@@ -936,6 +995,9 @@ void finish_gen_craft(char_data *ch) {
 * @param craft_data *type The craft recipe.
 */
 void process_gen_craft_vehicle(char_data *ch, craft_data *type) {
+	void adjust_vehicle_tech(vehicle_data *veh, bool add);
+	void finish_vehicle_setup(vehicle_data *veh);
+	
 	bool found = FALSE, any = FALSE;
 	char buf[MAX_STRING_LENGTH];
 	obj_data *found_obj = NULL;
@@ -984,6 +1046,10 @@ void process_gen_craft_vehicle(char_data *ch, craft_data *type) {
 			}
 		}
 		
+		if (VEH_OWNER(veh)) {
+			adjust_vehicle_tech(veh, TRUE);
+		}
+		finish_vehicle_setup(veh);
 		load_vtrigger(veh);
 	}
 	else if (!found) {
@@ -1078,10 +1144,10 @@ const struct {
 	char *command;
 	any_vnum ability;	// required ability
 	bool (*validate_func)(char_data *ch);	// e.g. can_forge, func that returns TRUE if ok -- must send own errors if FALSE
-	int types[3];	// NOTHING-terminated list of valid obj types
+	int types[4];	// NOTHING-terminated list of valid obj types
 } reforge_data[] = {
 	{ "reforge", ABIL_REFORGE, can_forge, { ITEM_WEAPON, ITEM_MISSILE_WEAPON, NOTHING } },	// SCMD_REFORGE
-	{ "refashion", ABIL_REFASHION, can_refashion, { ITEM_ARMOR, ITEM_SHIELD, NOTHING } }	// SCMD_REFASHION
+	{ "refashion", ABIL_REFASHION, can_refashion, { ITEM_ARMOR, ITEM_SHIELD, ITEM_WORN, NOTHING } }	// SCMD_REFASHION
 };
 
 
@@ -1092,7 +1158,7 @@ const struct {
 bool can_refashion(char_data *ch) {
 	bool ok = FALSE;
 	
-	if (!IS_IMMORTAL(ch) && !HAS_FUNCTION(IN_ROOM(ch), FNC_TAILOR)) {
+	if (!IS_IMMORTAL(ch) && !room_has_function_and_city_ok(IN_ROOM(ch), FNC_TAILOR)) {
 		msg_to_char(ch, "You need to be at the tailor to do that.\r\n");
 	}
 	else if (!IS_IMMORTAL(ch) && !check_in_city_requirement(IN_ROOM(ch), TRUE)) {
@@ -1138,9 +1204,12 @@ bool match_reforge_type(obj_data *obj, int subcmd) {
 * @return bool TRUE if it's ok to rename, FALSE otherwise.
 */
 bool validate_item_rename(char_data *ch, obj_data *obj, char *name) {
+	char must_have[MAX_STRING_LENGTH];
 	bool ok = FALSE, has_cap = FALSE;
 	obj_data *proto;
 	int iter;
+	
+	strcpy(must_have, fname(GET_OBJ_KEYWORDS(obj)));
 	
 	for (iter = 0; iter < strlen(GET_OBJ_SHORT_DESC(obj)) && !has_cap; ++iter) {
 		if (isupper(*(GET_OBJ_SHORT_DESC(obj) + iter))) {
@@ -1157,8 +1226,8 @@ bool validate_item_rename(char_data *ch, obj_data *obj, char *name) {
 	else if (strchr(name, '&') || strchr(name, '%')) {
 		msg_to_char(ch, "Item names cannot contain the \t& or %% symbols.\r\n");
 	}
-	else if (!str_str(name, (char*)skip_filler(GET_OBJ_SHORT_DESC(obj)))) {
-		msg_to_char(ch, "The new name must contain '%s'.\r\n", skip_filler(GET_OBJ_SHORT_DESC(obj)));
+	else if (!str_str(name, must_have)) {
+		msg_to_char(ch, "The new name must contain '%s'.\r\n", must_have);
 	}
 	else if (strlen(name) > 40) {
 		msg_to_char(ch, "You can't set a name longer than 40 characters.\r\n");
@@ -1671,7 +1740,7 @@ ACMD(do_learn) {
 	}
 	
 	// validate the player's ability to MAKE the recipe
-	else if (IS_SET(GET_CRAFT_FLAGS(recipe), CRAFT_IN_DEVELOPMENT)) {
+	else if (!IS_IMMORTAL(ch) && IS_SET(GET_CRAFT_FLAGS(recipe), CRAFT_IN_DEVELOPMENT)) {
 		msg_to_char(ch, "That recipe is not currently available to learn.\r\n");
 	}
 	else if (GET_CRAFT_ABILITY(recipe) != NO_ABIL && !has_ability(ch, GET_CRAFT_ABILITY(recipe))) {
@@ -1734,7 +1803,7 @@ ACMD(do_learned) {
 			if (!(craft = craft_proto(pcd->vnum))) {
 				continue;	// no craft?
 			}
-			if (CRAFT_FLAGGED(craft, CRAFT_IN_DEVELOPMENT)) {
+			if (CRAFT_FLAGGED(craft, CRAFT_IN_DEVELOPMENT) && !IS_IMMORTAL(ch)) {
 				continue;	// in-dev
 			}
 			if (*argument && !multi_isname(argument, GET_CRAFT_NAME(craft)) && str_cmp(craft_types[GET_CRAFT_TYPE(craft)], argument)) {
@@ -1939,7 +2008,7 @@ ACMD(do_recipes) {
 }
 
 
-// this handles both 'reforge' and 'refashion'
+// do_refashion / this handles both 'reforge' and 'refashion'
 ACMD(do_reforge) {
 	extern char *shared_by(obj_data *obj, char_data *ch);
 	extern const char *item_types[];
@@ -2017,10 +2086,11 @@ ACMD(do_reforge) {
 			proto = obj_proto(GET_OBJ_VNUM(obj));
 			
 			// rename keywords
+			snprintf(temp, sizeof(temp), "%s %s", fname(GET_OBJ_KEYWORDS(proto)), skip_filler(argument));
 			if (!proto || GET_OBJ_KEYWORDS(obj) != GET_OBJ_KEYWORDS(proto)) {
 				free(GET_OBJ_KEYWORDS(obj));
 			}
-			GET_OBJ_KEYWORDS(obj) = str_dup(skip_filler(argument));
+			GET_OBJ_KEYWORDS(obj) = str_dup(temp);
 			
 			// rename short desc
 			if (!proto || GET_OBJ_SHORT_DESC(obj) != GET_OBJ_SHORT_DESC(proto)) {
@@ -2184,5 +2254,55 @@ ACMD(do_reforge) {
 	// no leaks
 	if (res) {
 		free_resource_list(res);
+	}
+}
+
+
+ACMD(do_tame) {
+	char_data *mob;
+	bool any;
+	
+	one_argument(argument, arg);
+
+	if (!has_player_tech(ch, PTECH_TAME)) {
+		msg_to_char(ch, "You don't have the correct ability to tame animals.\r\n");
+	}
+	else if (get_cooldown_time(ch, COOLDOWN_TAME) > 0) {
+		msg_to_char(ch, "You can't tame again yet.\r\n");
+	}
+	else if (!can_use_room(ch, IN_ROOM(ch), MEMBERS_ONLY)) {
+		msg_to_char(ch, "You don't have permission to tame animals here.\r\n");
+	}
+	else if (!*arg) {
+		msg_to_char(ch, "Which animal would you like to tame?\r\n");
+	}
+	else if (!(mob = get_char_vis(ch, arg, FIND_CHAR_ROOM))) {
+		send_config_msg(ch, "no_person");
+	}
+	else if (!IS_NPC(mob) || !has_interaction(mob->interactions, INTERACT_TAME)) {
+		act("You can't tame $N!", FALSE, ch, 0, mob, TO_CHAR);
+	}
+	else if (GET_LED_BY(mob)) {
+		act("You can't tame $M right now.", FALSE, ch, NULL, mob, TO_CHAR);
+	}
+	else {
+		act("You try to tame $N...", FALSE, ch, NULL, mob, TO_CHAR);
+		act("$n tries to tame you...", FALSE, ch, NULL, mob, TO_VICT);
+		act("$n tries to tame $N...", FALSE, ch, NULL, mob, TO_NOTVICT);
+		
+		any = run_interactions(ch, mob->interactions, INTERACT_TAME, IN_ROOM(ch), mob, NULL, tame_interact);
+		
+		if (any) {
+			gain_player_tech_exp(ch, PTECH_TAME, 50);
+			add_cooldown(ch, COOLDOWN_TAME, 3 * SECS_PER_REAL_MIN);
+			
+			// remove the original
+			extract_char(mob);
+		}
+		else {
+			act("You can't seem to tame $M!", FALSE, ch, NULL, mob, TO_CHAR);
+		}
+		
+		command_lag(ch, WAIT_OTHER);
 	}
 }
